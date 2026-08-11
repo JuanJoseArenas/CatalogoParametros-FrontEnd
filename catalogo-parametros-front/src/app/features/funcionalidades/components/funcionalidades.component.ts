@@ -1,18 +1,31 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/services/api.service';
+import { SseService } from '../../../core/services/sse.service';
 import { Funcionalidad, Modulo } from '../../../shared/models';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-funcionalidades',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule],
   template: `
     <div class="funcionalidades">
-      <div class="header">
+      <div class="page-header">
         <h1>Funcionalidades</h1>
-        <button class="btn btn-primary" (click)="openModal()">+ Nueva Funcionalidad</button>
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+          <div class="connection-status" [class.connected]="isConnected" [class.disconnected]="!isConnected">
+            <span class="status-dot" [class.connected]="isConnected" [class.disconnected]="!isConnected"></span>
+            {{ isConnected ? 'En vivo' : 'Desconectado' }}
+          </div>
+          <div class="search-bar">
+            <span class="search-icon">🔍</span>
+            <input type="text" placeholder="Buscar funcionalidad..." [(ngModel)]="searchTerm">
+          </div>
+          <button class="btn btn-primary" (click)="openModal()">+ Nueva</button>
+        </div>
       </div>
 
       <div class="card" *ngIf="errorMessage">
@@ -26,9 +39,12 @@ import { Funcionalidad, Modulo } from '../../../shared/models';
       <div class="card">
         <div class="card-header">
           <h2 class="card-title">Lista de Funcionalidades</h2>
+          <span style="font-size: 0.85rem; color: #64748b; font-weight: 500;">
+            {{ filteredFuncionalidades.length }} registro(s)
+          </span>
         </div>
 
-        <div class="table-container" *ngIf="funcionalidades.length > 0">
+        <div class="table-container" *ngIf="filteredFuncionalidades.length > 0">
           <table>
             <thead>
               <tr>
@@ -40,8 +56,8 @@ import { Funcionalidad, Modulo } from '../../../shared/models';
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let func of funcionalidades">
-                <td>{{ func.id | slice:0:8 }}...</td>
+              <tr *ngFor="let func of filteredFuncionalidades">
+                <td><code>{{ func.id }}</code></td>
                 <td>{{ func.nombre }}</td>
                 <td>{{ getModuloNombre(func.idModulo) }}</td>
                 <td>
@@ -58,7 +74,7 @@ import { Funcionalidad, Modulo } from '../../../shared/models';
           </table>
         </div>
 
-        <div class="empty-state" *ngIf="funcionalidades.length === 0 && !loading">
+        <div class="empty-state" *ngIf="filteredFuncionalidades.length === 0 && !loading">
           <div class="empty-state-icon">⚙️</div>
           <h3>No hay funcionalidades</h3>
           <p>Comienza creando una nueva funcionalidad</p>
@@ -113,22 +129,9 @@ import { Funcionalidad, Modulo } from '../../../shared/models';
       max-width: 1200px;
       margin: 0 auto;
     }
-
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
-    }
-
-    .header h1 {
-      font-size: 1.75rem;
-      font-weight: 700;
-      color: #1f2937;
-    }
   `]
 })
-export class FuncionalidadesComponent implements OnInit {
+export class FuncionalidadesComponent implements OnInit, OnDestroy {
   funcionalidades: Funcionalidad[] = [];
   modulos: Modulo[] = [];
   loading = false;
@@ -139,8 +142,11 @@ export class FuncionalidadesComponent implements OnInit {
   errorMessage = '';
   successMessage = '';
   funcionalidadForm: FormGroup;
+  searchTerm = '';
+  isConnected = false;
+  private subscriptions: Subscription[] = [];
 
-  constructor(private apiService: ApiService, private fb: FormBuilder) {
+  constructor(private apiService: ApiService, private fb: FormBuilder, private sseService: SseService) {
     this.funcionalidadForm = this.fb.group({
       nombre: ['', Validators.required],
       idModulo: ['', Validators.required],
@@ -151,6 +157,18 @@ export class FuncionalidadesComponent implements OnInit {
   ngOnInit(): void {
     this.loadFuncionalidades();
     this.loadModulos();
+    this.connectSse();
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+  }
+
+  get filteredFuncionalidades(): Funcionalidad[] {
+    if (!this.searchTerm.trim()) return this.funcionalidades;
+    return this.funcionalidades.filter(func =>
+      func.nombre.toLowerCase().includes(this.searchTerm.toLowerCase())
+    );
   }
 
   loadFuncionalidades(): void {
@@ -179,6 +197,40 @@ export class FuncionalidadesComponent implements OnInit {
         console.error('Error al cargar modulos:', err);
       }
     });
+  }
+
+  connectSse(): void {
+    const url = `${this.apiService.getBaseUrl()}/funcionalidades/events`;
+    const sub = this.sseService.connect(url, 'funcionalidad').subscribe({
+      next: (data: any) => {
+        this.isConnected = true;
+        
+        const entity = data.funcionalidad;
+        const eventType = data.event;
+        
+        if (!entity) return;
+        
+        switch (eventType) {
+          case 'CREATED':
+            if (!this.funcionalidades.find(f => f.id === entity.id)) {
+              this.funcionalidades = [...this.funcionalidades, entity];
+            }
+            break;
+          case 'UPDATED':
+            this.funcionalidades = this.funcionalidades.map(f =>
+              f.id === entity.id ? entity : f
+            );
+            break;
+          case 'DELETED':
+            this.funcionalidades = this.funcionalidades.filter(f => f.id !== entity.id);
+            break;
+        }
+      },
+      error: () => {
+        this.isConnected = false;
+      }
+    });
+    this.subscriptions.push(sub);
   }
 
   getModuloNombre(id: string): string {
@@ -239,7 +291,6 @@ export class FuncionalidadesComponent implements OnInit {
           this.successMessage = response.mensajes[0] || 'Funcionalidad actualizada exitosamente';
           this.saving = false;
           this.closeModal();
-          this.loadFuncionalidades();
         },
         error: (err) => {
           this.errorMessage = err.message || 'Error al actualizar la funcionalidad';
@@ -252,7 +303,6 @@ export class FuncionalidadesComponent implements OnInit {
           this.successMessage = response.mensajes[0] || 'Funcionalidad creada exitosamente';
           this.saving = false;
           this.closeModal();
-          this.loadFuncionalidades();
         },
         error: (err) => {
           this.errorMessage = err.message || 'Error al crear la funcionalidad';
@@ -273,7 +323,7 @@ export class FuncionalidadesComponent implements OnInit {
     this.apiService.deleteFuncionalidad(id).subscribe({
       next: (response) => {
         this.successMessage = response.mensajes[0] || 'Funcionalidad eliminada exitosamente';
-        this.loadFuncionalidades();
+        this.funcionalidades = this.funcionalidades.filter(f => f.id !== id);
       },
       error: (err) => {
         this.errorMessage = err.message || 'Error al eliminar la funcionalidad';

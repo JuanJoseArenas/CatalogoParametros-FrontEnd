@@ -1,18 +1,31 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/services/api.service';
+import { SseService } from '../../../core/services/sse.service';
 import { Parametro, Funcionalidad } from '../../../shared/models';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-parametros',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule],
   template: `
     <div class="parametros">
-      <div class="header">
+      <div class="page-header">
         <h1>Parametros</h1>
-        <button class="btn btn-primary" (click)="openModal()">+ Nuevo Parametro</button>
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+          <div class="connection-status" [class.connected]="isConnected" [class.disconnected]="!isConnected">
+            <span class="status-dot" [class.connected]="isConnected" [class.disconnected]="!isConnected"></span>
+            {{ isConnected ? 'En vivo' : 'Desconectado' }}
+          </div>
+          <div class="search-bar">
+            <span class="search-icon">🔍</span>
+            <input type="text" placeholder="Buscar parametro..." [(ngModel)]="searchTerm">
+          </div>
+          <button class="btn btn-primary" (click)="openModal()">+ Nuevo</button>
+        </div>
       </div>
 
       <div class="card" *ngIf="errorMessage">
@@ -26,9 +39,12 @@ import { Parametro, Funcionalidad } from '../../../shared/models';
       <div class="card">
         <div class="card-header">
           <h2 class="card-title">Lista de Parametros</h2>
+          <span style="font-size: 0.85rem; color: #64748b; font-weight: 500;">
+            {{ filteredParametros.length }} registro(s)
+          </span>
         </div>
 
-        <div class="table-container" *ngIf="parametros.length > 0">
+        <div class="table-container" *ngIf="filteredParametros.length > 0">
           <table>
             <thead>
               <tr>
@@ -41,11 +57,11 @@ import { Parametro, Funcionalidad } from '../../../shared/models';
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let param of parametros">
-                <td>{{ param.id | slice:0:8 }}...</td>
+              <tr *ngFor="let param of filteredParametros">
+                <td><code>{{ param.id }}</code></td>
                 <td>{{ param.nombre }}</td>
                 <td>{{ getFuncionalidadNombre(param.idFuncionalidad) }}</td>
-                <td>{{ param.idTipoParametro | slice:0:8 }}...</td>
+                <td><code>{{ param.idTipoParametro }}</code></td>
                 <td>
                   <span class="badge" [class.badge-success]="param.activo" [class.badge-danger]="!param.activo">
                     {{ param.activo ? 'Activo' : 'Inactivo' }}
@@ -60,7 +76,7 @@ import { Parametro, Funcionalidad } from '../../../shared/models';
           </table>
         </div>
 
-        <div class="empty-state" *ngIf="parametros.length === 0 && !loading">
+        <div class="empty-state" *ngIf="filteredParametros.length === 0 && !loading">
           <div class="empty-state-icon">🔧</div>
           <h3>No hay parametros</h3>
           <p>Comienza creando un nuevo parametro</p>
@@ -119,22 +135,9 @@ import { Parametro, Funcionalidad } from '../../../shared/models';
       max-width: 1200px;
       margin: 0 auto;
     }
-
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
-    }
-
-    .header h1 {
-      font-size: 1.75rem;
-      font-weight: 700;
-      color: #1f2937;
-    }
   `]
 })
-export class ParametrosComponent implements OnInit {
+export class ParametrosComponent implements OnInit, OnDestroy {
   parametros: Parametro[] = [];
   funcionalidades: Funcionalidad[] = [];
   loading = false;
@@ -145,8 +148,11 @@ export class ParametrosComponent implements OnInit {
   errorMessage = '';
   successMessage = '';
   parametroForm: FormGroup;
+  searchTerm = '';
+  isConnected = false;
+  private subscriptions: Subscription[] = [];
 
-  constructor(private apiService: ApiService, private fb: FormBuilder) {
+  constructor(private apiService: ApiService, private fb: FormBuilder, private sseService: SseService) {
     this.parametroForm = this.fb.group({
       nombre: ['', Validators.required],
       idFuncionalidad: ['', Validators.required],
@@ -158,6 +164,18 @@ export class ParametrosComponent implements OnInit {
   ngOnInit(): void {
     this.loadParametros();
     this.loadFuncionalidades();
+    this.connectSse();
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+  }
+
+  get filteredParametros(): Parametro[] {
+    if (!this.searchTerm.trim()) return this.parametros;
+    return this.parametros.filter(param =>
+      param.nombre.toLowerCase().includes(this.searchTerm.toLowerCase())
+    );
   }
 
   loadParametros(): void {
@@ -186,6 +204,40 @@ export class ParametrosComponent implements OnInit {
         console.error('Error al cargar funcionalidades:', err);
       }
     });
+  }
+
+  connectSse(): void {
+    const url = `${this.apiService.getBaseUrl()}/parametros/events`;
+    const sub = this.sseService.connect(url, 'parametro').subscribe({
+      next: (data: any) => {
+        this.isConnected = true;
+        
+        const entity = data.parametro;
+        const eventType = data.event;
+        
+        if (!entity) return;
+        
+        switch (eventType) {
+          case 'CREATED':
+            if (!this.parametros.find(p => p.id === entity.id)) {
+              this.parametros = [...this.parametros, entity];
+            }
+            break;
+          case 'UPDATED':
+            this.parametros = this.parametros.map(p =>
+              p.id === entity.id ? entity : p
+            );
+            break;
+          case 'DELETED':
+            this.parametros = this.parametros.filter(p => p.id !== entity.id);
+            break;
+        }
+      },
+      error: () => {
+        this.isConnected = false;
+      }
+    });
+    this.subscriptions.push(sub);
   }
 
   getFuncionalidadNombre(id: string): string {
@@ -248,7 +300,6 @@ export class ParametrosComponent implements OnInit {
           this.successMessage = response.mensajes[0] || 'Parametro actualizado exitosamente';
           this.saving = false;
           this.closeModal();
-          this.loadParametros();
         },
         error: (err) => {
           this.errorMessage = err.message || 'Error al actualizar el parametro';
@@ -261,7 +312,6 @@ export class ParametrosComponent implements OnInit {
           this.successMessage = response.mensajes[0] || 'Parametro creado exitosamente';
           this.saving = false;
           this.closeModal();
-          this.loadParametros();
         },
         error: (err) => {
           this.errorMessage = err.message || 'Error al crear el parametro';
@@ -282,7 +332,7 @@ export class ParametrosComponent implements OnInit {
     this.apiService.deleteParametro(id).subscribe({
       next: (response) => {
         this.successMessage = response.mensajes[0] || 'Parametro eliminado exitosamente';
-        this.loadParametros();
+        this.parametros = this.parametros.filter(p => p.id !== id);
       },
       error: (err) => {
         this.errorMessage = err.message || 'Error al eliminar el parametro';
