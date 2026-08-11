@@ -35,6 +35,8 @@ import { Modulo, Aplicacion } from '../../../shared/models';
                 <th>ID</th>
                 <th>Nombre</th>
                 <th>Aplicacion</th>
+                <th>Fecha Inicio</th>
+                <th>Fecha Fin</th>
                 <th>Estado</th>
                 <th>Acciones</th>
               </tr>
@@ -44,6 +46,8 @@ import { Modulo, Aplicacion } from '../../../shared/models';
                 <td>{{ mod.id | slice:0:8 }}...</td>
                 <td>{{ mod.nombre }}</td>
                 <td>{{ getAplicacionNombre(mod.idAplicacion) }}</td>
+                <td>{{ mod.fechaInicio || '-' }}</td>
+                <td>{{ mod.fechaFinal || '-' }}</td>
                 <td>
                   <span class="badge" [class.badge-success]="mod.activo" [class.badge-danger]="!mod.activo">
                     {{ mod.activo ? 'Activo' : 'Inactivo' }}
@@ -88,6 +92,14 @@ import { Modulo, Aplicacion } from '../../../shared/models';
                 <option value="">Seleccione una aplicacion</option>
                 <option *ngFor="let app of aplicaciones" [value]="app.id">{{ app.nombre }}</option>
               </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Fecha Inicio</label>
+              <input type="date" class="form-control" formControlName="fechaInicio">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Fecha Fin</label>
+              <input type="date" class="form-control" formControlName="fechaFinal">
             </div>
             <div class="form-group">
               <label class="form-label">Estado</label>
@@ -143,7 +155,9 @@ export class ModulosComponent implements OnInit {
     this.moduloForm = this.fb.group({
       nombre: ['', Validators.required],
       idAplicacion: ['', Validators.required],
-      activo: [true]
+      activo: [true],
+      fechaInicio: [''],
+      fechaFinal: ['']
     });
   }
 
@@ -189,7 +203,7 @@ export class ModulosComponent implements OnInit {
     this.showModal = true;
     this.isEditing = false;
     this.editingId = null;
-    this.moduloForm.reset({ nombre: '', idAplicacion: '', activo: true });
+    this.moduloForm.reset({ nombre: '', idAplicacion: '', activo: true, fechaInicio: '', fechaFinal: '' });
   }
 
   editModulo(mod: Modulo): void {
@@ -199,7 +213,9 @@ export class ModulosComponent implements OnInit {
     this.moduloForm.reset({
       nombre: mod.nombre,
       idAplicacion: mod.idAplicacion,
-      activo: mod.activo
+      activo: mod.activo,
+      fechaInicio: mod.fechaInicio || '',
+      fechaFinal: mod.fechaFinal || ''
     });
   }
 
@@ -207,7 +223,7 @@ export class ModulosComponent implements OnInit {
     this.showModal = false;
     this.isEditing = false;
     this.editingId = null;
-    this.moduloForm.reset({ nombre: '', idAplicacion: '', activo: true });
+    this.moduloForm.reset({ nombre: '', idAplicacion: '', activo: true, fechaInicio: '', fechaFinal: '' });
   }
 
   closeModalOnOverlay(event: Event): void {
@@ -226,11 +242,18 @@ export class ModulosComponent implements OnInit {
     this.errorMessage = '';
     this.successMessage = '';
 
-    const data = {
+    const data: any = {
       nombre: this.moduloForm.value.nombre,
       idAplicacion: this.moduloForm.value.idAplicacion,
       activo: this.moduloForm.value.activo
     };
+
+    if (this.moduloForm.value.fechaInicio) {
+      data.fechaInicio = `${this.moduloForm.value.fechaInicio} 00:00:00`;
+    }
+    if (this.moduloForm.value.fechaFinal) {
+      data.fechaFinal = `${this.moduloForm.value.fechaFinal} 00:00:00`;
+    }
 
     this.apiService.createModulo(data).subscribe({
       next: (response) => {
