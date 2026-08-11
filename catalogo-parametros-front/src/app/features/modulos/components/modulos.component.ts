@@ -1,18 +1,31 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/services/api.service';
+import { SseService } from '../../../core/services/sse.service';
 import { Modulo, Aplicacion } from '../../../shared/models';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-modulos',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule],
   template: `
     <div class="modulos">
-      <div class="header">
+      <div class="page-header">
         <h1>Modulos</h1>
-        <button class="btn btn-primary" (click)="openModal()">+ Nuevo Modulo</button>
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+          <div class="connection-status" [class.connected]="isConnected" [class.disconnected]="!isConnected">
+            <span class="status-dot" [class.connected]="isConnected" [class.disconnected]="!isConnected"></span>
+            {{ isConnected ? 'En vivo' : 'Desconectado' }}
+          </div>
+          <div class="search-bar">
+            <span class="search-icon">🔍</span>
+            <input type="text" placeholder="Buscar modulo..." [(ngModel)]="searchTerm">
+          </div>
+          <button class="btn btn-primary" (click)="openModal()">+ Nuevo</button>
+        </div>
       </div>
 
       <div class="card" *ngIf="errorMessage">
@@ -26,9 +39,12 @@ import { Modulo, Aplicacion } from '../../../shared/models';
       <div class="card">
         <div class="card-header">
           <h2 class="card-title">Lista de Modulos</h2>
+          <span style="font-size: 0.85rem; color: #64748b; font-weight: 500;">
+            {{ filteredModulos.length }} registro(s)
+          </span>
         </div>
 
-        <div class="table-container" *ngIf="modulos.length > 0">
+        <div class="table-container" *ngIf="filteredModulos.length > 0">
           <table>
             <thead>
               <tr>
@@ -42,8 +58,8 @@ import { Modulo, Aplicacion } from '../../../shared/models';
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let mod of modulos">
-                <td>{{ mod.id | slice:0:8 }}...</td>
+              <tr *ngFor="let mod of filteredModulos">
+                <td><code>{{ mod.id }}</code></td>
                 <td>{{ mod.nombre }}</td>
                 <td>{{ getAplicacionNombre(mod.idAplicacion) }}</td>
                 <td>{{ mod.fechaInicio || '-' }}</td>
@@ -61,7 +77,7 @@ import { Modulo, Aplicacion } from '../../../shared/models';
           </table>
         </div>
 
-        <div class="empty-state" *ngIf="modulos.length === 0 && !loading">
+        <div class="empty-state" *ngIf="filteredModulos.length === 0 && !loading">
           <div class="empty-state-icon">📦</div>
           <h3>No hay modulos</h3>
           <p>Comienza creando un nuevo modulo</p>
@@ -124,22 +140,9 @@ import { Modulo, Aplicacion } from '../../../shared/models';
       max-width: 1200px;
       margin: 0 auto;
     }
-
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
-    }
-
-    .header h1 {
-      font-size: 1.75rem;
-      font-weight: 700;
-      color: #1f2937;
-    }
   `]
 })
-export class ModulosComponent implements OnInit {
+export class ModulosComponent implements OnInit, OnDestroy {
   modulos: Modulo[] = [];
   aplicaciones: Aplicacion[] = [];
   loading = false;
@@ -150,8 +153,11 @@ export class ModulosComponent implements OnInit {
   errorMessage = '';
   successMessage = '';
   moduloForm: FormGroup;
+  searchTerm = '';
+  isConnected = false;
+  private subscriptions: Subscription[] = [];
 
-  constructor(private apiService: ApiService, private fb: FormBuilder) {
+  constructor(private apiService: ApiService, private fb: FormBuilder, private sseService: SseService) {
     this.moduloForm = this.fb.group({
       nombre: ['', Validators.required],
       idAplicacion: ['', Validators.required],
@@ -164,6 +170,18 @@ export class ModulosComponent implements OnInit {
   ngOnInit(): void {
     this.loadModulos();
     this.loadAplicaciones();
+    this.connectSse();
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+  }
+
+  get filteredModulos(): Modulo[] {
+    if (!this.searchTerm.trim()) return this.modulos;
+    return this.modulos.filter(mod =>
+      mod.nombre.toLowerCase().includes(this.searchTerm.toLowerCase())
+    );
   }
 
   loadModulos(): void {
@@ -192,6 +210,40 @@ export class ModulosComponent implements OnInit {
         console.error('Error al cargar aplicaciones:', err);
       }
     });
+  }
+
+  connectSse(): void {
+    const url = `${this.apiService.getBaseUrl()}/modulos/events`;
+    const sub = this.sseService.connect(url, 'modulo').subscribe({
+      next: (data: any) => {
+        this.isConnected = true;
+        
+        const entity = data.modulo;
+        const eventType = data.event;
+        
+        if (!entity) return;
+        
+        switch (eventType) {
+          case 'CREATED':
+            if (!this.modulos.find(m => m.id === entity.id)) {
+              this.modulos = [...this.modulos, entity];
+            }
+            break;
+          case 'UPDATED':
+            this.modulos = this.modulos.map(m =>
+              m.id === entity.id ? entity : m
+            );
+            break;
+          case 'DELETED':
+            this.modulos = this.modulos.filter(m => m.id !== entity.id);
+            break;
+        }
+      },
+      error: () => {
+        this.isConnected = false;
+      }
+    });
+    this.subscriptions.push(sub);
   }
 
   getAplicacionNombre(id: string): string {
@@ -260,7 +312,6 @@ export class ModulosComponent implements OnInit {
         this.successMessage = response.mensajes[0] || 'Modulo creado exitosamente';
         this.saving = false;
         this.closeModal();
-        this.loadModulos();
       },
       error: (err) => {
         this.errorMessage = err.message || 'Error al crear el modulo';

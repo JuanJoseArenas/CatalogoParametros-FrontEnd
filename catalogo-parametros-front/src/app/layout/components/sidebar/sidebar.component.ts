@@ -9,7 +9,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
     <aside class="sidebar">
       <div class="sidebar-header">
         <h2>Catalogo Parametros</h2>
-        <p>Sistema de Gestion</p>
+        <p>Sistema de Gestion v1.0</p>
       </div>
       <nav>
         <ul class="nav-menu">
@@ -51,7 +51,20 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
           </li>
         </ul>
       </nav>
+      <div class="sidebar-footer">
+        <p>2026 UCOLab</p>
+      </div>
     </aside>
-  `
+  `,
+  styles: [`
+    .sidebar-footer {
+      padding: 16px 24px;
+      border-top: 1px solid rgba(255, 255, 255, 0.08);
+      text-align: center;
+      font-size: 0.75rem;
+      color: rgba(255, 255, 255, 0.4);
+      font-weight: 500;
+    }
+  `]
 })
 export class SidebarComponent {}

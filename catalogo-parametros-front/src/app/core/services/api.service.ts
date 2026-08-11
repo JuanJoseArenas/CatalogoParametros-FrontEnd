@@ -24,6 +24,10 @@ export class ApiService {
 
   constructor(private http: HttpClient) {}
 
+  getBaseUrl(): string {
+    return this.baseUrl;
+  }
+
   // Organizaciones
   getOrganizaciones(): Observable<Organizacion[]> {
     return this.http.get<OrganizacionResponse>(`${this.baseUrl}/organizaciones`).pipe(

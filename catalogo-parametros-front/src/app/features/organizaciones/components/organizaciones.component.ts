@@ -1,18 +1,30 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ApiService } from '../../../core/services/api.service';
+import { SseService } from '../../../core/services/sse.service';
 import { Organizacion } from '../../../shared/models';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-organizaciones',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule],
   template: `
     <div class="organizaciones">
-      <div class="header">
+      <div class="page-header">
         <h1>Organizaciones</h1>
-        <button class="btn btn-primary" (click)="openModal()">+ Nueva Organizacion</button>
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+          <div class="connection-status" [class.connected]="isConnected" [class.disconnected]="!isConnected">
+            <span class="status-dot" [class.connected]="isConnected" [class.disconnected]="!isConnected"></span>
+            {{ isConnected ? 'En vivo' : 'Desconectado' }}
+          </div>
+          <div class="search-bar">
+            <span class="search-icon">🔍</span>
+            <input type="text" placeholder="Buscar organizacion..." [(ngModel)]="searchTerm">
+          </div>
+          <button class="btn btn-primary" (click)="openModal()">+ Nueva</button>
+        </div>
       </div>
 
       <div class="card" *ngIf="errorMessage">
@@ -26,9 +38,12 @@ import { Organizacion } from '../../../shared/models';
       <div class="card">
         <div class="card-header">
           <h2 class="card-title">Lista de Organizaciones</h2>
+          <span style="font-size: 0.85rem; color: #64748b; font-weight: 500;">
+            {{ filteredOrganizaciones.length }} registro(s)
+          </span>
         </div>
 
-        <div class="table-container" *ngIf="organizaciones.length > 0">
+        <div class="table-container" *ngIf="filteredOrganizaciones.length > 0">
           <table>
             <thead>
               <tr>
@@ -38,8 +53,8 @@ import { Organizacion } from '../../../shared/models';
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let org of organizaciones">
-                <td>{{ org.id | slice:0:8 }}...</td>
+              <tr *ngFor="let org of filteredOrganizaciones">
+                <td><code>{{ org.id }}</code></td>
                 <td>{{ org.nombre }}</td>
                 <td>
                   <button class="btn btn-warning btn-sm" (click)="editOrganizacion(org)">Editar</button>
@@ -50,7 +65,7 @@ import { Organizacion } from '../../../shared/models';
           </table>
         </div>
 
-        <div class="empty-state" *ngIf="organizaciones.length === 0 && !loading">
+        <div class="empty-state" *ngIf="filteredOrganizaciones.length === 0 && !loading">
           <div class="empty-state-icon">🏢</div>
           <h3>No hay organizaciones</h3>
           <p>Comienza creando una nueva organizacion</p>
@@ -91,22 +106,9 @@ import { Organizacion } from '../../../shared/models';
       max-width: 1200px;
       margin: 0 auto;
     }
-
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
-    }
-
-    .header h1 {
-      font-size: 1.75rem;
-      font-weight: 700;
-      color: #1f2937;
-    }
   `]
 })
-export class OrganizacionesComponent implements OnInit {
+export class OrganizacionesComponent implements OnInit, OnDestroy {
   organizaciones: Organizacion[] = [];
   loading = false;
   saving = false;
@@ -116,8 +118,11 @@ export class OrganizacionesComponent implements OnInit {
   errorMessage = '';
   successMessage = '';
   organizacionForm: FormGroup;
+  searchTerm = '';
+  isConnected = false;
+  private subscriptions: Subscription[] = [];
 
-  constructor(private apiService: ApiService, private fb: FormBuilder) {
+  constructor(private apiService: ApiService, private fb: FormBuilder, private sseService: SseService) {
     this.organizacionForm = this.fb.group({
       nombre: ['', Validators.required]
     });
@@ -125,6 +130,18 @@ export class OrganizacionesComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadOrganizaciones();
+    this.connectSse();
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+  }
+
+  get filteredOrganizaciones(): Organizacion[] {
+    if (!this.searchTerm.trim()) return this.organizaciones;
+    return this.organizaciones.filter(org =>
+      org.nombre.toLowerCase().includes(this.searchTerm.toLowerCase())
+    );
   }
 
   loadOrganizaciones(): void {
@@ -142,6 +159,40 @@ export class OrganizacionesComponent implements OnInit {
         this.loading = false;
       }
     });
+  }
+
+  connectSse(): void {
+    const url = `${this.apiService.getBaseUrl()}/organizaciones/events`;
+    const sub = this.sseService.connect(url, 'organizacion').subscribe({
+      next: (data: any) => {
+        this.isConnected = true;
+        
+        const entity = data.organizacion;
+        const eventType = data.event;
+        
+        if (!entity) return;
+        
+        switch (eventType) {
+          case 'CREATED':
+            if (!this.organizaciones.find(o => o.id === entity.id)) {
+              this.organizaciones = [...this.organizaciones, entity];
+            }
+            break;
+          case 'UPDATED':
+            this.organizaciones = this.organizaciones.map(o =>
+              o.id === entity.id ? entity : o
+            );
+            break;
+          case 'DELETED':
+            this.organizaciones = this.organizaciones.filter(o => o.id !== entity.id);
+            break;
+        }
+      },
+      error: () => {
+        this.isConnected = false;
+      }
+    });
+    this.subscriptions.push(sub);
   }
 
   openModal(): void {
@@ -189,7 +240,6 @@ export class OrganizacionesComponent implements OnInit {
           this.successMessage = response.mensajes[0] || 'Organizacion actualizada exitosamente';
           this.saving = false;
           this.closeModal();
-          this.loadOrganizaciones();
         },
         error: (err) => {
           this.errorMessage = err.message || 'Error al actualizar la organizacion';
@@ -202,7 +252,6 @@ export class OrganizacionesComponent implements OnInit {
           this.successMessage = response.mensajes[0] || 'Organizacion creada exitosamente';
           this.saving = false;
           this.closeModal();
-          this.loadOrganizaciones();
         },
         error: (err) => {
           this.errorMessage = err.message || 'Error al crear la organizacion';
@@ -223,7 +272,7 @@ export class OrganizacionesComponent implements OnInit {
     this.apiService.deleteOrganizacion(id).subscribe({
       next: (response) => {
         this.successMessage = response.mensajes[0] || 'Organizacion eliminada exitosamente';
-        this.loadOrganizaciones();
+        this.organizaciones = this.organizaciones.filter(o => o.id !== id);
       },
       error: (err) => {
         this.errorMessage = err.message || 'Error al eliminar la organizacion';

@@ -1,18 +1,31 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/services/api.service';
+import { SseService } from '../../../core/services/sse.service';
 import { Aplicacion, Organizacion } from '../../../shared/models';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-aplicaciones',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule],
+  imports: [CommonModule, ReactiveFormsModule, FormsModule],
   template: `
     <div class="aplicaciones">
-      <div class="header">
+      <div class="page-header">
         <h1>Aplicaciones</h1>
-        <button class="btn btn-primary" (click)="openModal()">+ Nueva Aplicacion</button>
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+          <div class="connection-status" [class.connected]="isConnected" [class.disconnected]="!isConnected">
+            <span class="status-dot" [class.connected]="isConnected" [class.disconnected]="!isConnected"></span>
+            {{ isConnected ? 'En vivo' : 'Desconectado' }}
+          </div>
+          <div class="search-bar">
+            <span class="search-icon">🔍</span>
+            <input type="text" placeholder="Buscar aplicacion..." [(ngModel)]="searchTerm">
+          </div>
+          <button class="btn btn-primary" (click)="openModal()">+ Nueva</button>
+        </div>
       </div>
 
       <div class="card" *ngIf="errorMessage">
@@ -26,9 +39,12 @@ import { Aplicacion, Organizacion } from '../../../shared/models';
       <div class="card">
         <div class="card-header">
           <h2 class="card-title">Lista de Aplicaciones</h2>
+          <span style="font-size: 0.85rem; color: #64748b; font-weight: 500;">
+            {{ filteredAplicaciones.length }} registro(s)
+          </span>
         </div>
 
-        <div class="table-container" *ngIf="aplicaciones.length > 0">
+        <div class="table-container" *ngIf="filteredAplicaciones.length > 0">
           <table>
             <thead>
               <tr>
@@ -42,8 +58,8 @@ import { Aplicacion, Organizacion } from '../../../shared/models';
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let app of aplicaciones">
-                <td>{{ app.id | slice:0:8 }}...</td>
+              <tr *ngFor="let app of filteredAplicaciones">
+                <td><code>{{ app.id }}</code></td>
                 <td>{{ app.nombre }}</td>
                 <td>{{ getOrganizacionNombre(app.idOrganizacion) }}</td>
                 <td>{{ app.fechaInicio || '-' }}</td>
@@ -61,7 +77,7 @@ import { Aplicacion, Organizacion } from '../../../shared/models';
           </table>
         </div>
 
-        <div class="empty-state" *ngIf="aplicaciones.length === 0 && !loading">
+        <div class="empty-state" *ngIf="filteredAplicaciones.length === 0 && !loading">
           <div class="empty-state-icon">📱</div>
           <h3>No hay aplicaciones</h3>
           <p>Comienza creando una nueva aplicacion</p>
@@ -124,22 +140,9 @@ import { Aplicacion, Organizacion } from '../../../shared/models';
       max-width: 1200px;
       margin: 0 auto;
     }
-
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
-    }
-
-    .header h1 {
-      font-size: 1.75rem;
-      font-weight: 700;
-      color: #1f2937;
-    }
   `]
 })
-export class AplicacionesComponent implements OnInit {
+export class AplicacionesComponent implements OnInit, OnDestroy {
   aplicaciones: Aplicacion[] = [];
   organizaciones: Organizacion[] = [];
   loading = false;
@@ -150,8 +153,11 @@ export class AplicacionesComponent implements OnInit {
   errorMessage = '';
   successMessage = '';
   aplicacionForm: FormGroup;
+  searchTerm = '';
+  isConnected = false;
+  private subscriptions: Subscription[] = [];
 
-  constructor(private apiService: ApiService, private fb: FormBuilder) {
+  constructor(private apiService: ApiService, private fb: FormBuilder, private sseService: SseService) {
     this.aplicacionForm = this.fb.group({
       nombre: ['', Validators.required],
       idOrganizacion: ['', Validators.required],
@@ -164,6 +170,18 @@ export class AplicacionesComponent implements OnInit {
   ngOnInit(): void {
     this.loadAplicaciones();
     this.loadOrganizaciones();
+    this.connectSse();
+  }
+
+  ngOnDestroy(): void {
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+  }
+
+  get filteredAplicaciones(): Aplicacion[] {
+    if (!this.searchTerm.trim()) return this.aplicaciones;
+    return this.aplicaciones.filter(app =>
+      app.nombre.toLowerCase().includes(this.searchTerm.toLowerCase())
+    );
   }
 
   loadAplicaciones(): void {
@@ -192,6 +210,40 @@ export class AplicacionesComponent implements OnInit {
         console.error('Error al cargar organizaciones:', err);
       }
     });
+  }
+
+  connectSse(): void {
+    const url = `${this.apiService.getBaseUrl()}/aplicaciones/events`;
+    const sub = this.sseService.connect(url, 'aplicacion').subscribe({
+      next: (data: any) => {
+        this.isConnected = true;
+        
+        const entity = data.aplicacion;
+        const eventType = data.event;
+        
+        if (!entity) return;
+        
+        switch (eventType) {
+          case 'CREATED':
+            if (!this.aplicaciones.find(a => a.id === entity.id)) {
+              this.aplicaciones = [...this.aplicaciones, entity];
+            }
+            break;
+          case 'UPDATED':
+            this.aplicaciones = this.aplicaciones.map(a =>
+              a.id === entity.id ? entity : a
+            );
+            break;
+          case 'DELETED':
+            this.aplicaciones = this.aplicaciones.filter(a => a.id !== entity.id);
+            break;
+        }
+      },
+      error: () => {
+        this.isConnected = false;
+      }
+    });
+    this.subscriptions.push(sub);
   }
 
   getOrganizacionNombre(id: string): string {
@@ -260,7 +312,6 @@ export class AplicacionesComponent implements OnInit {
         this.successMessage = response.mensajes[0] || 'Aplicacion creada exitosamente';
         this.saving = false;
         this.closeModal();
-        this.loadAplicaciones();
       },
       error: (err) => {
         this.errorMessage = err.message || 'Error al crear la aplicacion';
