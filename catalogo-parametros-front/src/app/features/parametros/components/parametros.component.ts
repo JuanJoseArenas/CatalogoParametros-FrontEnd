@@ -332,7 +332,7 @@ export class ParametrosComponent implements OnInit, OnDestroy {
     this.apiService.deleteParametro(id).subscribe({
       next: (response) => {
         this.successMessage = response.mensajes[0] || 'Parametro eliminado exitosamente';
-        this.parametros = this.parametros.filter(p => p.id !== id);
+        this.errorMessage = '';
       },
       error: (err) => {
         this.errorMessage = err.message || 'Error al eliminar el parametro';
