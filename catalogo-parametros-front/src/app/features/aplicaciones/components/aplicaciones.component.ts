@@ -70,7 +70,10 @@ import { Subscription } from 'rxjs';
                   </span>
                 </td>
                 <td>
-                  <button class="btn btn-warning btn-sm" (click)="editAplicacion(app)">Editar</button>
+                  <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-warning btn-sm" (click)="editAplicacion(app)">Editar</button>
+                    <button class="btn btn-danger btn-sm" (click)="deleteAplicacion(app.id)">Eliminar</button>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -307,15 +310,46 @@ export class AplicacionesComponent implements OnInit, OnDestroy {
       data.fechaFinal = `${this.aplicacionForm.value.fechaFinal} 00:00:00`;
     }
 
-    this.apiService.createAplicacion(data).subscribe({
+    if (this.isEditing && this.editingId) {
+      this.apiService.updateAplicacion(this.editingId, data).subscribe({
+        next: (response) => {
+          this.successMessage = response.mensajes[0] || 'Aplicacion actualizada exitosamente';
+          this.saving = false;
+          this.closeModal();
+        },
+        error: (err) => {
+          this.errorMessage = err.message || 'Error al actualizar la aplicacion';
+          this.saving = false;
+        }
+      });
+    } else {
+      this.apiService.createAplicacion(data).subscribe({
+        next: (response) => {
+          this.successMessage = response.mensajes[0] || 'Aplicacion creada exitosamente';
+          this.saving = false;
+          this.closeModal();
+        },
+        error: (err) => {
+          this.errorMessage = err.message || 'Error al crear la aplicacion';
+          this.saving = false;
+        }
+      });
+    }
+  }
+
+  deleteAplicacion(id: string): void {
+    if (!confirm('¿Esta seguro de que desea eliminar esta aplicacion?')) {
+      return;
+    }
+
+    this.apiService.deleteAplicacion(id).subscribe({
       next: (response) => {
-        this.successMessage = response.mensajes[0] || 'Aplicacion creada exitosamente';
-        this.saving = false;
-        this.closeModal();
+        this.successMessage = response.mensajes[0] || 'Aplicacion eliminada exitosamente';
+        this.errorMessage = '';
       },
       error: (err) => {
-        this.errorMessage = err.message || 'Error al crear la aplicacion';
-        this.saving = false;
+        this.errorMessage = err.message || 'Error al eliminar la aplicacion';
+        this.successMessage = '';
       }
     });
   }

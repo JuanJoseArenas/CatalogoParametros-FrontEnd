@@ -107,6 +107,14 @@ import { Subscription } from 'rxjs';
               </select>
             </div>
             <div class="form-group">
+              <label class="form-label">Fecha Inicio</label>
+              <input type="date" class="form-control" formControlName="fechaInicio">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Fecha Fin</label>
+              <input type="date" class="form-control" formControlName="fechaFinal">
+            </div>
+            <div class="form-group">
               <label class="form-label">Estado</label>
               <select class="form-control" formControlName="activo">
                 <option [value]="true">Activo</option>
@@ -150,7 +158,9 @@ export class FuncionalidadesComponent implements OnInit, OnDestroy {
     this.funcionalidadForm = this.fb.group({
       nombre: ['', Validators.required],
       idModulo: ['', Validators.required],
-      activo: [true]
+      activo: [true],
+      fechaInicio: ['', Validators.required],
+      fechaFinal: ['', Validators.required]
     });
   }
 
@@ -242,7 +252,7 @@ export class FuncionalidadesComponent implements OnInit, OnDestroy {
     this.showModal = true;
     this.isEditing = false;
     this.editingId = null;
-    this.funcionalidadForm.reset({ nombre: '', idModulo: '', activo: true });
+    this.funcionalidadForm.reset({ nombre: '', idModulo: '', activo: true, fechaInicio: '', fechaFinal: '' });
   }
 
   editFuncionalidad(func: Funcionalidad): void {
@@ -252,7 +262,9 @@ export class FuncionalidadesComponent implements OnInit, OnDestroy {
     this.funcionalidadForm.reset({
       nombre: func.nombre,
       idModulo: func.idModulo,
-      activo: func.activo
+      activo: func.activo,
+      fechaInicio: func.fechaInicio || '',
+      fechaFinal: func.fechaFinal || ''
     });
   }
 
@@ -260,7 +272,7 @@ export class FuncionalidadesComponent implements OnInit, OnDestroy {
     this.showModal = false;
     this.isEditing = false;
     this.editingId = null;
-    this.funcionalidadForm.reset({ nombre: '', idModulo: '', activo: true });
+    this.funcionalidadForm.reset({ nombre: '', idModulo: '', activo: true, fechaInicio: '', fechaFinal: '' });
   }
 
   closeModalOnOverlay(event: Event): void {
@@ -271,7 +283,7 @@ export class FuncionalidadesComponent implements OnInit, OnDestroy {
 
   saveFuncionalidad(): void {
     if (this.funcionalidadForm.invalid) {
-      this.errorMessage = 'El nombre y el modulo son requeridos';
+      this.errorMessage = 'El nombre, modulo, fecha inicio y fecha fin son requeridos';
       return;
     }
 
@@ -279,11 +291,18 @@ export class FuncionalidadesComponent implements OnInit, OnDestroy {
     this.errorMessage = '';
     this.successMessage = '';
 
-    const data = {
+    const data: any = {
       nombre: this.funcionalidadForm.value.nombre,
       idModulo: this.funcionalidadForm.value.idModulo,
       activo: this.funcionalidadForm.value.activo
     };
+
+    if (this.funcionalidadForm.value.fechaInicio) {
+      data.fechaInicio = `${this.funcionalidadForm.value.fechaInicio} 00:00:00`;
+    }
+    if (this.funcionalidadForm.value.fechaFinal) {
+      data.fechaFinal = `${this.funcionalidadForm.value.fechaFinal} 00:00:00`;
+    }
 
     if (this.isEditing && this.editingId) {
       this.apiService.updateFuncionalidad(this.editingId, data).subscribe({
@@ -323,7 +342,7 @@ export class FuncionalidadesComponent implements OnInit, OnDestroy {
     this.apiService.deleteFuncionalidad(id).subscribe({
       next: (response) => {
         this.successMessage = response.mensajes[0] || 'Funcionalidad eliminada exitosamente';
-        this.funcionalidades = this.funcionalidades.filter(f => f.id !== id);
+        this.errorMessage = '';
       },
       error: (err) => {
         this.errorMessage = err.message || 'Error al eliminar la funcionalidad';

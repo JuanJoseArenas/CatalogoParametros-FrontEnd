@@ -272,7 +272,7 @@ export class OrganizacionesComponent implements OnInit, OnDestroy {
     this.apiService.deleteOrganizacion(id).subscribe({
       next: (response) => {
         this.successMessage = response.mensajes[0] || 'Organizacion eliminada exitosamente';
-        this.organizaciones = this.organizaciones.filter(o => o.id !== id);
+        this.errorMessage = '';
       },
       error: (err) => {
         this.errorMessage = err.message || 'Error al eliminar la organizacion';

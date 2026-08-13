@@ -75,6 +75,18 @@ export class ApiService {
     );
   }
 
+  updateAplicacion(id: string, aplicacion: { nombre: string; idOrganizacion: string; activa?: boolean; fechaInicio?: string; fechaFinal?: string }): Observable<AplicacionResponse> {
+    return this.http.put<AplicacionResponse>(`${this.baseUrl}/aplicaciones/${id}`, aplicacion).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  deleteAplicacion(id: string): Observable<AplicacionResponse> {
+    return this.http.delete<AplicacionResponse>(`${this.baseUrl}/aplicaciones/${id}`).pipe(
+      catchError(this.handleError)
+    );
+  }
+
   // Modulos
   getModulos(): Observable<Modulo[]> {
     return this.http.get<ModuloResponse>(`${this.baseUrl}/modulos`).pipe(
