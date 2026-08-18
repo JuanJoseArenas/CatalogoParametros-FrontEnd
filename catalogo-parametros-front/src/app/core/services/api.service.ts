@@ -176,8 +176,8 @@ export class ApiService {
       errorMessage = 'No se pudo conectar con el servidor. Verifica que el backend este corriendo en http://localhost:8080';
     } else if (error.status === 404) {
       errorMessage = 'Recurso no encontrado';
-    } else if (error.status === 400) {
-      errorMessage = error.error?.mensajes?.[0] || 'Solicitud incorrecta';
+    } else if (error.status === 400 || error.status === 409) {
+      errorMessage = error.error?.mensajes?.[0] || (error.status === 409 ? 'Conflicto: el recurso ya existe' : 'Solicitud incorrecta');
     } else if (error.status === 500) {
       errorMessage = 'Error interno del servidor';
     } else if (error.message) {
