@@ -220,7 +220,7 @@ export class ParametrosComponent implements OnInit, OnDestroy {
   }
 
   loadFuncionalidades(): void {
-    this.apiService.getFuncionalidades().subscribe({
+    this.apiService.getAllFuncionalidades().subscribe({
       next: (data) => {
         this.funcionalidades = data;
       },

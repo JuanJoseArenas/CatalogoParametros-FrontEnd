@@ -40,7 +40,7 @@ import { Subscription } from 'rxjs';
         <div class="card-header">
           <h2 class="card-title">Lista de Modulos</h2>
           <span style="font-size: 0.85rem; color: #64748b; font-weight: 500;">
-            {{ filteredModulos.length }} registro(s)
+            {{ filteredModulos.length }} registro(s) en pagina {{ page }}
           </span>
         </div>
 
@@ -83,6 +83,12 @@ import { Subscription } from 'rxjs';
 
         <div class="loading" *ngIf="loading">
           <div class="spinner"></div>
+        </div>
+
+        <div class="pagination" *ngIf="!loading && modulos.length > 0">
+          <button class="btn btn-secondary btn-sm" (click)="changePage(page - 1)" [disabled]="page <= 1">Anterior</button>
+          <span style="font-size: 0.9rem; color: #334155; font-weight: 600;">Página {{ page }}</span>
+          <button class="btn btn-secondary btn-sm" (click)="changePage(page + 1)" [disabled]="modulos.length < pageSize">Siguiente</button>
         </div>
       </div>
     </div>
@@ -138,6 +144,13 @@ import { Subscription } from 'rxjs';
       max-width: 1200px;
       margin: 0 auto;
     }
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 16px 0;
+    }
   `]
 })
 export class ModulosComponent implements OnInit, OnDestroy {
@@ -153,6 +166,8 @@ export class ModulosComponent implements OnInit, OnDestroy {
   moduloForm: FormGroup;
   searchTerm = '';
   isConnected = false;
+  page = 1;
+  pageSize = 10;
   private subscriptions: Subscription[] = [];
 
   constructor(private apiService: ApiService, private fb: FormBuilder, private sseService: SseService) {
@@ -187,7 +202,7 @@ export class ModulosComponent implements OnInit, OnDestroy {
     this.errorMessage = '';
     this.successMessage = '';
 
-    this.apiService.getModulos().subscribe({
+    this.apiService.getModulos(this.page, this.pageSize).subscribe({
       next: (data) => {
         this.modulos = data;
         this.loading = false;
@@ -199,8 +214,14 @@ export class ModulosComponent implements OnInit, OnDestroy {
     });
   }
 
+  changePage(page: number): void {
+    if (page < 1 || this.loading) return;
+    this.page = page;
+    this.loadModulos();
+  }
+
   loadAplicaciones(): void {
-    this.apiService.getAplicaciones().subscribe({
+    this.apiService.getAllAplicaciones().subscribe({
       next: (data) => {
         this.aplicaciones = data;
       },

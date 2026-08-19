@@ -23,6 +23,7 @@ import {
 })
 export class ApiService {
   private baseUrl = environment.apiUrl;
+  private static readonly ALL_PAGE_SIZE = 10000;
 
   constructor(private http: HttpClient) {}
 
@@ -31,8 +32,19 @@ export class ApiService {
   }
 
   // Organizaciones
-  getOrganizaciones(): Observable<Organizacion[]> {
-    return this.http.get<OrganizacionResponse>(`${this.baseUrl}/organizaciones`).pipe(
+  getOrganizaciones(page: number = 1, pageSize: number = 10): Observable<Organizacion[]> {
+    return this.http.get<OrganizacionResponse>(`${this.baseUrl}/organizaciones`, {
+      params: { page: page.toString(), pageSize: pageSize.toString() }
+    }).pipe(
+      map(response => response.organizaciones),
+      catchError(this.handleError)
+    );
+  }
+
+  getAllOrganizaciones(): Observable<Organizacion[]> {
+    return this.http.get<OrganizacionResponse>(`${this.baseUrl}/organizaciones`, {
+      params: { page: '1', pageSize: ApiService.ALL_PAGE_SIZE.toString() }
+    }).pipe(
       map(response => response.organizaciones),
       catchError(this.handleError)
     );
@@ -64,8 +76,19 @@ export class ApiService {
   }
 
   // Aplicaciones
-  getAplicaciones(): Observable<Aplicacion[]> {
-    return this.http.get<AplicacionResponse>(`${this.baseUrl}/aplicaciones`).pipe(
+  getAplicaciones(page: number = 1, pageSize: number = 10): Observable<Aplicacion[]> {
+    return this.http.get<AplicacionResponse>(`${this.baseUrl}/aplicaciones`, {
+      params: { page: page.toString(), pageSize: pageSize.toString() }
+    }).pipe(
+      map(response => response.aplicaciones),
+      catchError(this.handleError)
+    );
+  }
+
+  getAllAplicaciones(): Observable<Aplicacion[]> {
+    return this.http.get<AplicacionResponse>(`${this.baseUrl}/aplicaciones`, {
+      params: { page: '1', pageSize: ApiService.ALL_PAGE_SIZE.toString() }
+    }).pipe(
       map(response => response.aplicaciones),
       catchError(this.handleError)
     );
@@ -90,8 +113,19 @@ export class ApiService {
   }
 
   // Modulos
-  getModulos(): Observable<Modulo[]> {
-    return this.http.get<ModuloResponse>(`${this.baseUrl}/modulos`).pipe(
+  getModulos(page: number = 1, pageSize: number = 10): Observable<Modulo[]> {
+    return this.http.get<ModuloResponse>(`${this.baseUrl}/modulos`, {
+      params: { page: page.toString(), pageSize: pageSize.toString() }
+    }).pipe(
+      map(response => response.modulos),
+      catchError(this.handleError)
+    );
+  }
+
+  getAllModulos(): Observable<Modulo[]> {
+    return this.http.get<ModuloResponse>(`${this.baseUrl}/modulos`, {
+      params: { page: '1', pageSize: ApiService.ALL_PAGE_SIZE.toString() }
+    }).pipe(
       map(response => response.modulos),
       catchError(this.handleError)
     );
@@ -104,8 +138,19 @@ export class ApiService {
   }
 
   // Funcionalidades
-  getFuncionalidades(): Observable<Funcionalidad[]> {
-    return this.http.get<FuncionalidadResponse>(`${this.baseUrl}/funcionalidades`).pipe(
+  getFuncionalidades(page: number = 1, pageSize: number = 10): Observable<Funcionalidad[]> {
+    return this.http.get<FuncionalidadResponse>(`${this.baseUrl}/funcionalidades`, {
+      params: { page: page.toString(), pageSize: pageSize.toString() }
+    }).pipe(
+      map(response => response.funcionalidades),
+      catchError(this.handleError)
+    );
+  }
+
+  getAllFuncionalidades(): Observable<Funcionalidad[]> {
+    return this.http.get<FuncionalidadResponse>(`${this.baseUrl}/funcionalidades`, {
+      params: { page: '1', pageSize: ApiService.ALL_PAGE_SIZE.toString() }
+    }).pipe(
       map(response => response.funcionalidades),
       catchError(this.handleError)
     );

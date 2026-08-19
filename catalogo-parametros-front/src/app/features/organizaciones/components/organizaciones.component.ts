@@ -39,7 +39,7 @@ import { Subscription } from 'rxjs';
         <div class="card-header">
           <h2 class="card-title">Lista de Organizaciones</h2>
           <span style="font-size: 0.85rem; color: #64748b; font-weight: 500;">
-            {{ filteredOrganizaciones.length }} registro(s)
+            {{ filteredOrganizaciones.length }} registro(s) en pagina {{ page }}
           </span>
         </div>
 
@@ -71,6 +71,12 @@ import { Subscription } from 'rxjs';
 
         <div class="loading" *ngIf="loading">
           <div class="spinner"></div>
+        </div>
+
+        <div class="pagination" *ngIf="!loading && organizaciones.length > 0">
+          <button class="btn btn-secondary btn-sm" (click)="changePage(page - 1)" [disabled]="page <= 1">Anterior</button>
+          <span style="font-size: 0.9rem; color: #334155; font-weight: 600;">Página {{ page }}</span>
+          <button class="btn btn-secondary btn-sm" (click)="changePage(page + 1)" [disabled]="organizaciones.length < pageSize">Siguiente</button>
         </div>
       </div>
     </div>
@@ -104,6 +110,13 @@ import { Subscription } from 'rxjs';
       max-width: 1200px;
       margin: 0 auto;
     }
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 16px 0;
+    }
   `]
 })
 export class OrganizacionesComponent implements OnInit, OnDestroy {
@@ -118,6 +131,8 @@ export class OrganizacionesComponent implements OnInit, OnDestroy {
   organizacionForm: FormGroup;
   searchTerm = '';
   isConnected = false;
+  page = 1;
+  pageSize = 10;
   private subscriptions: Subscription[] = [];
 
   constructor(private apiService: ApiService, private fb: FormBuilder, private sseService: SseService) {
@@ -147,7 +162,7 @@ export class OrganizacionesComponent implements OnInit, OnDestroy {
     this.errorMessage = '';
     this.successMessage = '';
 
-    this.apiService.getOrganizaciones().subscribe({
+    this.apiService.getOrganizaciones(this.page, this.pageSize).subscribe({
       next: (data) => {
         this.organizaciones = data;
         this.loading = false;
@@ -157,6 +172,12 @@ export class OrganizacionesComponent implements OnInit, OnDestroy {
         this.loading = false;
       }
     });
+  }
+
+  changePage(page: number): void {
+    if (page < 1 || this.loading) return;
+    this.page = page;
+    this.loadOrganizaciones();
   }
 
   connectSse(): void {
