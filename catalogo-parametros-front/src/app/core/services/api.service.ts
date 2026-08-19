@@ -137,8 +137,10 @@ export class ApiService {
   }
 
   // Parametros
-  getParametros(): Observable<Parametro[]> {
-    return this.http.get<ParametroResponse>(`${this.baseUrl}/parametros`).pipe(
+  getParametros(page: number = 1, pageSize: number = 10): Observable<Parametro[]> {
+    return this.http.get<ParametroResponse>(`${this.baseUrl}/parametros`, {
+      params: { page: page.toString(), pageSize: pageSize.toString() }
+    }).pipe(
       map(response => response.parametros),
       catchError(this.handleError)
     );
