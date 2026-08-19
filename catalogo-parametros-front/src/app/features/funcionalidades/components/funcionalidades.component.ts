@@ -40,7 +40,7 @@ import { Subscription } from 'rxjs';
         <div class="card-header">
           <h2 class="card-title">Lista de Funcionalidades</h2>
           <span style="font-size: 0.85rem; color: #64748b; font-weight: 500;">
-            {{ filteredFuncionalidades.length }} registro(s)
+            {{ filteredFuncionalidades.length }} registro(s) en pagina {{ page }}
           </span>
         </div>
 
@@ -80,6 +80,12 @@ import { Subscription } from 'rxjs';
 
         <div class="loading" *ngIf="loading">
           <div class="spinner"></div>
+        </div>
+
+        <div class="pagination" *ngIf="!loading && funcionalidades.length > 0">
+          <button class="btn btn-secondary btn-sm" (click)="changePage(page - 1)" [disabled]="page <= 1">Anterior</button>
+          <span style="font-size: 0.9rem; color: #334155; font-weight: 600;">Página {{ page }}</span>
+          <button class="btn btn-secondary btn-sm" (click)="changePage(page + 1)" [disabled]="funcionalidades.length < pageSize">Siguiente</button>
         </div>
       </div>
     </div>
@@ -135,6 +141,13 @@ import { Subscription } from 'rxjs';
       max-width: 1200px;
       margin: 0 auto;
     }
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 16px 0;
+    }
   `]
 })
 export class FuncionalidadesComponent implements OnInit, OnDestroy {
@@ -150,6 +163,8 @@ export class FuncionalidadesComponent implements OnInit, OnDestroy {
   funcionalidadForm: FormGroup;
   searchTerm = '';
   isConnected = false;
+  page = 1;
+  pageSize = 10;
   private subscriptions: Subscription[] = [];
 
   constructor(private apiService: ApiService, private fb: FormBuilder, private sseService: SseService) {
@@ -184,7 +199,7 @@ export class FuncionalidadesComponent implements OnInit, OnDestroy {
     this.errorMessage = '';
     this.successMessage = '';
 
-    this.apiService.getFuncionalidades().subscribe({
+    this.apiService.getFuncionalidades(this.page, this.pageSize).subscribe({
       next: (data) => {
         this.funcionalidades = data;
         this.loading = false;
@@ -196,8 +211,14 @@ export class FuncionalidadesComponent implements OnInit, OnDestroy {
     });
   }
 
+  changePage(page: number): void {
+    if (page < 1 || this.loading) return;
+    this.page = page;
+    this.loadFuncionalidades();
+  }
+
   loadModulos(): void {
-    this.apiService.getModulos().subscribe({
+    this.apiService.getAllModulos().subscribe({
       next: (data) => {
         this.modulos = data;
       },
