@@ -47,14 +47,12 @@ import { Subscription } from 'rxjs';
           <table>
             <thead>
               <tr>
-                <th>ID</th>
                 <th>Nombre</th>
                 <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let org of filteredOrganizaciones">
-                <td><code>{{ org.id }}</code></td>
                 <td>{{ org.nombre }}</td>
                 <td>
                   <button class="btn btn-warning btn-sm" (click)="editOrganizacion(org)">Editar</button>

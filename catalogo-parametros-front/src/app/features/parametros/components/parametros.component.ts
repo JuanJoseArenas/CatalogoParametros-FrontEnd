@@ -48,7 +48,6 @@ import { Subscription } from 'rxjs';
           <table>
             <thead>
               <tr>
-                <th>ID</th>
                 <th>Nombre</th>
                 <th>Funcionalidad</th>
                 <th>Tipo Parametro</th>
@@ -58,7 +57,6 @@ import { Subscription } from 'rxjs';
             </thead>
             <tbody>
               <tr *ngFor="let param of filteredParametros">
-                <td><code>{{ param.id }}</code></td>
                 <td>{{ param.nombre }}</td>
                 <td>{{ getFuncionalidadNombre(param.idFuncionalidad) }}</td>
                 <td>{{ getTipoParametroNombre(param.idTipoParametro) }}</td>
