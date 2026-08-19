@@ -3,6 +3,7 @@ import { Aplicacion } from './aplicacion.model';
 import { Modulo } from './modulo.model';
 import { Funcionalidad } from './funcionalidad.model';
 import { Parametro } from './parametro.model';
+import { TipoParametro } from './tipo-parametro.model';
 
 export interface ApiResponse<T> {
   mensajes: string[];
@@ -32,4 +33,9 @@ export interface FuncionalidadResponse {
 export interface ParametroResponse {
   mensajes: string[];
   parametros: Parametro[];
+}
+
+export interface TipoParametroResponse {
+  mensajes: string[];
+  tiposParametro: TipoParametro[];
 }

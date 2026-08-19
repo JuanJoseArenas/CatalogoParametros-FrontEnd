@@ -4,7 +4,7 @@ import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angula
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/services/api.service';
 import { SseService } from '../../../core/services/sse.service';
-import { Parametro, Funcionalidad } from '../../../shared/models';
+import { Parametro, Funcionalidad, TipoParametro } from '../../../shared/models';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -61,7 +61,7 @@ import { Subscription } from 'rxjs';
                 <td><code>{{ param.id }}</code></td>
                 <td>{{ param.nombre }}</td>
                 <td>{{ getFuncionalidadNombre(param.idFuncionalidad) }}</td>
-                <td><code>{{ param.idTipoParametro }}</code></td>
+                <td>{{ getTipoParametroNombre(param.idTipoParametro) }}</td>
                 <td>
                   <span class="badge" [class.badge-success]="param.activo" [class.badge-danger]="!param.activo">
                     {{ param.activo ? 'Activo' : 'Inactivo' }}
@@ -109,8 +109,11 @@ import { Subscription } from 'rxjs';
               </select>
             </div>
             <div class="form-group">
-              <label class="form-label">ID Tipo Parametro</label>
-              <input type="text" class="form-control" formControlName="idTipoParametro" placeholder="ID del tipo de parametro">
+              <label class="form-label">Tipo Parametro</label>
+              <select class="form-control" formControlName="idTipoParametro">
+                <option value="">Seleccione un tipo</option>
+                <option *ngFor="let tipo of tiposParametro" [value]="tipo.id">{{ tipo.nombre }}</option>
+              </select>
             </div>
             <div class="form-group">
               <label class="form-label">Estado</label>
@@ -140,6 +143,7 @@ import { Subscription } from 'rxjs';
 export class ParametrosComponent implements OnInit, OnDestroy {
   parametros: Parametro[] = [];
   funcionalidades: Funcionalidad[] = [];
+  tiposParametro: TipoParametro[] = [];
   loading = false;
   saving = false;
   showModal = false;
@@ -164,6 +168,7 @@ export class ParametrosComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadParametros();
     this.loadFuncionalidades();
+    this.loadTiposParametro();
     this.connectSse();
   }
 
@@ -243,6 +248,22 @@ export class ParametrosComponent implements OnInit, OnDestroy {
   getFuncionalidadNombre(id: string): string {
     const func = this.funcionalidades.find(f => f.id === id);
     return func ? func.nombre : 'N/A';
+  }
+
+  getTipoParametroNombre(id: string): string {
+    const tipo = this.tiposParametro.find(t => t.id === id);
+    return tipo ? tipo.nombre : 'N/A';
+  }
+
+  loadTiposParametro(): void {
+    this.apiService.getTiposParametro().subscribe({
+      next: (data) => {
+        this.tiposParametro = data;
+      },
+      error: (err) => {
+        console.error('Error al cargar tipos de parametro:', err);
+      }
+    });
   }
 
   openModal(): void {
