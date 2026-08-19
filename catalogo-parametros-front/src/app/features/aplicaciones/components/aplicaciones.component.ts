@@ -48,7 +48,6 @@ import { Subscription } from 'rxjs';
           <table>
             <thead>
               <tr>
-                <th>ID</th>
                 <th>Nombre</th>
                 <th>Organizacion</th>
                 <th>Fecha Inicio</th>
@@ -59,7 +58,6 @@ import { Subscription } from 'rxjs';
             </thead>
             <tbody>
               <tr *ngFor="let app of filteredAplicaciones">
-                <td><code>{{ app.id }}</code></td>
                 <td>{{ app.nombre }}</td>
                 <td>{{ getOrganizacionNombre(app.idOrganizacion) }}</td>
                 <td>{{ app.fechaInicio || '-' }}</td>
