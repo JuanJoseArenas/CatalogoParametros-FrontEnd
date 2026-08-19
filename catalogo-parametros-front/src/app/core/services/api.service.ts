@@ -13,7 +13,9 @@ import {
   Funcionalidad,
   FuncionalidadResponse,
   Parametro,
-  ParametroResponse
+  ParametroResponse,
+  TipoParametro,
+  TipoParametroResponse
 } from '../../shared/models';
 
 @Injectable({
@@ -163,6 +165,13 @@ export class ApiService {
 
   deleteParametro(id: string): Observable<ParametroResponse> {
     return this.http.delete<ParametroResponse>(`${this.baseUrl}/parametros/${id}`).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  getTiposParametro(): Observable<TipoParametro[]> {
+    return this.http.get<TipoParametroResponse>(`${this.baseUrl}/tipos-parametro`).pipe(
+      map(response => response.tiposParametro),
       catchError(this.handleError)
     );
   }
