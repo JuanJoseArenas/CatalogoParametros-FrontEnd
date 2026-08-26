@@ -4,6 +4,8 @@ import { Modulo } from './modulo.model';
 import { Funcionalidad } from './funcionalidad.model';
 import { Parametro } from './parametro.model';
 import { TipoParametro } from './tipo-parametro.model';
+import { TipoMetadato } from './tipo-metadato.model';
+import { Metadato } from './metadato.model';
 
 export interface ApiResponse<T> {
   mensajes: string[];
@@ -38,4 +40,14 @@ export interface ParametroResponse {
 export interface TipoParametroResponse {
   mensajes: string[];
   tiposParametro: TipoParametro[];
+}
+
+export interface TipoMetadatoResponse {
+  mensajes: string[];
+  tiposMetadato: TipoMetadato[];
+}
+
+export interface MetadatoResponse {
+  mensajes: string[];
+  metadatos: Metadato[];
 }

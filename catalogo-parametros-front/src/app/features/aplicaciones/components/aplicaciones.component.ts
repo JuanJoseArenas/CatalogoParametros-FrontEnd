@@ -288,8 +288,8 @@ export class AplicacionesComponent implements OnInit, OnDestroy {
       nombre: app.nombre,
       idOrganizacion: app.idOrganizacion,
       activa: app.activa,
-      fechaInicio: app.fechaInicio || '',
-      fechaFinal: app.fechaFinal || ''
+      fechaInicio: app.fechaInicio?.slice(0, 10) || '',
+      fechaFinal: app.fechaFinal?.slice(0, 10) || ''
     });
   }
 

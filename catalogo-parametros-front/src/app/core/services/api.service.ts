@@ -15,7 +15,11 @@ import {
   Parametro,
   ParametroResponse,
   TipoParametro,
-  TipoParametroResponse
+  TipoParametroResponse,
+  TipoMetadato,
+  TipoMetadatoResponse,
+  Metadato,
+  MetadatoResponse
 } from '../../shared/models';
 
 @Injectable({
@@ -57,13 +61,13 @@ export class ApiService {
     );
   }
 
-  createOrganizacion(organizacion: { nombre: string }): Observable<OrganizacionResponse> {
+  createOrganizacion(organizacion: { nombre: string; fechaInicio?: string; fechaFinal?: string }): Observable<OrganizacionResponse> {
     return this.http.post<OrganizacionResponse>(`${this.baseUrl}/organizaciones`, organizacion).pipe(
       catchError(this.handleError)
     );
   }
 
-  updateOrganizacion(id: string, organizacion: { nombre: string }): Observable<OrganizacionResponse> {
+  updateOrganizacion(id: string, organizacion: { nombre: string; fechaInicio?: string; fechaFinal?: string }): Observable<OrganizacionResponse> {
     return this.http.put<OrganizacionResponse>(`${this.baseUrl}/organizaciones/${id}`, organizacion).pipe(
       catchError(this.handleError)
     );
@@ -133,6 +137,18 @@ export class ApiService {
 
   createModulo(modulo: { nombre: string; idAplicacion: string; activo?: boolean; fechaInicio?: string; fechaFinal?: string }): Observable<ModuloResponse> {
     return this.http.post<ModuloResponse>(`${this.baseUrl}/modulos`, modulo).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  updateModulo(id: string, modulo: { nombre: string; idAplicacion: string; activo?: boolean; fechaInicio?: string; fechaFinal?: string }): Observable<ModuloResponse> {
+    return this.http.put<ModuloResponse>(`${this.baseUrl}/modulos/${id}`, modulo).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  deleteModulo(id: string): Observable<ModuloResponse> {
+    return this.http.delete<ModuloResponse>(`${this.baseUrl}/modulos/${id}`).pipe(
       catchError(this.handleError)
     );
   }
@@ -219,6 +235,52 @@ export class ApiService {
   getTiposParametro(): Observable<TipoParametro[]> {
     return this.http.get<TipoParametroResponse>(`${this.baseUrl}/tipos-parametro`).pipe(
       map(response => response.tiposParametro),
+      catchError(this.handleError)
+    );
+  }
+
+  getAllParametros(): Observable<Parametro[]> {
+    return this.http.get<ParametroResponse>(`${this.baseUrl}/parametros`, {
+      params: { page: '1', pageSize: ApiService.ALL_PAGE_SIZE.toString() }
+    }).pipe(
+      map(response => response.parametros),
+      catchError(this.handleError)
+    );
+  }
+
+  // Tipos de metadato
+  getTiposMetadato(): Observable<TipoMetadato[]> {
+    return this.http.get<TipoMetadatoResponse>(`${this.baseUrl}/tipos-metadato`).pipe(
+      map(response => response.tiposMetadato),
+      catchError(this.handleError)
+    );
+  }
+
+  // Metadatos
+  getMetadatos(idParametro?: string): Observable<Metadato[]> {
+    const params: Record<string, string> = {};
+    if (idParametro) params['idParametro'] = idParametro;
+
+    return this.http.get<MetadatoResponse>(`${this.baseUrl}/metadatos`, { params }).pipe(
+      map(response => response.metadatos),
+      catchError(this.handleError)
+    );
+  }
+
+  createMetadato(metadato: { idParametro: string; idTipoMetadato: string; valor: string }): Observable<MetadatoResponse> {
+    return this.http.post<MetadatoResponse>(`${this.baseUrl}/metadatos`, metadato).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  updateMetadato(id: string, metadato: { idParametro: string; idTipoMetadato: string; valor: string }): Observable<MetadatoResponse> {
+    return this.http.put<MetadatoResponse>(`${this.baseUrl}/metadatos/${id}`, metadato).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  deleteMetadato(id: string): Observable<MetadatoResponse> {
+    return this.http.delete<MetadatoResponse>(`${this.baseUrl}/metadatos/${id}`).pipe(
       catchError(this.handleError)
     );
   }

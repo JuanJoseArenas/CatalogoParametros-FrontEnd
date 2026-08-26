@@ -48,12 +48,16 @@ import { Subscription } from 'rxjs';
             <thead>
               <tr>
                 <th>Nombre</th>
+                <th>Fecha Inicio</th>
+                <th>Fecha Fin</th>
                 <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let org of filteredOrganizaciones">
                 <td>{{ org.nombre }}</td>
+                <td>{{ org.fechaInicio || '-' }}</td>
+                <td>{{ org.fechaFinal || '-' }}</td>
                 <td>
                   <button class="btn btn-warning btn-sm" (click)="editOrganizacion(org)">Editar</button>
                   <button class="btn btn-danger btn-sm" (click)="deleteOrganizacion(org.id)">Eliminar</button>
@@ -93,6 +97,14 @@ import { Subscription } from 'rxjs';
             <div class="form-group">
               <label class="form-label">Nombre</label>
               <input type="text" class="form-control" formControlName="nombre" placeholder="Nombre de la organizacion">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Fecha Inicio</label>
+              <input type="date" class="form-control" formControlName="fechaInicio">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Fecha Fin</label>
+              <input type="date" class="form-control" formControlName="fechaFinal">
             </div>
           </form>
         </div>
@@ -137,7 +149,9 @@ export class OrganizacionesComponent implements OnInit, OnDestroy {
 
   constructor(private apiService: ApiService, private fb: FormBuilder, private sseService: SseService) {
     this.organizacionForm = this.fb.group({
-      nombre: ['', Validators.required]
+      nombre: ['', Validators.required],
+      fechaInicio: [''],
+      fechaFinal: ['']
     });
   }
 
@@ -218,21 +232,25 @@ export class OrganizacionesComponent implements OnInit, OnDestroy {
     this.showModal = true;
     this.isEditing = false;
     this.editingId = null;
-    this.organizacionForm.reset({ nombre: '' });
+    this.organizacionForm.reset({ nombre: '', fechaInicio: '', fechaFinal: '' });
   }
 
   editOrganizacion(org: Organizacion): void {
     this.showModal = true;
     this.isEditing = true;
     this.editingId = org.id;
-    this.organizacionForm.reset({ nombre: org.nombre });
+    this.organizacionForm.reset({
+      nombre: org.nombre,
+      fechaInicio: org.fechaInicio?.slice(0, 10) || '',
+      fechaFinal: org.fechaFinal?.slice(0, 10) || ''
+    });
   }
 
   closeModal(): void {
     this.showModal = false;
     this.isEditing = false;
     this.editingId = null;
-    this.organizacionForm.reset({ nombre: '' });
+    this.organizacionForm.reset({ nombre: '', fechaInicio: '', fechaFinal: '' });
   }
 
   closeModalOnOverlay(event: Event): void {
@@ -251,7 +269,16 @@ export class OrganizacionesComponent implements OnInit, OnDestroy {
     this.errorMessage = '';
     this.successMessage = '';
 
-    const data = { nombre: this.organizacionForm.value.nombre };
+    const data: { nombre: string; fechaInicio?: string; fechaFinal?: string } = {
+      nombre: this.organizacionForm.value.nombre
+    };
+
+    if (this.organizacionForm.value.fechaInicio) {
+      data.fechaInicio = `${this.organizacionForm.value.fechaInicio} 00:00:00`;
+    }
+    if (this.organizacionForm.value.fechaFinal) {
+      data.fechaFinal = `${this.organizacionForm.value.fechaFinal} 00:00:00`;
+    }
 
     if (this.isEditing && this.editingId) {
       this.apiService.updateOrganizacion(this.editingId, data).subscribe({

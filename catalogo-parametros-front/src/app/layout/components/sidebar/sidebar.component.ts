@@ -49,6 +49,18 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
               Parametros
             </a>
           </li>
+          <li class="nav-item">
+            <a routerLink="/tipos-metadato" routerLinkActive="active" class="nav-link">
+              <span class="nav-icon">🏷️</span>
+              Tipos de Metadato
+            </a>
+          </li>
+          <li class="nav-item">
+            <a routerLink="/metadatos" routerLinkActive="active" class="nav-link">
+              <span class="nav-icon">🧩</span>
+              Metadatos
+            </a>
+          </li>
         </ul>
       </nav>
       <div class="sidebar-footer">
