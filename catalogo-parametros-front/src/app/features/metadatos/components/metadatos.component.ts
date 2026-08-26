@@ -43,7 +43,7 @@ import { Metadato, Parametro, TipoMetadato } from '../../../shared/models';
               <tr *ngFor="let metadato of filteredMetadatos">
                 <td>{{ getParametroNombre(metadato.idParametro) }}</td>
                 <td>{{ getTipoNombre(metadato.idTipoMetadato) }}</td>
-                <td><span class="value-preview" [title]="metadato.valor">{{ metadato.valor }}</span></td>
+                <td><span class="value-preview" [title]="formatValor(metadato.valor)">{{ formatValor(metadato.valor) }}</span></td>
                 <td>
                   <button class="btn btn-warning btn-sm" (click)="editMetadato(metadato)">Editar</button>
                   <button class="btn btn-danger btn-sm" (click)="deleteMetadato(metadato.id)">Eliminar</button>
@@ -73,7 +73,7 @@ import { Metadato, Parametro, TipoMetadato } from '../../../shared/models';
             </div>
             <div class="form-group">
               <label class="form-label">Tipo de Metadato</label>
-              <select class="form-control" formControlName="idTipoMetadato">
+              <select class="form-control" formControlName="idTipoMetadato" (change)="onTipoChange()">
                 <option value="">Seleccione un tipo</option>
                 <option *ngFor="let tipo of tiposMetadato" [value]="tipo.id">
                   {{ tipo.tipo }}{{ tipo.detalle ? ' - ' + tipo.detalle : '' }}
@@ -82,7 +82,14 @@ import { Metadato, Parametro, TipoMetadato } from '../../../shared/models';
             </div>
             <div class="form-group">
               <label class="form-label">Valor</label>
-              <textarea class="form-control value-input" formControlName="valor" placeholder="Valor del metadato (texto o JSON)"></textarea>
+              <textarea *ngIf="selectedTipo === 'json'" class="form-control value-input" formControlName="valor"
+                placeholder='Ejemplo: {"propiedad":"valor"} o ["valor1","valor2"]'></textarea>
+              <input *ngIf="selectedTipo === 'date'" type="date" class="form-control" formControlName="valor">
+              <input *ngIf="selectedTipo !== 'json' && selectedTipo !== 'date'" type="text" class="form-control"
+                formControlName="valor" [placeholder]="selectedTipo === 'alfanumerico' ? 'Ingrese un valor alfanumérico' : 'Seleccione primero un tipo de metadato'">
+              <small class="field-help" *ngIf="selectedTipo === 'json'">Debe ser un objeto o un arreglo JSON válido.</small>
+              <small class="field-help" *ngIf="selectedTipo === 'date'">La fecha se enviará en formato yyyy-MM-dd.</small>
+              <small class="field-help" *ngIf="selectedTipo === 'alfanumerico'">El valor se enviará como una cadena de texto.</small>
             </div>
           </form>
         </div>
@@ -100,6 +107,7 @@ import { Metadato, Parametro, TipoMetadato } from '../../../shared/models';
     .record-count { font-size: .85rem; color: #64748b; font-weight: 500; }
     .value-preview { display: block; max-width: 420px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: monospace; }
     .value-input { min-height: 130px; resize: vertical; font-family: monospace; }
+    .field-help { display: block; margin-top: 6px; color: #64748b; font-size: .8rem; }
   `]
 })
 export class MetadatosComponent implements OnInit, OnDestroy {
@@ -136,7 +144,12 @@ export class MetadatosComponent implements OnInit, OnDestroy {
   get filteredMetadatos(): Metadato[] {
     const term = this.searchTerm.trim().toLowerCase();
     if (!term) return this.metadatos;
-    return this.metadatos.filter(item => item.valor.toLowerCase().includes(term) || this.getParametroNombre(item.idParametro).toLowerCase().includes(term) || this.getTipoNombre(item.idTipoMetadato).toLowerCase().includes(term));
+    return this.metadatos.filter(item => this.formatValor(item.valor).toLowerCase().includes(term) || this.getParametroNombre(item.idParametro).toLowerCase().includes(term) || this.getTipoNombre(item.idTipoMetadato).toLowerCase().includes(term));
+  }
+
+  get selectedTipo(): string {
+    const id = this.metadatoForm.get('idTipoMetadato')?.value;
+    return (this.tiposMetadato.find(item => item.id === id)?.tipo || '').trim().toLowerCase();
   }
 
   loadMetadatos(): void {
@@ -149,6 +162,9 @@ export class MetadatosComponent implements OnInit, OnDestroy {
 
   getParametroNombre(id: string): string { return this.parametros.find(item => item.id === id)?.nombre || 'N/A'; }
   getTipoNombre(id: string): string { return this.tiposMetadato.find(item => item.id === id)?.tipo || 'N/A'; }
+  formatValor(valor: Metadato['valor']): string {
+    return typeof valor === 'string' ? valor : JSON.stringify(valor);
+  }
   connectSse(): void {
     const subscription = this.sseService.connect(`${this.apiService.getBaseUrl()}/metadatos/events`, 'metadato').subscribe({
       next: data => {
@@ -171,6 +187,11 @@ export class MetadatosComponent implements OnInit, OnDestroy {
     this.metadatoForm.reset({ idParametro: '', idTipoMetadato: '', valor: '' });
   }
 
+  onTipoChange(): void {
+    this.metadatoForm.get('valor')?.reset('');
+    this.errorMessage = '';
+  }
+
   editMetadato(metadato: Metadato): void {
     this.showModal = true;
     this.isEditing = true;
@@ -178,7 +199,7 @@ export class MetadatosComponent implements OnInit, OnDestroy {
     this.metadatoForm.reset({
       idParametro: metadato.idParametro,
       idTipoMetadato: metadato.idTipoMetadato,
-      valor: metadato.valor
+      valor: typeof metadato.valor === 'string' ? metadato.valor : JSON.stringify(metadato.valor, null, 2)
     });
   }
 
@@ -192,8 +213,12 @@ export class MetadatosComponent implements OnInit, OnDestroy {
 
   saveMetadato(): void {
     if (this.metadatoForm.invalid) { this.metadatoForm.markAllAsTouched(); this.errorMessage = 'Todos los campos son requeridos'; return; }
+    const valor = this.buildValor();
+    if (valor === undefined) return;
+
     this.saving = true; this.errorMessage = ''; this.successMessage = '';
-    const data = this.metadatoForm.getRawValue();
+    const formValue = this.metadatoForm.getRawValue();
+    const data = { idParametro: formValue.idParametro, idTipoMetadato: formValue.idTipoMetadato, valor };
     const request = this.isEditing && this.editingId
       ? this.apiService.updateMetadato(this.editingId, data)
       : this.apiService.createMetadato(data);
@@ -204,6 +229,41 @@ export class MetadatosComponent implements OnInit, OnDestroy {
       },
       error: err => { this.errorMessage = err.message || (this.isEditing ? 'Error al actualizar el metadato' : 'Error al crear el metadato'); this.saving = false; }
     });
+  }
+
+  private buildValor(): string | Record<string, unknown> | unknown[] | undefined {
+    const rawValue = String(this.metadatoForm.get('valor')?.value ?? '').trim();
+
+    if (this.selectedTipo === 'json') {
+      try {
+        const parsed: unknown = JSON.parse(rawValue);
+        if (typeof parsed !== 'object' || parsed === null) {
+          this.errorMessage = 'El valor debe ser un objeto o arreglo JSON';
+          return undefined;
+        }
+        return parsed as Record<string, unknown> | unknown[];
+      } catch {
+        this.errorMessage = 'El valor ingresado no es un JSON válido';
+        return undefined;
+      }
+    }
+
+    if (this.selectedTipo === 'date' && !this.isValidDate(rawValue)) {
+      this.errorMessage = 'El valor debe ser una fecha válida en formato yyyy-MM-dd';
+      return undefined;
+    }
+
+    return rawValue;
+  }
+
+  private isValidDate(value: string): boolean {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+    if (!match) return false;
+    const year = Number(match[1]);
+    const month = Number(match[2]);
+    const day = Number(match[3]);
+    const date = new Date(Date.UTC(year, month - 1, day));
+    return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
   }
 
   deleteMetadato(id: string): void {

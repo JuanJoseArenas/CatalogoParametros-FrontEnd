@@ -267,13 +267,13 @@ export class ApiService {
     );
   }
 
-  createMetadato(metadato: { idParametro: string; idTipoMetadato: string; valor: string }): Observable<MetadatoResponse> {
+  createMetadato(metadato: { idParametro: string; idTipoMetadato: string; valor: string | Record<string, unknown> | unknown[] }): Observable<MetadatoResponse> {
     return this.http.post<MetadatoResponse>(`${this.baseUrl}/metadatos`, metadato).pipe(
       catchError(this.handleError)
     );
   }
 
-  updateMetadato(id: string, metadato: { idParametro: string; idTipoMetadato: string; valor: string }): Observable<MetadatoResponse> {
+  updateMetadato(id: string, metadato: { idParametro: string; idTipoMetadato: string; valor: string | Record<string, unknown> | unknown[] }): Observable<MetadatoResponse> {
     return this.http.put<MetadatoResponse>(`${this.baseUrl}/metadatos/${id}`, metadato).pipe(
       catchError(this.handleError)
     );
