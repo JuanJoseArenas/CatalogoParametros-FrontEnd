@@ -282,8 +282,8 @@ export class FuncionalidadesComponent implements OnInit, OnDestroy {
       nombre: func.nombre,
       idModulo: func.idModulo,
       activo: func.activo,
-      fechaInicio: func.fechaInicio || '',
-      fechaFinal: func.fechaFinal || ''
+      fechaInicio: func.fechaInicio?.slice(0, 10) || '',
+      fechaFinal: func.fechaFinal?.slice(0, 10) || ''
     });
   }
 

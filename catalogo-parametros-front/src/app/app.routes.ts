@@ -5,6 +5,8 @@ import { AplicacionesComponent } from './features/aplicaciones/components/aplica
 import { ModulosComponent } from './features/modulos/components/modulos.component';
 import { FuncionalidadesComponent } from './features/funcionalidades/components/funcionalidades.component';
 import { ParametrosComponent } from './features/parametros/components/parametros.component';
+import { TiposMetadatoComponent } from './features/tipos-metadato/components/tipos-metadato.component';
+import { MetadatosComponent } from './features/metadatos/components/metadatos.component';
 
 export const appRoutes: Routes = [
   { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
@@ -13,5 +15,7 @@ export const appRoutes: Routes = [
   { path: 'aplicaciones', component: AplicacionesComponent },
   { path: 'modulos', component: ModulosComponent },
   { path: 'funcionalidades', component: FuncionalidadesComponent },
-  { path: 'parametros', component: ParametrosComponent }
+  { path: 'parametros', component: ParametrosComponent },
+  { path: 'tipos-metadato', component: TiposMetadatoComponent },
+  { path: 'metadatos', component: MetadatosComponent }
 ];

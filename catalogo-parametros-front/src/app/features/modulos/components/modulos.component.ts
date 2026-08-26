@@ -69,6 +69,7 @@ import { Subscription } from 'rxjs';
                 </td>
                 <td>
                   <button class="btn btn-warning btn-sm" (click)="editModulo(mod)">Editar</button>
+                  <button class="btn btn-danger btn-sm" (click)="deleteModulo(mod.id)">Eliminar</button>
                 </td>
               </tr>
             </tbody>
@@ -200,7 +201,6 @@ export class ModulosComponent implements OnInit, OnDestroy {
   loadModulos(): void {
     this.loading = true;
     this.errorMessage = '';
-    this.successMessage = '';
 
     this.apiService.getModulos(this.page, this.pageSize).subscribe({
       next: (data) => {
@@ -285,8 +285,8 @@ export class ModulosComponent implements OnInit, OnDestroy {
       nombre: mod.nombre,
       idAplicacion: mod.idAplicacion,
       activo: mod.activo,
-      fechaInicio: mod.fechaInicio || '',
-      fechaFinal: mod.fechaFinal || ''
+      fechaInicio: mod.fechaInicio?.slice(0, 10) || '',
+      fechaFinal: mod.fechaFinal?.slice(0, 10) || ''
     });
   }
 
@@ -326,15 +326,36 @@ export class ModulosComponent implements OnInit, OnDestroy {
       data.fechaFinal = `${this.moduloForm.value.fechaFinal} 00:00:00`;
     }
 
-    this.apiService.createModulo(data).subscribe({
+    const request = this.isEditing && this.editingId
+      ? this.apiService.updateModulo(this.editingId, data)
+      : this.apiService.createModulo(data);
+
+    request.subscribe({
       next: (response) => {
-        this.successMessage = response.mensajes[0] || 'Modulo creado exitosamente';
+        this.successMessage = response.mensajes[0] || (this.isEditing ? 'Modulo actualizado exitosamente' : 'Modulo creado exitosamente');
         this.saving = false;
         this.closeModal();
+        this.loadModulos();
       },
       error: (err) => {
-        this.errorMessage = err.message || 'Error al crear el modulo';
+        this.errorMessage = err.message || (this.isEditing ? 'Error al actualizar el modulo' : 'Error al crear el modulo');
         this.saving = false;
+      }
+    });
+  }
+
+  deleteModulo(id: string): void {
+    if (!confirm('¿Está seguro de eliminar este modulo?')) return;
+
+    this.errorMessage = '';
+    this.successMessage = '';
+    this.apiService.deleteModulo(id).subscribe({
+      next: (response) => {
+        this.successMessage = response.mensajes[0] || 'Modulo eliminado exitosamente';
+        this.loadModulos();
+      },
+      error: (err) => {
+        this.errorMessage = err.message || 'Error al eliminar el modulo';
       }
     });
   }
