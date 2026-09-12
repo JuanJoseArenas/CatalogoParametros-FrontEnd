@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/services/api.service';
 import { SseService } from '../../../core/services/sse.service';
 import { Funcionalidad, Modulo } from '../../../shared/models';
+import { fechaConZona } from '../../../shared/utils/date.utils';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -317,10 +318,10 @@ export class FuncionalidadesComponent implements OnInit, OnDestroy {
     };
 
     if (this.funcionalidadForm.value.fechaInicio) {
-      data.fechaInicio = `${this.funcionalidadForm.value.fechaInicio}T00:00:00-05:00`;
+      data.fechaInicio = fechaConZona(this.funcionalidadForm.value.fechaInicio);
     }
     if (this.funcionalidadForm.value.fechaFinal) {
-      data.fechaFinal = `${this.funcionalidadForm.value.fechaFinal}T00:00:00-05:00`;
+      data.fechaFinal = fechaConZona(this.funcionalidadForm.value.fechaFinal);
     }
 
     if (this.isEditing && this.editingId) {

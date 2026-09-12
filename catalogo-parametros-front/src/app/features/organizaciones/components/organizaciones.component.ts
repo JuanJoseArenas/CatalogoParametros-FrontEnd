@@ -4,6 +4,7 @@ import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup, Validators } 
 import { ApiService } from '../../../core/services/api.service';
 import { SseService } from '../../../core/services/sse.service';
 import { Organizacion } from '../../../shared/models';
+import { fechaConZona } from '../../../shared/utils/date.utils';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -274,10 +275,10 @@ export class OrganizacionesComponent implements OnInit, OnDestroy {
     };
 
     if (this.organizacionForm.value.fechaInicio) {
-      data.fechaInicio = `${this.organizacionForm.value.fechaInicio}T00:00:00-05:00`;
+      data.fechaInicio = fechaConZona(this.organizacionForm.value.fechaInicio);
     }
     if (this.organizacionForm.value.fechaFinal) {
-      data.fechaFinal = `${this.organizacionForm.value.fechaFinal}T00:00:00-05:00`;
+      data.fechaFinal = fechaConZona(this.organizacionForm.value.fechaFinal);
     }
 
     if (this.isEditing && this.editingId) {
