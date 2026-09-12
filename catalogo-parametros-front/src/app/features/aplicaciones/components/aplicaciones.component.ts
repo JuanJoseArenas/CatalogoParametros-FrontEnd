@@ -60,8 +60,8 @@ import { Subscription } from 'rxjs';
               <tr *ngFor="let app of filteredAplicaciones">
                 <td>{{ app.nombre }}</td>
                 <td>{{ getOrganizacionNombre(app.idOrganizacion) }}</td>
-                <td>{{ app.fechaInicio || '-' }}</td>
-                <td>{{ app.fechaFinal || '-' }}</td>
+                <td>{{ (app.fechaInicio | slice:0:10) || '-' }}</td>
+                <td>{{ (app.fechaFinal | slice:0:10) || '-' }}</td>
                 <td>
                   <span class="badge" [class.badge-success]="app.activa" [class.badge-danger]="!app.activa">
                     {{ app.activa ? 'Activa' : 'Inactiva' }}
@@ -323,10 +323,10 @@ export class AplicacionesComponent implements OnInit, OnDestroy {
     };
 
     if (this.aplicacionForm.value.fechaInicio) {
-      data.fechaInicio = `${this.aplicacionForm.value.fechaInicio} 00:00:00`;
+      data.fechaInicio = `${this.aplicacionForm.value.fechaInicio}T00:00:00-05:00`;
     }
     if (this.aplicacionForm.value.fechaFinal) {
-      data.fechaFinal = `${this.aplicacionForm.value.fechaFinal} 00:00:00`;
+      data.fechaFinal = `${this.aplicacionForm.value.fechaFinal}T00:00:00-05:00`;
     }
 
     if (this.isEditing && this.editingId) {

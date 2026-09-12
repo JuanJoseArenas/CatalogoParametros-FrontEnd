@@ -317,10 +317,10 @@ export class FuncionalidadesComponent implements OnInit, OnDestroy {
     };
 
     if (this.funcionalidadForm.value.fechaInicio) {
-      data.fechaInicio = `${this.funcionalidadForm.value.fechaInicio} 00:00:00`;
+      data.fechaInicio = `${this.funcionalidadForm.value.fechaInicio}T00:00:00-05:00`;
     }
     if (this.funcionalidadForm.value.fechaFinal) {
-      data.fechaFinal = `${this.funcionalidadForm.value.fechaFinal} 00:00:00`;
+      data.fechaFinal = `${this.funcionalidadForm.value.fechaFinal}T00:00:00-05:00`;
     }
 
     if (this.isEditing && this.editingId) {
