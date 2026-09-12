@@ -56,8 +56,8 @@ import { Subscription } from 'rxjs';
             <tbody>
               <tr *ngFor="let org of filteredOrganizaciones">
                 <td>{{ org.nombre }}</td>
-                <td>{{ org.fechaInicio || '-' }}</td>
-                <td>{{ org.fechaFinal || '-' }}</td>
+                <td>{{ (org.fechaInicio | slice:0:10) || '-' }}</td>
+                <td>{{ (org.fechaFinal | slice:0:10) || '-' }}</td>
                 <td>
                   <button class="btn btn-warning btn-sm" (click)="editOrganizacion(org)">Editar</button>
                   <button class="btn btn-danger btn-sm" (click)="deleteOrganizacion(org.id)">Eliminar</button>
@@ -274,10 +274,10 @@ export class OrganizacionesComponent implements OnInit, OnDestroy {
     };
 
     if (this.organizacionForm.value.fechaInicio) {
-      data.fechaInicio = `${this.organizacionForm.value.fechaInicio} 00:00:00`;
+      data.fechaInicio = `${this.organizacionForm.value.fechaInicio}T00:00:00-05:00`;
     }
     if (this.organizacionForm.value.fechaFinal) {
-      data.fechaFinal = `${this.organizacionForm.value.fechaFinal} 00:00:00`;
+      data.fechaFinal = `${this.organizacionForm.value.fechaFinal}T00:00:00-05:00`;
     }
 
     if (this.isEditing && this.editingId) {

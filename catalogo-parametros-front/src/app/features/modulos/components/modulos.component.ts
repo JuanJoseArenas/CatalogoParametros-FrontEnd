@@ -60,8 +60,8 @@ import { Subscription } from 'rxjs';
               <tr *ngFor="let mod of filteredModulos">
                 <td>{{ mod.nombre }}</td>
                 <td>{{ getAplicacionNombre(mod.idAplicacion) }}</td>
-                <td>{{ mod.fechaInicio || '-' }}</td>
-                <td>{{ mod.fechaFinal || '-' }}</td>
+                <td>{{ (mod.fechaInicio | slice:0:10) || '-' }}</td>
+                <td>{{ (mod.fechaFinal | slice:0:10) || '-' }}</td>
                 <td>
                   <span class="badge" [class.badge-success]="mod.activo" [class.badge-danger]="!mod.activo">
                     {{ mod.activo ? 'Activo' : 'Inactivo' }}
@@ -320,10 +320,10 @@ export class ModulosComponent implements OnInit, OnDestroy {
     };
 
     if (this.moduloForm.value.fechaInicio) {
-      data.fechaInicio = `${this.moduloForm.value.fechaInicio} 00:00:00`;
+      data.fechaInicio = `${this.moduloForm.value.fechaInicio}T00:00:00-05:00`;
     }
     if (this.moduloForm.value.fechaFinal) {
-      data.fechaFinal = `${this.moduloForm.value.fechaFinal} 00:00:00`;
+      data.fechaFinal = `${this.moduloForm.value.fechaFinal}T00:00:00-05:00`;
     }
 
     const request = this.isEditing && this.editingId
