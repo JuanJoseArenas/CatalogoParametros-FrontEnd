@@ -70,6 +70,9 @@ import { Subscription } from 'rxjs';
                 </td>
                 <td>
                   <button class="btn btn-warning btn-sm" (click)="editModulo(mod)">Editar</button>
+                  <button class="btn btn-secondary btn-sm" (click)="changeStatus(mod)">
+                    {{ mod.activo ? 'Desactivar' : 'Activar' }}
+                  </button>
                   <button class="btn btn-danger btn-sm" (click)="deleteModulo(mod.id)">Eliminar</button>
                 </td>
               </tr>
@@ -357,6 +360,24 @@ export class ModulosComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.errorMessage = err.message || 'Error al eliminar el modulo';
+      }
+    });
+  }
+
+  changeStatus(modulo: Modulo): void {
+    const activo = !modulo.activo;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.apiService.changeModuloStatus(modulo.id, activo).subscribe({
+      next: (response) => {
+        this.modulos = this.modulos.map(mod =>
+          mod.id === modulo.id ? { ...mod, activo } : mod
+        );
+        this.successMessage = response.mensajes[0] || `Modulo ${activo ? 'activado' : 'desactivado'} exitosamente`;
+      },
+      error: (err) => {
+        this.errorMessage = err.message || 'Error al cambiar el estado del modulo';
       }
     });
   }
