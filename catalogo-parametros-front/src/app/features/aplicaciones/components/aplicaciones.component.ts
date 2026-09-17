@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/services/api.service';
 import { SseService } from '../../../core/services/sse.service';
 import { Aplicacion, Organizacion } from '../../../shared/models';
+import { fechaConZona } from '../../../shared/utils/date.utils';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -70,6 +71,9 @@ import { Subscription } from 'rxjs';
                 <td>
                   <div style="display: flex; gap: 8px;">
                     <button class="btn btn-warning btn-sm" (click)="editAplicacion(app)">Editar</button>
+                    <button class="btn btn-secondary btn-sm" (click)="changeStatus(app)">
+                      {{ app.activa ? 'Desactivar' : 'Activar' }}
+                    </button>
                     <button class="btn btn-danger btn-sm" (click)="deleteAplicacion(app.id)">Eliminar</button>
                   </div>
                 </td>
@@ -323,10 +327,10 @@ export class AplicacionesComponent implements OnInit, OnDestroy {
     };
 
     if (this.aplicacionForm.value.fechaInicio) {
-      data.fechaInicio = `${this.aplicacionForm.value.fechaInicio}T00:00:00-05:00`;
+      data.fechaInicio = fechaConZona(this.aplicacionForm.value.fechaInicio);
     }
     if (this.aplicacionForm.value.fechaFinal) {
-      data.fechaFinal = `${this.aplicacionForm.value.fechaFinal}T00:00:00-05:00`;
+      data.fechaFinal = fechaConZona(this.aplicacionForm.value.fechaFinal);
     }
 
     if (this.isEditing && this.editingId) {
@@ -369,6 +373,24 @@ export class AplicacionesComponent implements OnInit, OnDestroy {
       error: (err) => {
         this.errorMessage = err.message || 'Error al eliminar la aplicacion';
         this.successMessage = '';
+      }
+    });
+  }
+
+  changeStatus(aplicacion: Aplicacion): void {
+    const activa = !aplicacion.activa;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.apiService.changeAplicacionStatus(aplicacion.id, activa).subscribe({
+      next: (response) => {
+        this.aplicaciones = this.aplicaciones.map(app =>
+          app.id === aplicacion.id ? { ...app, activa } : app
+        );
+        this.successMessage = response.mensajes[0] || `Aplicacion ${activa ? 'activada' : 'desactivada'} exitosamente`;
+      },
+      error: (err) => {
+        this.errorMessage = err.message || 'Error al cambiar el estado de la aplicacion';
       }
     });
   }

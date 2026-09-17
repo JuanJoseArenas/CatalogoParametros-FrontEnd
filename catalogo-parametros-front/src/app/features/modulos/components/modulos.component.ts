@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/services/api.service';
 import { SseService } from '../../../core/services/sse.service';
 import { Modulo, Aplicacion } from '../../../shared/models';
+import { fechaConZona } from '../../../shared/utils/date.utils';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -69,6 +70,9 @@ import { Subscription } from 'rxjs';
                 </td>
                 <td>
                   <button class="btn btn-warning btn-sm" (click)="editModulo(mod)">Editar</button>
+                  <button class="btn btn-secondary btn-sm" (click)="changeStatus(mod)">
+                    {{ mod.activo ? 'Desactivar' : 'Activar' }}
+                  </button>
                   <button class="btn btn-danger btn-sm" (click)="deleteModulo(mod.id)">Eliminar</button>
                 </td>
               </tr>
@@ -320,10 +324,10 @@ export class ModulosComponent implements OnInit, OnDestroy {
     };
 
     if (this.moduloForm.value.fechaInicio) {
-      data.fechaInicio = `${this.moduloForm.value.fechaInicio}T00:00:00-05:00`;
+      data.fechaInicio = fechaConZona(this.moduloForm.value.fechaInicio);
     }
     if (this.moduloForm.value.fechaFinal) {
-      data.fechaFinal = `${this.moduloForm.value.fechaFinal}T00:00:00-05:00`;
+      data.fechaFinal = fechaConZona(this.moduloForm.value.fechaFinal);
     }
 
     const request = this.isEditing && this.editingId
@@ -356,6 +360,24 @@ export class ModulosComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.errorMessage = err.message || 'Error al eliminar el modulo';
+      }
+    });
+  }
+
+  changeStatus(modulo: Modulo): void {
+    const activo = !modulo.activo;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.apiService.changeModuloStatus(modulo.id, activo).subscribe({
+      next: (response) => {
+        this.modulos = this.modulos.map(mod =>
+          mod.id === modulo.id ? { ...mod, activo } : mod
+        );
+        this.successMessage = response.mensajes[0] || `Modulo ${activo ? 'activado' : 'desactivado'} exitosamente`;
+      },
+      error: (err) => {
+        this.errorMessage = err.message || 'Error al cambiar el estado del modulo';
       }
     });
   }

@@ -116,6 +116,12 @@ export class ApiService {
     );
   }
 
+  changeAplicacionStatus(id: string, activo: boolean): Observable<AplicacionResponse> {
+    return this.http.post<AplicacionResponse>(`${this.baseUrl}/aplicaciones/${id}/changestatus`, { activo }).pipe(
+      catchError(this.handleError)
+    );
+  }
+
   // Modulos
   getModulos(page: number = 1, pageSize: number = 10): Observable<Modulo[]> {
     return this.http.get<ModuloResponse>(`${this.baseUrl}/modulos`, {
@@ -153,6 +159,12 @@ export class ApiService {
     );
   }
 
+  changeModuloStatus(id: string, activo: boolean): Observable<ModuloResponse> {
+    return this.http.post<ModuloResponse>(`${this.baseUrl}/modulos/${id}/changestatus`, { activo }).pipe(
+      catchError(this.handleError)
+    );
+  }
+
   // Funcionalidades
   getFuncionalidades(page: number = 1, pageSize: number = 10): Observable<Funcionalidad[]> {
     return this.http.get<FuncionalidadResponse>(`${this.baseUrl}/funcionalidades`, {
@@ -179,20 +191,26 @@ export class ApiService {
     );
   }
 
-  createFuncionalidad(funcionalidad: { nombre: string; idModulo: string; activo?: boolean; fechaInicio?: string; fechaFinal?: string }): Observable<ParametroResponse> {
-    return this.http.post<ParametroResponse>(`${this.baseUrl}/funcionalidades`, funcionalidad).pipe(
+  createFuncionalidad(funcionalidad: { nombre: string; idModulo: string; activo?: boolean; fechaInicio?: string; fechaFinal?: string }): Observable<FuncionalidadResponse> {
+    return this.http.post<FuncionalidadResponse>(`${this.baseUrl}/funcionalidades`, funcionalidad).pipe(
       catchError(this.handleError)
     );
   }
 
-  updateFuncionalidad(id: string, funcionalidad: { nombre: string; idModulo: string; activo?: boolean; fechaInicio?: string; fechaFinal?: string }): Observable<ParametroResponse> {
-    return this.http.put<ParametroResponse>(`${this.baseUrl}/funcionalidades/${id}`, funcionalidad).pipe(
+  updateFuncionalidad(id: string, funcionalidad: { nombre: string; idModulo: string; activo?: boolean; fechaInicio?: string; fechaFinal?: string }): Observable<FuncionalidadResponse> {
+    return this.http.put<FuncionalidadResponse>(`${this.baseUrl}/funcionalidades/${id}`, funcionalidad).pipe(
       catchError(this.handleError)
     );
   }
 
-  deleteFuncionalidad(id: string): Observable<ParametroResponse> {
-    return this.http.delete<ParametroResponse>(`${this.baseUrl}/funcionalidades/${id}`).pipe(
+  deleteFuncionalidad(id: string): Observable<FuncionalidadResponse> {
+    return this.http.delete<FuncionalidadResponse>(`${this.baseUrl}/funcionalidades/${id}`).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  changeFuncionalidadStatus(id: string, activo: boolean): Observable<FuncionalidadResponse> {
+    return this.http.post<FuncionalidadResponse>(`${this.baseUrl}/funcionalidades/${id}/changestatus`, { activo }).pipe(
       catchError(this.handleError)
     );
   }
@@ -228,6 +246,12 @@ export class ApiService {
 
   deleteParametro(id: string): Observable<ParametroResponse> {
     return this.http.delete<ParametroResponse>(`${this.baseUrl}/parametros/${id}`).pipe(
+      catchError(this.handleError)
+    );
+  }
+
+  changeParametroStatus(id: string, activo: boolean): Observable<ParametroResponse> {
+    return this.http.post<ParametroResponse>(`${this.baseUrl}/parametros/${id}/changestatus`, { activo }).pipe(
       catchError(this.handleError)
     );
   }

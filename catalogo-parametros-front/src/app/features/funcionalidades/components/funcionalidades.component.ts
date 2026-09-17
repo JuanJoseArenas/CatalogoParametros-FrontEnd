@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../core/services/api.service';
 import { SseService } from '../../../core/services/sse.service';
 import { Funcionalidad, Modulo } from '../../../shared/models';
+import { fechaConZona } from '../../../shared/utils/date.utils';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -50,6 +51,8 @@ import { Subscription } from 'rxjs';
               <tr>
                 <th>Nombre</th>
                 <th>Modulo</th>
+                <th>Fecha Inicio</th>
+                <th>Fecha Fin</th>
                 <th>Estado</th>
                 <th>Acciones</th>
               </tr>
@@ -58,6 +61,8 @@ import { Subscription } from 'rxjs';
               <tr *ngFor="let func of filteredFuncionalidades">
                 <td>{{ func.nombre }}</td>
                 <td>{{ getModuloNombre(func.idModulo) }}</td>
+                <td>{{ (func.fechaInicio | slice:0:10) || '-' }}</td>
+                <td>{{ (func.fechaFinal | slice:0:10) || '-' }}</td>
                 <td>
                   <span class="badge" [class.badge-success]="func.activo" [class.badge-danger]="!func.activo">
                     {{ func.activo ? 'Activo' : 'Inactivo' }}
@@ -65,6 +70,9 @@ import { Subscription } from 'rxjs';
                 </td>
                 <td>
                   <button class="btn btn-warning btn-sm" (click)="editFuncionalidad(func)">Editar</button>
+                  <button class="btn btn-secondary btn-sm" (click)="changeStatus(func)">
+                    {{ func.activo ? 'Desactivar' : 'Activar' }}
+                  </button>
                   <button class="btn btn-danger btn-sm" (click)="deleteFuncionalidad(func.id)">Eliminar</button>
                 </td>
               </tr>
@@ -317,10 +325,10 @@ export class FuncionalidadesComponent implements OnInit, OnDestroy {
     };
 
     if (this.funcionalidadForm.value.fechaInicio) {
-      data.fechaInicio = `${this.funcionalidadForm.value.fechaInicio}T00:00:00-05:00`;
+      data.fechaInicio = fechaConZona(this.funcionalidadForm.value.fechaInicio);
     }
     if (this.funcionalidadForm.value.fechaFinal) {
-      data.fechaFinal = `${this.funcionalidadForm.value.fechaFinal}T00:00:00-05:00`;
+      data.fechaFinal = fechaConZona(this.funcionalidadForm.value.fechaFinal);
     }
 
     if (this.isEditing && this.editingId) {
@@ -365,6 +373,24 @@ export class FuncionalidadesComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.errorMessage = err.message || 'Error al eliminar la funcionalidad';
+      }
+    });
+  }
+
+  changeStatus(funcionalidad: Funcionalidad): void {
+    const activo = !funcionalidad.activo;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.apiService.changeFuncionalidadStatus(funcionalidad.id, activo).subscribe({
+      next: (response) => {
+        this.funcionalidades = this.funcionalidades.map(func =>
+          func.id === funcionalidad.id ? { ...func, activo } : func
+        );
+        this.successMessage = response.mensajes[0] || `Funcionalidad ${activo ? 'activada' : 'desactivada'} exitosamente`;
+      },
+      error: (err) => {
+        this.errorMessage = err.message || 'Error al cambiar el estado de la funcionalidad';
       }
     });
   }

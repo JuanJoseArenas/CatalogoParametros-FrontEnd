@@ -67,6 +67,9 @@ import { Subscription } from 'rxjs';
                 </td>
                 <td>
                   <button class="btn btn-warning btn-sm" (click)="editParametro(param)">Editar</button>
+                  <button class="btn btn-secondary btn-sm" (click)="changeStatus(param)">
+                    {{ param.activo ? 'Desactivar' : 'Activar' }}
+                  </button>
                   <button class="btn btn-danger btn-sm" (click)="deleteParametro(param.id)">Eliminar</button>
                 </td>
               </tr>
@@ -376,6 +379,24 @@ export class ParametrosComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.errorMessage = err.message || 'Error al eliminar el parametro';
+      }
+    });
+  }
+
+  changeStatus(parametro: Parametro): void {
+    const activo = !parametro.activo;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.apiService.changeParametroStatus(parametro.id, activo).subscribe({
+      next: (response) => {
+        this.parametros = this.parametros.map(param =>
+          param.id === parametro.id ? { ...param, activo } : param
+        );
+        this.successMessage = response.mensajes[0] || `Parametro ${activo ? 'activado' : 'desactivado'} exitosamente`;
+      },
+      error: (err) => {
+        this.errorMessage = err.message || 'Error al cambiar el estado del parametro';
       }
     });
   }
