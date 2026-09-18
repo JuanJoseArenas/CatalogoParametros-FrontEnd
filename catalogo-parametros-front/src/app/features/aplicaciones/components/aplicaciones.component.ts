@@ -304,6 +304,7 @@ export class AplicacionesComponent implements OnInit, OnDestroy {
     this.aplicacionForm.reset({ nombre: '', idOrganizacion: '', activa: true, fechaInicio: '', fechaFinal: '' });
   }
 
+  
   closeModalOnOverlay(event: Event): void {
     if (event.target === event.currentTarget) {
       this.closeModal();

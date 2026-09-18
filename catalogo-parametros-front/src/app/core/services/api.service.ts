@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, throwError, of } from 'rxjs';
-import { catchError, map, timeout } from 'rxjs/operators';
+import { Observable, throwError } from 'rxjs';
+import { catchError, map} from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import {
   Organizacion,
@@ -117,7 +117,7 @@ export class ApiService {
   }
 
   changeAplicacionStatus(id: string, activo: boolean): Observable<AplicacionResponse> {
-    return this.http.post<AplicacionResponse>(`${this.baseUrl}/aplicaciones/${id}/changestatus`, { activo }).pipe(
+    return this.http.post<AplicacionResponse>(`${this.baseUrl}/aplicaciones/${id}/cambiarestado`, { activo }).pipe(
       catchError(this.handleError)
     );
   }
@@ -160,7 +160,7 @@ export class ApiService {
   }
 
   changeModuloStatus(id: string, activo: boolean): Observable<ModuloResponse> {
-    return this.http.post<ModuloResponse>(`${this.baseUrl}/modulos/${id}/changestatus`, { activo }).pipe(
+    return this.http.post<ModuloResponse>(`${this.baseUrl}/modulos/${id}/cambiarestado`, { activo }).pipe(
       catchError(this.handleError)
     );
   }
@@ -210,7 +210,7 @@ export class ApiService {
   }
 
   changeFuncionalidadStatus(id: string, activo: boolean): Observable<FuncionalidadResponse> {
-    return this.http.post<FuncionalidadResponse>(`${this.baseUrl}/funcionalidades/${id}/changestatus`, { activo }).pipe(
+    return this.http.post<FuncionalidadResponse>(`${this.baseUrl}/funcionalidades/${id}/cambiarestado`, { activo }).pipe(
       catchError(this.handleError)
     );
   }
@@ -251,7 +251,7 @@ export class ApiService {
   }
 
   changeParametroStatus(id: string, activo: boolean): Observable<ParametroResponse> {
-    return this.http.post<ParametroResponse>(`${this.baseUrl}/parametros/${id}/changestatus`, { activo }).pipe(
+    return this.http.post<ParametroResponse>(`${this.baseUrl}/parametros/${id}/cambiarestado`, { activo }).pipe(
       catchError(this.handleError)
     );
   }
