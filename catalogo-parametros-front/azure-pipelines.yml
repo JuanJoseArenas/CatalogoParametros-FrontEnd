@@ -1,0 +1,160 @@
+name: catalogo-front-$(SourceBranchName)-$(Date:yyyyMMdd).$(Rev:r)
+
+trigger:
+  batch: true
+  branches:
+    include:
+      - develop
+
+pr:
+  branches:
+    include:
+      - '*'
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  FRONTEND_DIRECTORY: $(Build.SourcesDirectory)/catalogo-parametros-front
+  NPM_CONFIG_CACHE: $(Pipeline.Workspace)/.npm
+  SONAR_USER_HOME: $(Pipeline.Workspace)/.sonar
+  SONAR_BINARY_CACHE: $(Pipeline.Workspace)/.sonar/native-sonar-scanner
+  IMAGE_REPOSITORY: simon4219/catalogo-parametros-frontend
+  IMAGE_VERSION_PREFIX: '0.0'
+  # La version se asigna al latest ANTERIOR, no a la imagen nueva.
+  # Los PR tienen un contador separado y nunca publican imagenes.
+  IMAGE_VERSION_PATCH: $[counter(format('docker-front-{0}-{1}', variables['IMAGE_VERSION_PREFIX'], variables['Build.SourceBranch']), 2)]
+
+steps:
+  - checkout: self
+    fetchDepth: 0
+
+  - task: UseNode@1
+    displayName: Configurar Node.js 20
+    inputs:
+      version: 20.x
+
+  - task: Cache@2
+    displayName: Cache de npm
+    inputs:
+      key: 'npm | "$(Agent.OS)" | catalogo-parametros-front/package-lock.json'
+      restoreKeys: |
+        npm | "$(Agent.OS)"
+      path: $(NPM_CONFIG_CACHE)
+
+  - task: Cache@2
+    displayName: Cache de Sonar
+    inputs:
+      key: 'sonar-front | "$(Agent.OS)"'
+      path: $(SONAR_USER_HOME)
+
+  - bash: npm ci
+    displayName: Instalar dependencias bloqueadas
+    workingDirectory: $(FRONTEND_DIRECTORY)
+    env:
+      npm_config_cache: $(NPM_CONFIG_CACHE)
+
+  - bash: npm run test:ci
+    displayName: Ejecutar pruebas y generar cobertura
+    workingDirectory: $(FRONTEND_DIRECTORY)
+
+  - task: PublishTestResults@2
+    displayName: Publicar resultados de pruebas
+    condition: succeededOrFailed()
+    inputs:
+      testResultsFormat: JUnit
+      testResultsFiles: test-results/junit.xml
+      searchFolder: $(FRONTEND_DIRECTORY)
+      failTaskOnFailedTests: true
+      failTaskOnMissingResultsFile: true
+
+  - task: PublishCodeCoverageResults@2
+    displayName: Publicar cobertura del frontend
+    condition: succeededOrFailed()
+    inputs:
+      summaryFileLocation: $(FRONTEND_DIRECTORY)/coverage/catalogo-parametros-front/cobertura-coverage.xml
+      pathToSources: $(FRONTEND_DIRECTORY)/src
+      failIfCoverageEmpty: true
+
+  - bash: npm run build -- --configuration production
+    displayName: Compilar frontend para producción
+    workingDirectory: $(FRONTEND_DIRECTORY)
+
+  - bash: |
+      set -euo pipefail
+      token_sin_resolver='$''(SONAR_TOKEN)'
+      if [[ -z "${SONAR_TOKEN:-}" || "$SONAR_TOKEN" == "$token_sin_resolver" ]]; then
+        echo "##vso[task.logissue type=error]Configura SONAR_TOKEN como variable secreta del pipeline."
+        exit 1
+      fi
+
+      npm run sonar -- \
+        -Dsonar.qualitygate.wait=true \
+        -Dsonar.qualitygate.timeout=300
+    displayName: Analizar Sonar y exigir Quality Gate
+    workingDirectory: $(FRONTEND_DIRECTORY)
+    env:
+      SONAR_TOKEN: $(SONAR_TOKEN)
+      SONAR_USER_HOME: $(SONAR_USER_HOME)
+      SONAR_BINARY_CACHE: $(SONAR_BINARY_CACHE)
+
+  - task: Docker@2
+    displayName: Autenticarse en Docker Hub
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/develop'), ne(variables['Build.Reason'], 'PullRequest'))
+    inputs:
+      command: login
+      containerRegistry: DockerHubConnection
+
+  - bash: |
+      set -euo pipefail
+
+      repositorio="${IMAGE_REPOSITORY}"
+      version_anterior="${IMAGE_VERSION_PREFIX}.${IMAGE_VERSION_PATCH}"
+      imagen_nueva="catalogo-front-candidato:${BUILD_BUILDID}"
+
+      if [[ ! "$version_anterior" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        echo "##vso[task.logissue type=error]La versión debe tener formato X.Y.Z."
+        exit 1
+      fi
+
+      echo "Construyendo nueva imagen..."
+      docker build --file Dockerfile --tag "$imagen_nueva" .
+
+      archivo_error="$(mktemp)"
+      trap 'rm -f "$archivo_error"' EXIT
+
+      echo "Buscando latest anterior..."
+      if docker pull "${repositorio}:latest" 2>"$archivo_error"; then
+        if docker manifest inspect "${repositorio}:${version_anterior}" > /dev/null 2>"$archivo_error"; then
+          echo "##vso[task.logissue type=error]La versión ${version_anterior} ya existe. No se sobrescribirá."
+          exit 1
+        elif ! grep -Eqi 'manifest unknown|no such manifest' "$archivo_error"; then
+          cat "$archivo_error" >&2
+          echo "##vso[task.logissue type=error]No se pudo comprobar si la versión histórica existe."
+          exit 1
+        fi
+
+        echo "Guardando latest anterior como ${repositorio}:${version_anterior}..."
+        docker tag "${repositorio}:latest" "${repositorio}:${version_anterior}"
+        docker push "${repositorio}:${version_anterior}"
+      elif grep -Eqi 'manifest unknown|no such manifest' "$archivo_error"; then
+        echo "No existe latest anterior. Se publicará el primer latest."
+      else
+        cat "$archivo_error" >&2
+        echo "##vso[task.logissue type=error]No se pudo descargar latest. Se cancela la publicación."
+        exit 1
+      fi
+
+      echo "Publicando nueva imagen como ${repositorio}:latest..."
+      docker tag "$imagen_nueva" "${repositorio}:latest"
+      docker push "${repositorio}:latest"
+    displayName: Versionar imagen anterior y publicar nueva como latest
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/develop'), ne(variables['Build.Reason'], 'PullRequest'))
+    workingDirectory: $(FRONTEND_DIRECTORY)
+
+  - task: Docker@2
+    displayName: Cerrar sesión en Docker Hub
+    condition: and(always(), eq(variables['Build.SourceBranch'], 'refs/heads/develop'), ne(variables['Build.Reason'], 'PullRequest'))
+    inputs:
+      command: logout
+      containerRegistry: DockerHubConnection
