@@ -1,19 +1,12 @@
 import { Routes } from '@angular/router';
-import { DashboardComponent } from './layout/components/dashboard/dashboard.component';
-import { OrganizacionesComponent } from './features/organizaciones/components/organizaciones.component';
-import { AplicacionesComponent } from './features/aplicaciones/components/aplicaciones.component';
-import { ModulosComponent } from './features/modulos/components/modulos.component';
-import { FuncionalidadesComponent } from './features/funcionalidades/components/funcionalidades.component';
-import { ParametrosComponent } from './features/parametros/components/parametros.component';
-import { MetadatosComponent } from './features/metadatos/components/metadatos.component';
-
 export const appRoutes: Routes = [
-  { path: '', redirectTo: '/dashboard', pathMatch: 'full' },
-  { path: 'dashboard', component: DashboardComponent },
-  { path: 'organizaciones', component: OrganizacionesComponent },
-  { path: 'aplicaciones', component: AplicacionesComponent },
-  { path: 'modulos', component: ModulosComponent },
-  { path: 'funcionalidades', component: FuncionalidadesComponent },
-  { path: 'parametros', component: ParametrosComponent },
-  { path: 'metadatos', component: MetadatosComponent }
+  { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+  { path: 'dashboard', loadComponent: () => import('./layout/components/dashboard/dashboard.component').then(m => m.DashboardComponent) },
+  { path: 'organizaciones', loadChildren: () => import('./features/organizaciones/organizaciones.routes').then(m => m.ORGANIZACIONES_ROUTES) },
+  { path: 'aplicaciones', loadChildren: () => import('./features/aplicaciones/aplicaciones.routes').then(m => m.APLICACIONES_ROUTES) },
+  { path: 'modulos', loadChildren: () => import('./features/modulos/modulos.routes').then(m => m.MODULOS_ROUTES) },
+  { path: 'funcionalidades', loadChildren: () => import('./features/funcionalidades/funcionalidades.routes').then(m => m.FUNCIONALIDADES_ROUTES) },
+  { path: 'parametros', loadChildren: () => import('./features/parametros/parametros.routes').then(m => m.PARAMETROS_ROUTES) },
+  { path: 'metadatos', loadChildren: () => import('./features/metadatos/metadatos.routes').then(m => m.METADATOS_ROUTES) },
+  { path: '**', redirectTo: 'dashboard' }
 ];

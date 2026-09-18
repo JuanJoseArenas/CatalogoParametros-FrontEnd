@@ -1,9 +1,9 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { ApiService } from '../../../core/services/api.service';
-import { SseService } from '../../../core/services/sse.service';
-import { Organizacion } from '../../../shared/models';
+import { EventStreamService } from '../../../core/realtime/event-stream.service';
+import { Organizacion } from '../domain/organizacion';
+import { OrganizacionesRepository } from '../domain/organizaciones.repository';
 import { fechaConZona } from '../../../shared/utils/date.utils';
 import { Subscription } from 'rxjs';
 
@@ -148,7 +148,7 @@ export class OrganizacionesComponent implements OnInit, OnDestroy {
   pageSize = 10;
   private subscriptions: Subscription[] = [];
 
-  constructor(private apiService: ApiService, private fb: FormBuilder, private sseService: SseService) {
+  constructor(private repository: OrganizacionesRepository, private fb: FormBuilder, private eventStream: EventStreamService) {
     this.organizacionForm = this.fb.group({
       nombre: ['', Validators.required],
       fechaInicio: [''],
@@ -177,7 +177,7 @@ export class OrganizacionesComponent implements OnInit, OnDestroy {
     this.errorMessage = '';
     this.successMessage = '';
 
-    this.apiService.getOrganizaciones(this.page, this.pageSize).subscribe({
+    this.repository.findPage(this.page, this.pageSize).subscribe({
       next: (data) => {
         this.organizaciones = data;
         this.loading = false;
@@ -196,8 +196,7 @@ export class OrganizacionesComponent implements OnInit, OnDestroy {
   }
 
   connectSse(): void {
-    const url = `${this.apiService.getBaseUrl()}/organizaciones/events`;
-    const sub = this.sseService.connect(url, 'organizacion').subscribe({
+    const sub = this.eventStream.connect<any>(this.repository.eventsUrl, 'organizacion').subscribe({
       next: (data: any) => {
         this.isConnected = true;
         
@@ -282,7 +281,7 @@ export class OrganizacionesComponent implements OnInit, OnDestroy {
     }
 
     if (this.isEditing && this.editingId) {
-      this.apiService.updateOrganizacion(this.editingId, data).subscribe({
+      this.repository.update(this.editingId, data).subscribe({
         next: (response) => {
           this.successMessage = response.mensajes[0] || 'Organizacion actualizada exitosamente';
           this.saving = false;
@@ -294,7 +293,7 @@ export class OrganizacionesComponent implements OnInit, OnDestroy {
         }
       });
     } else {
-      this.apiService.createOrganizacion(data).subscribe({
+      this.repository.create(data).subscribe({
         next: (response) => {
           this.successMessage = response.mensajes[0] || 'Organizacion creada exitosamente';
           this.saving = false;
@@ -316,7 +315,7 @@ export class OrganizacionesComponent implements OnInit, OnDestroy {
     this.errorMessage = '';
     this.successMessage = '';
 
-    this.apiService.deleteOrganizacion(id).subscribe({
+    this.repository.delete(id).subscribe({
       next: (response) => {
         this.successMessage = response.mensajes[0] || 'Organizacion eliminada exitosamente';
         this.errorMessage = '';

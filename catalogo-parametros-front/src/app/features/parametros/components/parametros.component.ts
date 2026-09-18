@@ -1,9 +1,11 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } from '@angular/forms';
-import { ApiService } from '../../../core/services/api.service';
-import { SseService } from '../../../core/services/sse.service';
-import { Parametro, Funcionalidad, TipoParametro } from '../../../shared/models';
+import { EventStreamService } from '../../../core/realtime/event-stream.service';
+import { Parametro, TipoParametro } from '../domain/parametro';
+import { ParametrosRepository } from '../domain/parametros.repository';
+import { Funcionalidad } from '../../funcionalidades/domain/funcionalidad';
+import { FuncionalidadesRepository } from '../../funcionalidades/domain/funcionalidades.repository';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -171,7 +173,7 @@ export class ParametrosComponent implements OnInit, OnDestroy {
   pageSize = 10;
   private subscriptions: Subscription[] = [];
 
-  constructor(private apiService: ApiService, private fb: FormBuilder, private sseService: SseService) {
+  constructor(private repository: ParametrosRepository, private funcionalidadesRepository: FuncionalidadesRepository, private fb: FormBuilder, private eventStream: EventStreamService) {
     this.parametroForm = this.fb.group({
       nombre: ['', Validators.required],
       idFuncionalidad: ['', Validators.required],
@@ -203,7 +205,7 @@ export class ParametrosComponent implements OnInit, OnDestroy {
     this.errorMessage = '';
     this.successMessage = '';
 
-    this.apiService.getParametros(this.page, this.pageSize).subscribe({
+    this.repository.findPage(this.page, this.pageSize).subscribe({
       next: (data) => {
         this.parametros = data;
         this.loading = false;
@@ -222,7 +224,7 @@ export class ParametrosComponent implements OnInit, OnDestroy {
   }
 
   loadFuncionalidades(): void {
-    this.apiService.getAllFuncionalidades().subscribe({
+    this.funcionalidadesRepository.findAll().subscribe({
       next: (data) => {
         this.funcionalidades = data;
       },
@@ -233,8 +235,7 @@ export class ParametrosComponent implements OnInit, OnDestroy {
   }
 
   connectSse(): void {
-    const url = `${this.apiService.getBaseUrl()}/parametros/events`;
-    const sub = this.sseService.connect(url, 'parametro').subscribe({
+    const sub = this.eventStream.connect<any>(this.repository.eventsUrl, 'parametro').subscribe({
       next: (data: any) => {
         this.isConnected = true;
         
@@ -277,7 +278,7 @@ export class ParametrosComponent implements OnInit, OnDestroy {
   }
 
   loadTiposParametro(): void {
-    this.apiService.getTiposParametro().subscribe({
+    this.repository.findTypes().subscribe({
       next: (data) => {
         this.tiposParametro = data;
       },
@@ -337,7 +338,7 @@ export class ParametrosComponent implements OnInit, OnDestroy {
     };
 
     if (this.isEditing && this.editingId) {
-      this.apiService.updateParametro(this.editingId, data).subscribe({
+      this.repository.update(this.editingId, data).subscribe({
         next: (response) => {
           this.successMessage = response.mensajes[0] || 'Parametro actualizado exitosamente';
           this.saving = false;
@@ -349,7 +350,7 @@ export class ParametrosComponent implements OnInit, OnDestroy {
         }
       });
     } else {
-      this.apiService.createParametro(data).subscribe({
+      this.repository.create(data).subscribe({
         next: (response) => {
           this.successMessage = response.mensajes[0] || 'Parametro creado exitosamente';
           this.saving = false;
@@ -371,7 +372,7 @@ export class ParametrosComponent implements OnInit, OnDestroy {
     this.errorMessage = '';
     this.successMessage = '';
 
-    this.apiService.deleteParametro(id).subscribe({
+    this.repository.delete(id).subscribe({
       next: (response) => {
         this.successMessage = response.mensajes[0] || 'Parametro eliminado exitosamente';
         this.errorMessage = '';
@@ -387,7 +388,7 @@ export class ParametrosComponent implements OnInit, OnDestroy {
     this.errorMessage = '';
     this.successMessage = '';
 
-    this.apiService.changeParametroStatus(parametro.id, activo).subscribe({
+    this.repository.changeStatus(parametro.id, activo).subscribe({
       next: (response) => {
         this.parametros = this.parametros.map(param =>
           param.id === parametro.id ? { ...param, activo } : param

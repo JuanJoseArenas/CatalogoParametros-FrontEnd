@@ -14,31 +14,34 @@ Frontend desarrollado en Angular 17 para el sistema de catalogo de parametros.
 ## Estructura del Proyecto
 
 ```
-src/
-├── app/
-│   ├── core/
-│   │   └── services/
-│   │       └── api.service.ts          # Servicio de comunicacion con el backend
-│   ├── features/
-│   │   ├── organizaciones/
-│   │   ├── aplicaciones/
-│   │   ├── modulos/
-│   │   ├── funcionalidades/
-│   │   └── parametros/
-│   ├── layout/
-│   │   └── components/
-│   │       ├── sidebar/                # Menu lateral de navegacion
-│   │       └── dashboard/              # Panel principal
-│   └── shared/
-│       └── models/                     # Interfaces TypeScript
-├── assets/
-├── environments/
-│   ├── environment.ts
-│   └── environment.development.ts
-├── index.html
-├── main.ts
-└── styles.css
+src/app/
+├── core/                     # Infraestructura transversal de la aplicacion
+│   ├── http/                 # Tratamiento comun de errores HTTP
+│   └── realtime/             # Transporte Server-Sent Events
+├── features/                 # Modulos verticales e independientes
+│   └── <feature>/
+│       ├── domain/           # Entidades y puertos; no conoce Angular HTTP
+│       ├── data/             # Adaptadores HTTP que implementan los puertos
+│       ├── components/       # Capa de presentacion
+│       └── <feature>.routes.ts # Composicion y proveedores de la feature
+├── layout/                   # Estructura visual global
+└── shared/                   # Contratos y utilidades sin logica de negocio
 ```
+
+Las rutas de cada feature se cargan de forma diferida. La presentacion depende de
+abstracciones del dominio y las implementaciones HTTP se conectan exclusivamente
+en el archivo de rutas de cada feature. De esta manera, cambiar el origen de datos
+o probar una pantalla con un repositorio falso no exige modificar el componente.
+
+### Regla de dependencias
+
+`presentation -> domain <- data`
+
+- `domain` contiene reglas, entidades y contratos; nunca importa desde `data`.
+- `data` conoce HTTP y el backend, e implementa contratos de `domain`.
+- `components` coordina estado de UI y consume únicamente contratos de `domain`.
+- `core` no contiene lógica propia de una feature.
+- `shared` solo aloja piezas reutilizadas por más de una feature.
 
 ## Requisitos
 

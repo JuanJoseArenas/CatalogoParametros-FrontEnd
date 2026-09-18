@@ -3,9 +3,11 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, Subscription } from 'rxjs';
-import { ApiService } from '../../../core/services/api.service';
-import { SseService } from '../../../core/services/sse.service';
-import { Metadato, Parametro, TipoMetadato } from '../../../shared/models';
+import { EventStreamService } from '../../../core/realtime/event-stream.service';
+import { Metadato, TipoMetadato } from '../domain/metadato';
+import { MetadatosRepository } from '../domain/metadatos.repository';
+import { Parametro } from '../../parametros/domain/parametro';
+import { ParametrosRepository } from '../../parametros/domain/parametros.repository';
 
 @Component({
   selector: 'app-metadatos',
@@ -126,13 +128,13 @@ export class MetadatosComponent implements OnInit, OnDestroy {
   searchTerm = '';
   private subscriptions: Subscription[] = [];
 
-  constructor(private apiService: ApiService, private sseService: SseService, fb: FormBuilder) {
+  constructor(private repository: MetadatosRepository, private parametrosRepository: ParametrosRepository, private eventStream: EventStreamService, fb: FormBuilder) {
     this.metadatoForm = fb.group({ idParametro: ['', Validators.required], idTipoMetadato: ['', Validators.required], valor: ['', Validators.required] });
   }
 
   ngOnInit(): void {
     this.loadMetadatos();
-    forkJoin({ parametros: this.apiService.getAllParametros(), tipos: this.apiService.getTiposMetadato() }).subscribe({
+    forkJoin({ parametros: this.parametrosRepository.findAll(), tipos: this.repository.findTypes() }).subscribe({
       next: data => { this.parametros = data.parametros; this.tiposMetadato = data.tipos; },
       error: err => { this.errorMessage = err.message || 'Error al cargar los datos del formulario'; }
     });
@@ -154,7 +156,7 @@ export class MetadatosComponent implements OnInit, OnDestroy {
 
   loadMetadatos(): void {
     this.loading = true; this.errorMessage = '';
-    this.apiService.getMetadatos().subscribe({
+    this.repository.findAll().subscribe({
       next: data => { this.metadatos = data; this.loading = false; },
       error: err => { this.errorMessage = err.message || 'Error al cargar los metadatos'; this.loading = false; }
     });
@@ -166,7 +168,7 @@ export class MetadatosComponent implements OnInit, OnDestroy {
     return typeof valor === 'string' ? valor : JSON.stringify(valor);
   }
   connectSse(): void {
-    const subscription = this.sseService.connect(`${this.apiService.getBaseUrl()}/metadatos/events`, 'metadato').subscribe({
+    const subscription = this.eventStream.connect<any>(this.repository.eventsUrl, 'metadato').subscribe({
       next: data => {
         this.isConnected = true;
         const entity = data.metadato as Metadato;
@@ -220,8 +222,8 @@ export class MetadatosComponent implements OnInit, OnDestroy {
     const formValue = this.metadatoForm.getRawValue();
     const data = { idParametro: formValue.idParametro, idTipoMetadato: formValue.idTipoMetadato, valor };
     const request = this.isEditing && this.editingId
-      ? this.apiService.updateMetadato(this.editingId, data)
-      : this.apiService.createMetadato(data);
+      ? this.repository.update(this.editingId, data)
+      : this.repository.create(data);
     request.subscribe({
       next: response => {
         this.successMessage = response.mensajes?.[0] || (this.isEditing ? 'Metadato actualizado exitosamente' : 'Metadato creado exitosamente');
@@ -269,7 +271,7 @@ export class MetadatosComponent implements OnInit, OnDestroy {
   deleteMetadato(id: string): void {
     if (!confirm('¿Está seguro de eliminar este metadato?')) return;
     this.errorMessage = ''; this.successMessage = '';
-    this.apiService.deleteMetadato(id).subscribe({
+    this.repository.delete(id).subscribe({
       next: response => { this.successMessage = response.mensajes?.[0] || 'Metadato eliminado exitosamente'; this.loadMetadatos(); },
       error: err => { this.errorMessage = err.message || 'Error al eliminar el metadato'; }
     });
