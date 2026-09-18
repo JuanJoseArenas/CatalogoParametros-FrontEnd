@@ -66,6 +66,34 @@ La aplicacion estara disponible en `http://localhost:4200`
 
 ## Configuracion
 
+### Docker Compose (frontend y backend)
+
+Desde la carpeta `CatalogoParametros/CatalogoParametrosUcoLab` del workspace:
+
+```bash
+docker compose up --build -d
+```
+
+El frontend queda disponible en `http://localhost:4200` y el backend en
+`http://localhost:8080`. El Compose incluye los servicios de infraestructura
+existentes y requiere las variables de Azure del backend previamente configuradas.
+Conservar la estructura de carpetas del workspace: el contexto de construccion
+del frontend es `../../CatalogoParametrosFrontend/CatalogoParametros-FrontEnd/catalogo-parametros-front`,
+relativo al Compose.
+
+El Dockerfile compila Angular en modo produccion y sirve el resultado con Nginx.
+`environment.production.ts` usa una URL relativa y Nginx redirige
+`/catalogo-parametros/` a `app:8080` dentro de la red Docker, incluidos los eventos
+SSE. Las rutas de Angular pueden abrirse directamente o recargarse.
+
+Para reconstruir solo el frontend con el backend ya levantado:
+
+```bash
+docker compose up --build -d --no-deps frontend
+```
+
+### Desarrollo local
+
 La URL del backend se configura en `src/environments/environment.ts`:
 
 ```typescript
