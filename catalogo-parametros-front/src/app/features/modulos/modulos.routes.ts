@@ -11,4 +11,5 @@ export const MODULOS_ROUTES: Routes = [{
     { provide: AplicacionesRepository, useClass: HttpAplicacionesRepository }
   ],
   loadComponent: () => import('./components/modulos.component').then(m => m.ModulosComponent)
+  
 }];
