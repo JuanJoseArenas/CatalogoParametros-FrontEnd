@@ -19,7 +19,7 @@ variables:
   NPM_CONFIG_CACHE: $(Pipeline.Workspace)/.npm
   SONAR_USER_HOME: $(Pipeline.Workspace)/.sonar
   SONAR_BINARY_CACHE: $(Pipeline.Workspace)/.sonar/native-sonar-scanner
-  IMAGE_REPOSITORY: simon4219/catalogo-parametros-front
+  IMAGE_REPOSITORY: simon4219/catalogo-parametros-frontend
   IMAGE_VERSION_PREFIX: '0.0'
   # La version se asigna al latest ANTERIOR, no a la imagen nueva.
   # Los PR tienen un contador separado y nunca publican imagenes.
