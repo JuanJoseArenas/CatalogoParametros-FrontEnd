@@ -2,9 +2,11 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
-import { ApiService } from '../../../core/services/api.service';
-import { SseService } from '../../../core/services/sse.service';
-import { Aplicacion, Organizacion } from '../../../shared/models';
+import { EventStreamService } from '../../../core/realtime/event-stream.service';
+import { Aplicacion } from '../domain/aplicacion';
+import { AplicacionesRepository } from '../domain/aplicaciones.repository';
+import { Organizacion } from '../../organizaciones/domain/organizacion';
+import { OrganizacionesRepository } from '../../organizaciones/domain/organizaciones.repository';
 import { fechaConZona } from '../../../shared/utils/date.utils';
 import { Subscription } from 'rxjs';
 
@@ -177,7 +179,7 @@ export class AplicacionesComponent implements OnInit, OnDestroy {
   pageSize = 10;
   private subscriptions: Subscription[] = [];
 
-  constructor(private apiService: ApiService, private fb: FormBuilder, private sseService: SseService) {
+  constructor(private repository: AplicacionesRepository, private organizacionesRepository: OrganizacionesRepository, private fb: FormBuilder, private eventStream: EventStreamService) {
     this.aplicacionForm = this.fb.group({
       nombre: ['', Validators.required],
       idOrganizacion: ['', Validators.required],
@@ -209,7 +211,7 @@ export class AplicacionesComponent implements OnInit, OnDestroy {
     this.errorMessage = '';
     this.successMessage = '';
 
-    this.apiService.getAplicaciones(this.page, this.pageSize).subscribe({
+    this.repository.findPage(this.page, this.pageSize).subscribe({
       next: (data) => {
         this.aplicaciones = data;
         this.loading = false;
@@ -228,7 +230,7 @@ export class AplicacionesComponent implements OnInit, OnDestroy {
   }
 
   loadOrganizaciones(): void {
-    this.apiService.getAllOrganizaciones().subscribe({
+    this.organizacionesRepository.findAll().subscribe({
       next: (data) => {
         this.organizaciones = data;
       },
@@ -239,8 +241,7 @@ export class AplicacionesComponent implements OnInit, OnDestroy {
   }
 
   connectSse(): void {
-    const url = `${this.apiService.getBaseUrl()}/aplicaciones/events`;
-    const sub = this.sseService.connect(url, 'aplicacion').subscribe({
+    const sub = this.eventStream.connect<any>(this.repository.eventsUrl, 'aplicacion').subscribe({
       next: (data: any) => {
         this.isConnected = true;
         
@@ -335,7 +336,7 @@ export class AplicacionesComponent implements OnInit, OnDestroy {
     }
 
     if (this.isEditing && this.editingId) {
-      this.apiService.updateAplicacion(this.editingId, data).subscribe({
+      this.repository.update(this.editingId, data).subscribe({
         next: (response) => {
           this.successMessage = response.mensajes[0] || 'Aplicacion actualizada exitosamente';
           this.saving = false;
@@ -347,7 +348,7 @@ export class AplicacionesComponent implements OnInit, OnDestroy {
         }
       });
     } else {
-      this.apiService.createAplicacion(data).subscribe({
+      this.repository.create(data).subscribe({
         next: (response) => {
           this.successMessage = response.mensajes[0] || 'Aplicacion creada exitosamente';
           this.saving = false;
@@ -366,7 +367,7 @@ export class AplicacionesComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.apiService.deleteAplicacion(id).subscribe({
+    this.repository.delete(id).subscribe({
       next: (response) => {
         this.successMessage = response.mensajes[0] || 'Aplicacion eliminada exitosamente';
         this.errorMessage = '';
@@ -383,7 +384,7 @@ export class AplicacionesComponent implements OnInit, OnDestroy {
     this.errorMessage = '';
     this.successMessage = '';
 
-    this.apiService.changeAplicacionStatus(aplicacion.id, activa).subscribe({
+    this.repository.changeStatus(aplicacion.id, activa).subscribe({
       next: (response) => {
         this.aplicaciones = this.aplicaciones.map(app =>
           app.id === aplicacion.id ? { ...app, activa } : app

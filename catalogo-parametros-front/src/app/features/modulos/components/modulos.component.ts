@@ -2,9 +2,11 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
-import { ApiService } from '../../../core/services/api.service';
-import { SseService } from '../../../core/services/sse.service';
-import { Modulo, Aplicacion } from '../../../shared/models';
+import { EventStreamService } from '../../../core/realtime/event-stream.service';
+import { Modulo } from '../domain/modulo';
+import { ModulosRepository } from '../domain/modulos.repository';
+import { Aplicacion } from '../../aplicaciones/domain/aplicacion';
+import { AplicacionesRepository } from '../../aplicaciones/domain/aplicaciones.repository';
 import { fechaConZona } from '../../../shared/utils/date.utils';
 import { Subscription } from 'rxjs';
 
@@ -175,7 +177,7 @@ export class ModulosComponent implements OnInit, OnDestroy {
   pageSize = 10;
   private subscriptions: Subscription[] = [];
 
-  constructor(private apiService: ApiService, private fb: FormBuilder, private sseService: SseService) {
+  constructor(private repository: ModulosRepository, private aplicacionesRepository: AplicacionesRepository, private fb: FormBuilder, private eventStream: EventStreamService) {
     this.moduloForm = this.fb.group({
       nombre: ['', Validators.required],
       idAplicacion: ['', Validators.required],
@@ -206,7 +208,7 @@ export class ModulosComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.errorMessage = '';
 
-    this.apiService.getModulos(this.page, this.pageSize).subscribe({
+    this.repository.findPage(this.page, this.pageSize).subscribe({
       next: (data) => {
         this.modulos = data;
         this.loading = false;
@@ -225,7 +227,7 @@ export class ModulosComponent implements OnInit, OnDestroy {
   }
 
   loadAplicaciones(): void {
-    this.apiService.getAllAplicaciones().subscribe({
+    this.aplicacionesRepository.findAll().subscribe({
       next: (data) => {
         this.aplicaciones = data;
       },
@@ -236,8 +238,7 @@ export class ModulosComponent implements OnInit, OnDestroy {
   }
 
   connectSse(): void {
-    const url = `${this.apiService.getBaseUrl()}/modulos/events`;
-    const sub = this.sseService.connect(url, 'modulo').subscribe({
+    const sub = this.eventStream.connect<any>(this.repository.eventsUrl, 'modulo').subscribe({
       next: (data: any) => {
         this.isConnected = true;
         
@@ -331,8 +332,8 @@ export class ModulosComponent implements OnInit, OnDestroy {
     }
 
     const request = this.isEditing && this.editingId
-      ? this.apiService.updateModulo(this.editingId, data)
-      : this.apiService.createModulo(data);
+      ? this.repository.update(this.editingId, data)
+      : this.repository.create(data);
 
     request.subscribe({
       next: (response) => {
@@ -353,7 +354,7 @@ export class ModulosComponent implements OnInit, OnDestroy {
 
     this.errorMessage = '';
     this.successMessage = '';
-    this.apiService.deleteModulo(id).subscribe({
+    this.repository.delete(id).subscribe({
       next: (response) => {
         this.successMessage = response.mensajes[0] || 'Modulo eliminado exitosamente';
         this.loadModulos();
@@ -369,7 +370,7 @@ export class ModulosComponent implements OnInit, OnDestroy {
     this.errorMessage = '';
     this.successMessage = '';
 
-    this.apiService.changeModuloStatus(modulo.id, activo).subscribe({
+    this.repository.changeStatus(modulo.id, activo).subscribe({
       next: (response) => {
         this.modulos = this.modulos.map(mod =>
           mod.id === modulo.id ? { ...mod, activo } : mod

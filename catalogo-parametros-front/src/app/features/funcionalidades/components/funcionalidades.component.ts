@@ -2,9 +2,11 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
-import { ApiService } from '../../../core/services/api.service';
-import { SseService } from '../../../core/services/sse.service';
-import { Funcionalidad, Modulo } from '../../../shared/models';
+import { EventStreamService } from '../../../core/realtime/event-stream.service';
+import { Funcionalidad } from '../domain/funcionalidad';
+import { FuncionalidadesRepository } from '../domain/funcionalidades.repository';
+import { Modulo } from '../../modulos/domain/modulo';
+import { ModulosRepository } from '../../modulos/domain/modulos.repository';
 import { fechaConZona } from '../../../shared/utils/date.utils';
 import { Subscription } from 'rxjs';
 
@@ -175,7 +177,7 @@ export class FuncionalidadesComponent implements OnInit, OnDestroy {
   pageSize = 10;
   private subscriptions: Subscription[] = [];
 
-  constructor(private apiService: ApiService, private fb: FormBuilder, private sseService: SseService) {
+  constructor(private repository: FuncionalidadesRepository, private modulosRepository: ModulosRepository, private fb: FormBuilder, private eventStream: EventStreamService) {
     this.funcionalidadForm = this.fb.group({
       nombre: ['', Validators.required],
       idModulo: ['', Validators.required],
@@ -207,7 +209,7 @@ export class FuncionalidadesComponent implements OnInit, OnDestroy {
     this.errorMessage = '';
     this.successMessage = '';
 
-    this.apiService.getFuncionalidades(this.page, this.pageSize).subscribe({
+    this.repository.findPage(this.page, this.pageSize).subscribe({
       next: (data) => {
         this.funcionalidades = data;
         this.loading = false;
@@ -226,7 +228,7 @@ export class FuncionalidadesComponent implements OnInit, OnDestroy {
   }
 
   loadModulos(): void {
-    this.apiService.getAllModulos().subscribe({
+    this.modulosRepository.findAll().subscribe({
       next: (data) => {
         this.modulos = data;
       },
@@ -237,8 +239,7 @@ export class FuncionalidadesComponent implements OnInit, OnDestroy {
   }
 
   connectSse(): void {
-    const url = `${this.apiService.getBaseUrl()}/funcionalidades/events`;
-    const sub = this.sseService.connect(url, 'funcionalidad').subscribe({
+    const sub = this.eventStream.connect<any>(this.repository.eventsUrl, 'funcionalidad').subscribe({
       next: (data: any) => {
         this.isConnected = true;
         
@@ -332,7 +333,7 @@ export class FuncionalidadesComponent implements OnInit, OnDestroy {
     }
 
     if (this.isEditing && this.editingId) {
-      this.apiService.updateFuncionalidad(this.editingId, data).subscribe({
+      this.repository.update(this.editingId, data).subscribe({
         next: (response) => {
           this.successMessage = response.mensajes[0] || 'Funcionalidad actualizada exitosamente';
           this.saving = false;
@@ -344,7 +345,7 @@ export class FuncionalidadesComponent implements OnInit, OnDestroy {
         }
       });
     } else {
-      this.apiService.createFuncionalidad(data).subscribe({
+      this.repository.create(data).subscribe({
         next: (response) => {
           this.successMessage = response.mensajes[0] || 'Funcionalidad creada exitosamente';
           this.saving = false;
@@ -366,7 +367,7 @@ export class FuncionalidadesComponent implements OnInit, OnDestroy {
     this.errorMessage = '';
     this.successMessage = '';
 
-    this.apiService.deleteFuncionalidad(id).subscribe({
+    this.repository.delete(id).subscribe({
       next: (response) => {
         this.successMessage = response.mensajes[0] || 'Funcionalidad eliminada exitosamente';
         this.errorMessage = '';
@@ -382,7 +383,7 @@ export class FuncionalidadesComponent implements OnInit, OnDestroy {
     this.errorMessage = '';
     this.successMessage = '';
 
-    this.apiService.changeFuncionalidadStatus(funcionalidad.id, activo).subscribe({
+    this.repository.changeStatus(funcionalidad.id, activo).subscribe({
       next: (response) => {
         this.funcionalidades = this.funcionalidades.map(func =>
           func.id === funcionalidad.id ? { ...func, activo } : func

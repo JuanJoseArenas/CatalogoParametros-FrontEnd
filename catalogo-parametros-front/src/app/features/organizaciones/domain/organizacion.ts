@@ -4,3 +4,5 @@ export interface Organizacion {
   fechaInicio?: string;
   fechaFinal?: string;
 }
+
+export type OrganizacionInput = Omit<Organizacion, 'id'>;
