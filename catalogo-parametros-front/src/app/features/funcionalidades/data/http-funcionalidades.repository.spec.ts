@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { environment } from '../../../../environments/environment';
 import { HttpFuncionalidadesRepository } from './http-funcionalidades.repository';
@@ -7,7 +7,7 @@ import { HttpFuncionalidadesRepository } from './http-funcionalidades.repository
 describe('HttpFuncionalidadesRepository', () => {
   let repository: HttpFuncionalidadesRepository; let http: HttpTestingController;
   const url = `${environment.apiUrl}/funcionalidades`; const entity = { id: 'f1', nombre: 'Función', idModulo: 'm1', activo: true };
-  beforeEach(() => { TestBed.configureTestingModule({ providers: [HttpFuncionalidadesRepository, provideHttpClient(), provideHttpClientTesting()] }); repository = TestBed.inject(HttpFuncionalidadesRepository); http = TestBed.inject(HttpTestingController); });
+  beforeEach(() => { TestBed.configureTestingModule({ providers: [HttpFuncionalidadesRepository, provideHttpClient(withXhr()), provideHttpClientTesting()] }); repository = TestBed.inject(HttpFuncionalidadesRepository); http = TestBed.inject(HttpTestingController); });
   afterEach(() => http.verify());
   it('consulta páginas y todos los registros', () => {
     repository.findPage(1, 8).subscribe(v => expect(v).toEqual([entity])); let req = http.expectOne(r => r.url === url && r.params.get('pageSize') === '8'); req.flush({ mensajes: [], funcionalidades: [entity] });

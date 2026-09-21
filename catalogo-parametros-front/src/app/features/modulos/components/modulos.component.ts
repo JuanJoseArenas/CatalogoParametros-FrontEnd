@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
@@ -11,10 +11,9 @@ import { fechaConZona } from '../../../shared/utils/date.utils';
 import { Subscription } from 'rxjs';
 
 @Component({
-  selector: 'app-modulos',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
-  template: `
+    selector: 'app-modulos',
+    imports: [CommonModule, ReactiveFormsModule, FormsModule],
+    template: `
     <div class="modulos">
       <div class="page-header">
         <h1>Modulos</h1>
@@ -31,13 +30,17 @@ import { Subscription } from 'rxjs';
         </div>
       </div>
 
-      <div class="card" *ngIf="errorMessage">
-        <div class="alert alert-error">{{ errorMessage }}</div>
-      </div>
+      @if (errorMessage) {
+        <div class="card">
+          <div class="alert alert-error">{{ errorMessage }}</div>
+        </div>
+      }
 
-      <div class="card" *ngIf="successMessage">
-        <div class="alert alert-success">{{ successMessage }}</div>
-      </div>
+      @if (successMessage) {
+        <div class="card">
+          <div class="alert alert-success">{{ successMessage }}</div>
+        </div>
+      }
 
       <div class="card">
         <div class="card-header">
@@ -47,106 +50,121 @@ import { Subscription } from 'rxjs';
           </span>
         </div>
 
-        <div class="table-container" *ngIf="filteredModulos.length > 0">
-          <table>
-            <thead>
-              <tr>
-                <th>Nombre</th>
-                <th>Aplicacion</th>
-                <th>Fecha Inicio</th>
-                <th>Fecha Fin</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let mod of filteredModulos">
-                <td>{{ mod.nombre }}</td>
-                <td>{{ getAplicacionNombre(mod.idAplicacion) }}</td>
-                <td>{{ (mod.fechaInicio | slice:0:10) || '-' }}</td>
-                <td>{{ (mod.fechaFinal | slice:0:10) || '-' }}</td>
-                <td>
-                  <span class="badge" [class.badge-success]="mod.activo" [class.badge-danger]="!mod.activo">
-                    {{ mod.activo ? 'Activo' : 'Inactivo' }}
-                  </span>
-                </td>
-                <td>
-                  <button class="btn btn-warning btn-sm" (click)="editModulo(mod)">Editar</button>
-                  <button class="btn btn-secondary btn-sm" (click)="changeStatus(mod)">
-                    {{ mod.activo ? 'Desactivar' : 'Activar' }}
-                  </button>
-                  <button class="btn btn-danger btn-sm" (click)="deleteModulo(mod.id)">Eliminar</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        @if (filteredModulos.length > 0) {
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Aplicacion</th>
+                  <th>Fecha Inicio</th>
+                  <th>Fecha Fin</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (mod of filteredModulos; track mod) {
+                  <tr>
+                    <td>{{ mod.nombre }}</td>
+                    <td>{{ getAplicacionNombre(mod.idAplicacion) }}</td>
+                    <td>{{ (mod.fechaInicio | slice:0:10) || '-' }}</td>
+                    <td>{{ (mod.fechaFinal | slice:0:10) || '-' }}</td>
+                    <td>
+                      <span class="badge" [class.badge-success]="mod.activo" [class.badge-danger]="!mod.activo">
+                        {{ mod.activo ? 'Activo' : 'Inactivo' }}
+                      </span>
+                    </td>
+                    <td>
+                      <button class="btn btn-warning btn-sm" (click)="editModulo(mod)">Editar</button>
+                      <button class="btn btn-secondary btn-sm" (click)="changeStatus(mod)">
+                        {{ mod.activo ? 'Desactivar' : 'Activar' }}
+                      </button>
+                      <button class="btn btn-danger btn-sm" (click)="deleteModulo(mod.id)">Eliminar</button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
 
-        <div class="empty-state" *ngIf="filteredModulos.length === 0 && !loading">
-          <div class="empty-state-icon">📦</div>
-          <h3>No hay modulos</h3>
-          <p>Comienza creando un nuevo modulo</p>
-        </div>
+        @if (filteredModulos.length === 0 && !loading) {
+          <div class="empty-state">
+            <div class="empty-state-icon">📦</div>
+            <h3>No hay modulos</h3>
+            <p>Comienza creando un nuevo modulo</p>
+          </div>
+        }
 
-        <div class="loading" *ngIf="loading">
-          <div class="spinner"></div>
-        </div>
+        @if (loading) {
+          <div class="loading">
+            <div class="spinner"></div>
+          </div>
+        }
 
-        <div class="pagination" *ngIf="!loading && modulos.length > 0">
-          <button class="btn btn-secondary btn-sm" (click)="changePage(page - 1)" [disabled]="page <= 1">Anterior</button>
-          <span style="font-size: 0.9rem; color: #334155; font-weight: 600;">Página {{ page }}</span>
-          <button class="btn btn-secondary btn-sm" (click)="changePage(page + 1)" [disabled]="modulos.length < pageSize">Siguiente</button>
-        </div>
+        @if (!loading && modulos.length > 0) {
+          <div class="pagination">
+            <button class="btn btn-secondary btn-sm" (click)="changePage(page - 1)" [disabled]="page <= 1">Anterior</button>
+            <span style="font-size: 0.9rem; color: #334155; font-weight: 600;">Página {{ page }}</span>
+            <button class="btn btn-secondary btn-sm" (click)="changePage(page + 1)" [disabled]="modulos.length < pageSize">Siguiente</button>
+          </div>
+        }
       </div>
     </div>
 
     <!-- Modal -->
-    <div class="modal-overlay" *ngIf="showModal" (click)="closeModalOnOverlay($event)">
-      <div class="modal">
-        <div class="modal-header">
-          <h3 class="modal-title">{{ isEditing ? 'Editar' : 'Nuevo' }} Modulo</h3>
-          <button class="modal-close" (click)="closeModal()">&times;</button>
-        </div>
-        <div class="modal-body">
-          <form [formGroup]="moduloForm" (ngSubmit)="saveModulo()">
-            <div class="form-group">
-              <label class="form-label">Nombre</label>
-              <input type="text" class="form-control" formControlName="nombre" placeholder="Nombre del modulo">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Aplicacion</label>
-              <select class="form-control" formControlName="idAplicacion">
-                <option value="">Seleccione una aplicacion</option>
-                <option *ngFor="let app of aplicaciones" [value]="app.id">{{ app.nombre }}</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Fecha Inicio</label>
-              <input type="date" class="form-control" formControlName="fechaInicio">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Fecha Fin</label>
-              <input type="date" class="form-control" formControlName="fechaFinal">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Estado</label>
-              <select class="form-control" formControlName="activo">
-                <option [value]="true">Activo</option>
-                <option [value]="false">Inactivo</option>
-              </select>
-            </div>
-          </form>
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
-          <button class="btn btn-primary" (click)="saveModulo()" [disabled]="moduloForm.invalid || saving">
-            {{ saving ? 'Guardando...' : (isEditing ? 'Actualizar' : 'Crear') }}
-          </button>
+    @if (showModal) {
+      <div class="modal-overlay" (click)="closeModalOnOverlay($event)">
+        <div class="modal">
+          <div class="modal-header">
+            <h3 class="modal-title">{{ isEditing ? 'Editar' : 'Nuevo' }} Modulo</h3>
+            <button class="modal-close" (click)="closeModal()">&times;</button>
+          </div>
+          <div class="modal-body">
+            <form [formGroup]="moduloForm" (ngSubmit)="saveModulo()">
+              <div class="form-group">
+                <label class="form-label">Nombre</label>
+                <input type="text" class="form-control" formControlName="nombre" placeholder="Nombre del modulo">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Aplicacion</label>
+                <select class="form-control" formControlName="idAplicacion">
+                  <option value="">Seleccione una aplicacion</option>
+                  @for (app of aplicaciones; track app) {
+                    <option [value]="app.id">{{ app.nombre }}</option>
+                  }
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Fecha Inicio</label>
+                <input type="date" class="form-control" formControlName="fechaInicio">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Fecha Fin</label>
+                <input type="date" class="form-control" formControlName="fechaFinal">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Estado</label>
+                <select class="form-control" formControlName="activo">
+                  <option [value]="true">Activo</option>
+                  <option [value]="false">Inactivo</option>
+                </select>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
+            <button class="btn btn-primary" (click)="saveModulo()" [disabled]="moduloForm.invalid || saving">
+              {{ saving ? 'Guardando...' : (isEditing ? 'Actualizar' : 'Crear') }}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  `,
-  styles: [`
+    }
+    `,
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styles: [`
     .modulos {
       max-width: 1200px;
       margin: 0 auto;
@@ -241,12 +259,12 @@ export class ModulosComponent implements OnInit, OnDestroy {
     const sub = this.eventStream.connect<any>(this.repository.eventsUrl, 'modulo').subscribe({
       next: (data: any) => {
         this.isConnected = true;
-        
+
         const entity = data.modulo;
         const eventType = data.event;
-        
+
         if (!entity) return;
-        
+
         switch (eventType) {
           case 'CREATED':
             if (!this.modulos.find(m => m.id === entity.id)) {

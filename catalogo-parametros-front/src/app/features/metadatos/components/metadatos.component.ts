@@ -1,5 +1,5 @@
-import { CommonModule } from '@angular/common';
-import { Component, OnDestroy, OnInit } from '@angular/core';
+
+import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, Subscription } from 'rxjs';
@@ -10,10 +10,9 @@ import { Parametro } from '../../parametros/domain/parametro';
 import { ParametrosRepository } from '../../parametros/domain/parametros.repository';
 
 @Component({
-  selector: 'app-metadatos',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
-  template: `
+    selector: 'app-metadatos',
+    imports: [ReactiveFormsModule, FormsModule],
+    template: `
     <div class="metadatos">
       <div class="page-header">
         <h1>Metadatos</h1>
@@ -30,79 +29,110 @@ import { ParametrosRepository } from '../../parametros/domain/parametros.reposit
         </div>
       </div>
 
-      <div class="card" *ngIf="errorMessage"><div class="alert alert-error">{{ errorMessage }}</div></div>
-      <div class="card" *ngIf="successMessage"><div class="alert alert-success">{{ successMessage }}</div></div>
+      @if (errorMessage) {
+        <div class="card"><div class="alert alert-error">{{ errorMessage }}</div></div>
+      }
+      @if (successMessage) {
+        <div class="card"><div class="alert alert-success">{{ successMessage }}</div></div>
+      }
 
       <div class="card">
         <div class="card-header">
           <h2 class="card-title">Lista de Metadatos</h2>
           <span class="record-count">{{ filteredMetadatos.length }} registro(s)</span>
         </div>
-        <div class="table-container" *ngIf="filteredMetadatos.length > 0">
-          <table>
-            <thead><tr><th>Parámetro</th><th>Tipo de Metadato</th><th>Valor</th><th>Acciones</th></tr></thead>
-            <tbody>
-              <tr *ngFor="let metadato of filteredMetadatos">
-                <td>{{ getParametroNombre(metadato.idParametro) }}</td>
-                <td>{{ getTipoNombre(metadato.idTipoMetadato) }}</td>
-                <td><span class="value-preview" [title]="formatValor(metadato.valor)">{{ formatValor(metadato.valor) }}</span></td>
-                <td>
-                  <button class="btn btn-warning btn-sm" (click)="editMetadato(metadato)">Editar</button>
-                  <button class="btn btn-danger btn-sm" (click)="deleteMetadato(metadato.id)">Eliminar</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        <div class="empty-state" *ngIf="filteredMetadatos.length === 0 && !loading">
-          <div class="empty-state-icon">🧩</div><h3>No hay metadatos</h3><p>Comienza creando un nuevo metadato</p>
-        </div>
-        <div class="loading" *ngIf="loading"><div class="spinner"></div></div>
+        @if (filteredMetadatos.length > 0) {
+          <div class="table-container">
+            <table>
+              <thead><tr><th>Parámetro</th><th>Tipo de Metadato</th><th>Valor</th><th>Acciones</th></tr></thead>
+              <tbody>
+                @for (metadato of filteredMetadatos; track metadato) {
+                  <tr>
+                    <td>{{ getParametroNombre(metadato.idParametro) }}</td>
+                    <td>{{ getTipoNombre(metadato.idTipoMetadato) }}</td>
+                    <td><span class="value-preview" [title]="formatValor(metadato.valor)">{{ formatValor(metadato.valor) }}</span></td>
+                    <td>
+                      <button class="btn btn-warning btn-sm" (click)="editMetadato(metadato)">Editar</button>
+                      <button class="btn btn-danger btn-sm" (click)="deleteMetadato(metadato.id)">Eliminar</button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+        @if (filteredMetadatos.length === 0 && !loading) {
+          <div class="empty-state">
+            <div class="empty-state-icon">🧩</div><h3>No hay metadatos</h3><p>Comienza creando un nuevo metadato</p>
+          </div>
+        }
+        @if (loading) {
+          <div class="loading"><div class="spinner"></div></div>
+        }
       </div>
     </div>
 
-    <div class="modal-overlay" *ngIf="showModal" (click)="closeModalOnOverlay($event)">
-      <div class="modal">
-        <div class="modal-header"><h3 class="modal-title">{{ isEditing ? 'Editar' : 'Nuevo' }} Metadato</h3><button class="modal-close" (click)="closeModal()">&times;</button></div>
-        <div class="modal-body">
-          <form [formGroup]="metadatoForm" (ngSubmit)="saveMetadato()">
-            <div class="form-group">
-              <label class="form-label">Parámetro</label>
-              <select class="form-control" formControlName="idParametro">
-                <option value="">Seleccione un parámetro</option>
-                <option *ngFor="let parametro of parametros" [value]="parametro.id">{{ parametro.nombre }}</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Tipo de Metadato</label>
-              <select class="form-control" formControlName="idTipoMetadato" (change)="onTipoChange()">
-                <option value="">Seleccione un tipo</option>
-                <option *ngFor="let tipo of tiposMetadato" [value]="tipo.id">
-                  {{ tipo.tipo }}{{ tipo.detalle ? ' - ' + tipo.detalle : '' }}
-                </option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Valor</label>
-              <textarea *ngIf="selectedTipo === 'json'" class="form-control value-input" formControlName="valor"
-                placeholder='Ejemplo: {"propiedad":"valor"} o ["valor1","valor2"]'></textarea>
-              <input *ngIf="selectedTipo === 'date'" type="date" class="form-control" formControlName="valor">
-              <input *ngIf="selectedTipo !== 'json' && selectedTipo !== 'date'" type="text" class="form-control"
-                formControlName="valor" [placeholder]="selectedTipo === 'alfanumerico' ? 'Ingrese un valor alfanumérico' : 'Seleccione primero un tipo de metadato'">
-              <small class="field-help" *ngIf="selectedTipo === 'json'">Debe ser un objeto o un arreglo JSON válido.</small>
-              <small class="field-help" *ngIf="selectedTipo === 'date'">La fecha se enviará en formato yyyy-MM-dd.</small>
-              <small class="field-help" *ngIf="selectedTipo === 'alfanumerico'">El valor se enviará como una cadena de texto.</small>
-            </div>
-          </form>
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
-          <button class="btn btn-primary" (click)="saveMetadato()" [disabled]="metadatoForm.invalid || saving">{{ saving ? 'Guardando...' : (isEditing ? 'Actualizar' : 'Crear') }}</button>
+    @if (showModal) {
+      <div class="modal-overlay" (click)="closeModalOnOverlay($event)">
+        <div class="modal">
+          <div class="modal-header"><h3 class="modal-title">{{ isEditing ? 'Editar' : 'Nuevo' }} Metadato</h3><button class="modal-close" (click)="closeModal()">&times;</button></div>
+          <div class="modal-body">
+            <form [formGroup]="metadatoForm" (ngSubmit)="saveMetadato()">
+              <div class="form-group">
+                <label class="form-label">Parámetro</label>
+                <select class="form-control" formControlName="idParametro">
+                  <option value="">Seleccione un parámetro</option>
+                  @for (parametro of parametros; track parametro) {
+                    <option [value]="parametro.id">{{ parametro.nombre }}</option>
+                  }
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Tipo de Metadato</label>
+                <select class="form-control" formControlName="idTipoMetadato" (change)="onTipoChange()">
+                  <option value="">Seleccione un tipo</option>
+                  @for (tipo of tiposMetadato; track tipo) {
+                    <option [value]="tipo.id">
+                      {{ tipo.tipo }}{{ tipo.detalle ? ' - ' + tipo.detalle : '' }}
+                    </option>
+                  }
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Valor</label>
+                @if (selectedTipo === 'json') {
+                  <textarea class="form-control value-input" formControlName="valor"
+                  placeholder='Ejemplo: {"propiedad":"valor"} o ["valor1","valor2"]'></textarea>
+                }
+                @if (selectedTipo === 'date') {
+                  <input type="date" class="form-control" formControlName="valor">
+                }
+                @if (selectedTipo !== 'json' && selectedTipo !== 'date') {
+                  <input type="text" class="form-control"
+                    formControlName="valor" [placeholder]="selectedTipo === 'alfanumerico' ? 'Ingrese un valor alfanumérico' : 'Seleccione primero un tipo de metadato'">
+                }
+                @if (selectedTipo === 'json') {
+                  <small class="field-help">Debe ser un objeto o un arreglo JSON válido.</small>
+                }
+                @if (selectedTipo === 'date') {
+                  <small class="field-help">La fecha se enviará en formato yyyy-MM-dd.</small>
+                }
+                @if (selectedTipo === 'alfanumerico') {
+                  <small class="field-help">El valor se enviará como una cadena de texto.</small>
+                }
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
+            <button class="btn btn-primary" (click)="saveMetadato()" [disabled]="metadatoForm.invalid || saving">{{ saving ? 'Guardando...' : (isEditing ? 'Actualizar' : 'Crear') }}</button>
+          </div>
         </div>
       </div>
-    </div>
-  `,
-  styles: [`
+    }
+    `,
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styles: [`
     .metadatos { max-width: 1200px; margin: 0 auto; }
     .header-actions { display: flex; align-items: center; gap: 12px; }
     .header-actions { flex-wrap: wrap; }

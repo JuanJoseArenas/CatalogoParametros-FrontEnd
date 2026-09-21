@@ -1,6 +1,6 @@
 # Catalogo de Parametros - Frontend
 
-Frontend desarrollado en Angular 17 para el sistema de catalogo de parametros.
+Frontend desarrollado en Angular 22 para el sistema de catalogo de parametros.
 
 ## Caracteristicas
 
@@ -45,8 +45,8 @@ o probar una pantalla con un repositorio falso no exige modificar el componente.
 
 ## Requisitos
 
-- Node.js 18+
-- Angular CLI 17+
+- Node.js 22.22.3+
+- Angular CLI 22+
 - Backend corriendo en `http://localhost:8080`
 
 ## Instalacion
@@ -117,7 +117,7 @@ El frontend consume los siguientes endpoints del backend:
 
 ## Tecnologias
 
-- Angular 17
-- TypeScript 5.4
+- Angular 22
+- TypeScript 6.0
 - RxJS 7.8
 - CSS3 (sin frameworks adicionales)

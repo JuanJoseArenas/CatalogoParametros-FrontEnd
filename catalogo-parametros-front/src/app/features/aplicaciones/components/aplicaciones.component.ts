@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
@@ -11,10 +11,9 @@ import { fechaConZona } from '../../../shared/utils/date.utils';
 import { Subscription } from 'rxjs';
 
 @Component({
-  selector: 'app-aplicaciones',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
-  template: `
+    selector: 'app-aplicaciones',
+    imports: [CommonModule, ReactiveFormsModule, FormsModule],
+    template: `
     <div class="aplicaciones">
       <div class="page-header">
         <h1>Aplicaciones</h1>
@@ -31,13 +30,17 @@ import { Subscription } from 'rxjs';
         </div>
       </div>
 
-      <div class="card" *ngIf="errorMessage">
-        <div class="alert alert-error">{{ errorMessage }}</div>
-      </div>
+      @if (errorMessage) {
+        <div class="card">
+          <div class="alert alert-error">{{ errorMessage }}</div>
+        </div>
+      }
 
-      <div class="card" *ngIf="successMessage">
-        <div class="alert alert-success">{{ successMessage }}</div>
-      </div>
+      @if (successMessage) {
+        <div class="card">
+          <div class="alert alert-success">{{ successMessage }}</div>
+        </div>
+      }
 
       <div class="card">
         <div class="card-header">
@@ -47,108 +50,123 @@ import { Subscription } from 'rxjs';
           </span>
         </div>
 
-        <div class="table-container" *ngIf="filteredAplicaciones.length > 0">
-          <table>
-            <thead>
-              <tr>
-                <th>Nombre</th>
-                <th>Organizacion</th>
-                <th>Fecha Inicio</th>
-                <th>Fecha Fin</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let app of filteredAplicaciones">
-                <td>{{ app.nombre }}</td>
-                <td>{{ getOrganizacionNombre(app.idOrganizacion) }}</td>
-                <td>{{ (app.fechaInicio | slice:0:10) || '-' }}</td>
-                <td>{{ (app.fechaFinal | slice:0:10) || '-' }}</td>
-                <td>
-                  <span class="badge" [class.badge-success]="app.activa" [class.badge-danger]="!app.activa">
-                    {{ app.activa ? 'Activa' : 'Inactiva' }}
-                  </span>
-                </td>
-                <td>
-                  <div style="display: flex; gap: 8px;">
-                    <button class="btn btn-warning btn-sm" (click)="editAplicacion(app)">Editar</button>
-                    <button class="btn btn-secondary btn-sm" (click)="changeStatus(app)">
-                      {{ app.activa ? 'Desactivar' : 'Activar' }}
-                    </button>
-                    <button class="btn btn-danger btn-sm" (click)="deleteAplicacion(app.id)">Eliminar</button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        @if (filteredAplicaciones.length > 0) {
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Organizacion</th>
+                  <th>Fecha Inicio</th>
+                  <th>Fecha Fin</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (app of filteredAplicaciones; track app) {
+                  <tr>
+                    <td>{{ app.nombre }}</td>
+                    <td>{{ getOrganizacionNombre(app.idOrganizacion) }}</td>
+                    <td>{{ (app.fechaInicio | slice:0:10) || '-' }}</td>
+                    <td>{{ (app.fechaFinal | slice:0:10) || '-' }}</td>
+                    <td>
+                      <span class="badge" [class.badge-success]="app.activa" [class.badge-danger]="!app.activa">
+                        {{ app.activa ? 'Activa' : 'Inactiva' }}
+                      </span>
+                    </td>
+                    <td>
+                      <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-warning btn-sm" (click)="editAplicacion(app)">Editar</button>
+                        <button class="btn btn-secondary btn-sm" (click)="changeStatus(app)">
+                          {{ app.activa ? 'Desactivar' : 'Activar' }}
+                        </button>
+                        <button class="btn btn-danger btn-sm" (click)="deleteAplicacion(app.id)">Eliminar</button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
 
-        <div class="empty-state" *ngIf="filteredAplicaciones.length === 0 && !loading">
-          <div class="empty-state-icon">📱</div>
-          <h3>No hay aplicaciones</h3>
-          <p>Comienza creando una nueva aplicacion</p>
-        </div>
+        @if (filteredAplicaciones.length === 0 && !loading) {
+          <div class="empty-state">
+            <div class="empty-state-icon">📱</div>
+            <h3>No hay aplicaciones</h3>
+            <p>Comienza creando una nueva aplicacion</p>
+          </div>
+        }
 
-        <div class="loading" *ngIf="loading">
-          <div class="spinner"></div>
-        </div>
+        @if (loading) {
+          <div class="loading">
+            <div class="spinner"></div>
+          </div>
+        }
 
-        <div class="pagination" *ngIf="!loading && aplicaciones.length > 0">
-          <button class="btn btn-secondary btn-sm" (click)="changePage(page - 1)" [disabled]="page <= 1">Anterior</button>
-          <span style="font-size: 0.9rem; color: #334155; font-weight: 600;">Página {{ page }}</span>
-          <button class="btn btn-secondary btn-sm" (click)="changePage(page + 1)" [disabled]="aplicaciones.length < pageSize">Siguiente</button>
-        </div>
+        @if (!loading && aplicaciones.length > 0) {
+          <div class="pagination">
+            <button class="btn btn-secondary btn-sm" (click)="changePage(page - 1)" [disabled]="page <= 1">Anterior</button>
+            <span style="font-size: 0.9rem; color: #334155; font-weight: 600;">Página {{ page }}</span>
+            <button class="btn btn-secondary btn-sm" (click)="changePage(page + 1)" [disabled]="aplicaciones.length < pageSize">Siguiente</button>
+          </div>
+        }
       </div>
     </div>
 
     <!-- Modal -->
-    <div class="modal-overlay" *ngIf="showModal" (click)="closeModalOnOverlay($event)">
-      <div class="modal">
-        <div class="modal-header">
-          <h3 class="modal-title">{{ isEditing ? 'Editar' : 'Nueva' }} Aplicacion</h3>
-          <button class="modal-close" (click)="closeModal()">&times;</button>
-        </div>
-        <div class="modal-body">
-          <form [formGroup]="aplicacionForm" (ngSubmit)="saveAplicacion()">
-            <div class="form-group">
-              <label class="form-label">Nombre</label>
-              <input type="text" class="form-control" formControlName="nombre" placeholder="Nombre de la aplicacion">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Organizacion</label>
-              <select class="form-control" formControlName="idOrganizacion">
-                <option value="">Seleccione una organizacion</option>
-                <option *ngFor="let org of organizaciones" [value]="org.id">{{ org.nombre }}</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Fecha Inicio</label>
-              <input type="date" class="form-control" formControlName="fechaInicio">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Fecha Fin</label>
-              <input type="date" class="form-control" formControlName="fechaFinal">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Estado</label>
-              <select class="form-control" formControlName="activa">
-                <option [value]="true">Activa</option>
-                <option [value]="false">Inactiva</option>
-              </select>
-            </div>
-          </form>
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
-          <button class="btn btn-primary" (click)="saveAplicacion()" [disabled]="aplicacionForm.invalid || saving">
-            {{ saving ? 'Guardando...' : (isEditing ? 'Actualizar' : 'Crear') }}
-          </button>
+    @if (showModal) {
+      <div class="modal-overlay" (click)="closeModalOnOverlay($event)">
+        <div class="modal">
+          <div class="modal-header">
+            <h3 class="modal-title">{{ isEditing ? 'Editar' : 'Nueva' }} Aplicacion</h3>
+            <button class="modal-close" (click)="closeModal()">&times;</button>
+          </div>
+          <div class="modal-body">
+            <form [formGroup]="aplicacionForm" (ngSubmit)="saveAplicacion()">
+              <div class="form-group">
+                <label class="form-label">Nombre</label>
+                <input type="text" class="form-control" formControlName="nombre" placeholder="Nombre de la aplicacion">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Organizacion</label>
+                <select class="form-control" formControlName="idOrganizacion">
+                  <option value="">Seleccione una organizacion</option>
+                  @for (org of organizaciones; track org) {
+                    <option [value]="org.id">{{ org.nombre }}</option>
+                  }
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Fecha Inicio</label>
+                <input type="date" class="form-control" formControlName="fechaInicio">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Fecha Fin</label>
+                <input type="date" class="form-control" formControlName="fechaFinal">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Estado</label>
+                <select class="form-control" formControlName="activa">
+                  <option [value]="true">Activa</option>
+                  <option [value]="false">Inactiva</option>
+                </select>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
+            <button class="btn btn-primary" (click)="saveAplicacion()" [disabled]="aplicacionForm.invalid || saving">
+              {{ saving ? 'Guardando...' : (isEditing ? 'Actualizar' : 'Crear') }}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  `,
-  styles: [`
+    }
+    `,
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styles: [`
     .aplicaciones {
       max-width: 1200px;
       margin: 0 auto;
@@ -244,12 +262,12 @@ export class AplicacionesComponent implements OnInit, OnDestroy {
     const sub = this.eventStream.connect<any>(this.repository.eventsUrl, 'aplicacion').subscribe({
       next: (data: any) => {
         this.isConnected = true;
-        
+
         const entity = data.aplicacion;
         const eventType = data.event;
-        
+
         if (!entity) return;
-        
+
         switch (eventType) {
           case 'CREATED':
             if (!this.aplicaciones.find(a => a.id === entity.id)) {
@@ -305,7 +323,7 @@ export class AplicacionesComponent implements OnInit, OnDestroy {
     this.aplicacionForm.reset({ nombre: '', idOrganizacion: '', activa: true, fechaInicio: '', fechaFinal: '' });
   }
 
-  
+
   closeModalOnOverlay(event: Event): void {
     if (event.target === event.currentTarget) {
       this.closeModal();

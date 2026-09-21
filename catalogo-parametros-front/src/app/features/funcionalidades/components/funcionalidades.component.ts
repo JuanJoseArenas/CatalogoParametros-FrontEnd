@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
@@ -11,10 +11,9 @@ import { fechaConZona } from '../../../shared/utils/date.utils';
 import { Subscription } from 'rxjs';
 
 @Component({
-  selector: 'app-funcionalidades',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
-  template: `
+    selector: 'app-funcionalidades',
+    imports: [CommonModule, ReactiveFormsModule, FormsModule],
+    template: `
     <div class="funcionalidades">
       <div class="page-header">
         <h1>Funcionalidades</h1>
@@ -31,13 +30,17 @@ import { Subscription } from 'rxjs';
         </div>
       </div>
 
-      <div class="card" *ngIf="errorMessage">
-        <div class="alert alert-error">{{ errorMessage }}</div>
-      </div>
+      @if (errorMessage) {
+        <div class="card">
+          <div class="alert alert-error">{{ errorMessage }}</div>
+        </div>
+      }
 
-      <div class="card" *ngIf="successMessage">
-        <div class="alert alert-success">{{ successMessage }}</div>
-      </div>
+      @if (successMessage) {
+        <div class="card">
+          <div class="alert alert-success">{{ successMessage }}</div>
+        </div>
+      }
 
       <div class="card">
         <div class="card-header">
@@ -47,106 +50,121 @@ import { Subscription } from 'rxjs';
           </span>
         </div>
 
-        <div class="table-container" *ngIf="filteredFuncionalidades.length > 0">
-          <table>
-            <thead>
-              <tr>
-                <th>Nombre</th>
-                <th>Modulo</th>
-                <th>Fecha Inicio</th>
-                <th>Fecha Fin</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let func of filteredFuncionalidades">
-                <td>{{ func.nombre }}</td>
-                <td>{{ getModuloNombre(func.idModulo) }}</td>
-                <td>{{ (func.fechaInicio | slice:0:10) || '-' }}</td>
-                <td>{{ (func.fechaFinal | slice:0:10) || '-' }}</td>
-                <td>
-                  <span class="badge" [class.badge-success]="func.activo" [class.badge-danger]="!func.activo">
-                    {{ func.activo ? 'Activo' : 'Inactivo' }}
-                  </span>
-                </td>
-                <td>
-                  <button class="btn btn-warning btn-sm" (click)="editFuncionalidad(func)">Editar</button>
-                  <button class="btn btn-secondary btn-sm" (click)="changeStatus(func)">
-                    {{ func.activo ? 'Desactivar' : 'Activar' }}
-                  </button>
-                  <button class="btn btn-danger btn-sm" (click)="deleteFuncionalidad(func.id)">Eliminar</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        @if (filteredFuncionalidades.length > 0) {
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Modulo</th>
+                  <th>Fecha Inicio</th>
+                  <th>Fecha Fin</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (func of filteredFuncionalidades; track func) {
+                  <tr>
+                    <td>{{ func.nombre }}</td>
+                    <td>{{ getModuloNombre(func.idModulo) }}</td>
+                    <td>{{ (func.fechaInicio | slice:0:10) || '-' }}</td>
+                    <td>{{ (func.fechaFinal | slice:0:10) || '-' }}</td>
+                    <td>
+                      <span class="badge" [class.badge-success]="func.activo" [class.badge-danger]="!func.activo">
+                        {{ func.activo ? 'Activo' : 'Inactivo' }}
+                      </span>
+                    </td>
+                    <td>
+                      <button class="btn btn-warning btn-sm" (click)="editFuncionalidad(func)">Editar</button>
+                      <button class="btn btn-secondary btn-sm" (click)="changeStatus(func)">
+                        {{ func.activo ? 'Desactivar' : 'Activar' }}
+                      </button>
+                      <button class="btn btn-danger btn-sm" (click)="deleteFuncionalidad(func.id)">Eliminar</button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
 
-        <div class="empty-state" *ngIf="filteredFuncionalidades.length === 0 && !loading">
-          <div class="empty-state-icon">⚙️</div>
-          <h3>No hay funcionalidades</h3>
-          <p>Comienza creando una nueva funcionalidad</p>
-        </div>
+        @if (filteredFuncionalidades.length === 0 && !loading) {
+          <div class="empty-state">
+            <div class="empty-state-icon">⚙️</div>
+            <h3>No hay funcionalidades</h3>
+            <p>Comienza creando una nueva funcionalidad</p>
+          </div>
+        }
 
-        <div class="loading" *ngIf="loading">
-          <div class="spinner"></div>
-        </div>
+        @if (loading) {
+          <div class="loading">
+            <div class="spinner"></div>
+          </div>
+        }
 
-        <div class="pagination" *ngIf="!loading && funcionalidades.length > 0">
-          <button class="btn btn-secondary btn-sm" (click)="changePage(page - 1)" [disabled]="page <= 1">Anterior</button>
-          <span style="font-size: 0.9rem; color: #334155; font-weight: 600;">Página {{ page }}</span>
-          <button class="btn btn-secondary btn-sm" (click)="changePage(page + 1)" [disabled]="funcionalidades.length < pageSize">Siguiente</button>
-        </div>
+        @if (!loading && funcionalidades.length > 0) {
+          <div class="pagination">
+            <button class="btn btn-secondary btn-sm" (click)="changePage(page - 1)" [disabled]="page <= 1">Anterior</button>
+            <span style="font-size: 0.9rem; color: #334155; font-weight: 600;">Página {{ page }}</span>
+            <button class="btn btn-secondary btn-sm" (click)="changePage(page + 1)" [disabled]="funcionalidades.length < pageSize">Siguiente</button>
+          </div>
+        }
       </div>
     </div>
 
     <!-- Modal -->
-    <div class="modal-overlay" *ngIf="showModal" (click)="closeModalOnOverlay($event)">
-      <div class="modal">
-        <div class="modal-header">
-          <h3 class="modal-title">{{ isEditing ? 'Editar' : 'Nueva' }} Funcionalidad</h3>
-          <button class="modal-close" (click)="closeModal()">&times;</button>
-        </div>
-        <div class="modal-body">
-          <form [formGroup]="funcionalidadForm" (ngSubmit)="saveFuncionalidad()">
-            <div class="form-group">
-              <label class="form-label">Nombre</label>
-              <input type="text" class="form-control" formControlName="nombre" placeholder="Nombre de la funcionalidad">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Modulo</label>
-              <select class="form-control" formControlName="idModulo">
-                <option value="">Seleccione un modulo</option>
-                <option *ngFor="let mod of modulos" [value]="mod.id">{{ mod.nombre }}</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Fecha Inicio</label>
-              <input type="date" class="form-control" formControlName="fechaInicio">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Fecha Fin</label>
-              <input type="date" class="form-control" formControlName="fechaFinal">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Estado</label>
-              <select class="form-control" formControlName="activo">
-                <option [value]="true">Activo</option>
-                <option [value]="false">Inactivo</option>
-              </select>
-            </div>
-          </form>
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
-          <button class="btn btn-primary" (click)="saveFuncionalidad()" [disabled]="funcionalidadForm.invalid || saving">
-            {{ saving ? 'Guardando...' : (isEditing ? 'Actualizar' : 'Crear') }}
-          </button>
+    @if (showModal) {
+      <div class="modal-overlay" (click)="closeModalOnOverlay($event)">
+        <div class="modal">
+          <div class="modal-header">
+            <h3 class="modal-title">{{ isEditing ? 'Editar' : 'Nueva' }} Funcionalidad</h3>
+            <button class="modal-close" (click)="closeModal()">&times;</button>
+          </div>
+          <div class="modal-body">
+            <form [formGroup]="funcionalidadForm" (ngSubmit)="saveFuncionalidad()">
+              <div class="form-group">
+                <label class="form-label">Nombre</label>
+                <input type="text" class="form-control" formControlName="nombre" placeholder="Nombre de la funcionalidad">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Modulo</label>
+                <select class="form-control" formControlName="idModulo">
+                  <option value="">Seleccione un modulo</option>
+                  @for (mod of modulos; track mod) {
+                    <option [value]="mod.id">{{ mod.nombre }}</option>
+                  }
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Fecha Inicio</label>
+                <input type="date" class="form-control" formControlName="fechaInicio">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Fecha Fin</label>
+                <input type="date" class="form-control" formControlName="fechaFinal">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Estado</label>
+                <select class="form-control" formControlName="activo">
+                  <option [value]="true">Activo</option>
+                  <option [value]="false">Inactivo</option>
+                </select>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
+            <button class="btn btn-primary" (click)="saveFuncionalidad()" [disabled]="funcionalidadForm.invalid || saving">
+              {{ saving ? 'Guardando...' : (isEditing ? 'Actualizar' : 'Crear') }}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  `,
-  styles: [`
+    }
+    `,
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styles: [`
     .funcionalidades {
       max-width: 1200px;
       margin: 0 auto;
@@ -242,12 +260,12 @@ export class FuncionalidadesComponent implements OnInit, OnDestroy {
     const sub = this.eventStream.connect<any>(this.repository.eventsUrl, 'funcionalidad').subscribe({
       next: (data: any) => {
         this.isConnected = true;
-        
+
         const entity = data.funcionalidad;
         const eventType = data.event;
-        
+
         if (!entity) return;
-        
+
         switch (eventType) {
           case 'CREATED':
             if (!this.funcionalidades.find(f => f.id === entity.id)) {

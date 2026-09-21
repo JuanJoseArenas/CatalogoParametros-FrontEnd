@@ -1,12 +1,11 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
+
 import { RouterLink } from '@angular/router';
 
 @Component({
-  selector: 'app-dashboard',
-  standalone: true,
-  imports: [CommonModule, RouterLink],
-  template: `
+    selector: 'app-dashboard',
+    imports: [RouterLink],
+    template: `
     <div class="dashboard">
       <div class="header">
         <h1>Dashboard</h1>
@@ -61,7 +60,8 @@ import { RouterLink } from '@angular/router';
       </div>
     </div>
   `,
-  styles: [`
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styles: [`
     .dashboard {
       max-width: 1200px;
       margin: 0 auto;

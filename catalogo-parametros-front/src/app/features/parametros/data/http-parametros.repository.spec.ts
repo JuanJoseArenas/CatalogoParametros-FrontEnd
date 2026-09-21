@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { environment } from '../../../../environments/environment';
 import { HttpParametrosRepository } from './http-parametros.repository';
@@ -7,7 +7,7 @@ import { HttpParametrosRepository } from './http-parametros.repository';
 describe('HttpParametrosRepository', () => {
   let repository: HttpParametrosRepository; let http: HttpTestingController;
   const url = `${environment.apiUrl}/parametros`; const entity = { id: 'p1', nombre: 'Parámetro', idFuncionalidad: 'f1', idTipoParametro: 't1', activo: true };
-  beforeEach(() => { TestBed.configureTestingModule({ providers: [HttpParametrosRepository, provideHttpClient(), provideHttpClientTesting()] }); repository = TestBed.inject(HttpParametrosRepository); http = TestBed.inject(HttpTestingController); });
+  beforeEach(() => { TestBed.configureTestingModule({ providers: [HttpParametrosRepository, provideHttpClient(withXhr()), provideHttpClientTesting()] }); repository = TestBed.inject(HttpParametrosRepository); http = TestBed.inject(HttpTestingController); });
   afterEach(() => http.verify());
   it('consulta páginas, todos los registros y tipos', () => {
     repository.findPage(1, 10).subscribe(v => expect(v).toEqual([entity])); let req = http.expectOne(r => r.url === url && r.params.get('pageSize') === '10'); req.flush({ mensajes: [], parametros: [entity] });

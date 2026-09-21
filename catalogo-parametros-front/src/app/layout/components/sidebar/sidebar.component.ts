@@ -1,11 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
 @Component({
-  selector: 'app-sidebar',
-  standalone: true,
-  imports: [RouterLink, RouterLinkActive],
-  template: `
+    selector: 'app-sidebar',
+    imports: [RouterLink, RouterLinkActive],
+    template: `
     <aside class="sidebar">
       <div class="sidebar-header">
         <h2>Catalogo Parametros</h2>
@@ -62,7 +61,8 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
       </div>
     </aside>
   `,
-  styles: [`
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styles: [`
     .sidebar-footer {
       padding: 16px 24px;
       border-top: 1px solid rgba(255, 255, 255, 0.08);

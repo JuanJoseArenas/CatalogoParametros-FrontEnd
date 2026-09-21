@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { environment } from '../../../../environments/environment';
 import { HttpMetadatosRepository } from './http-metadatos.repository';
@@ -7,7 +7,7 @@ import { HttpMetadatosRepository } from './http-metadatos.repository';
 describe('HttpMetadatosRepository', () => {
   let repository: HttpMetadatosRepository; let http: HttpTestingController;
   const url = `${environment.apiUrl}/metadatos`; const entity = { id: 'md1', idParametro: 'p1', idTipoMetadato: 't1', valor: 'valor' };
-  beforeEach(() => { TestBed.configureTestingModule({ providers: [HttpMetadatosRepository, provideHttpClient(), provideHttpClientTesting()] }); repository = TestBed.inject(HttpMetadatosRepository); http = TestBed.inject(HttpTestingController); });
+  beforeEach(() => { TestBed.configureTestingModule({ providers: [HttpMetadatosRepository, provideHttpClient(withXhr()), provideHttpClientTesting()] }); repository = TestBed.inject(HttpMetadatosRepository); http = TestBed.inject(HttpTestingController); });
   afterEach(() => http.verify());
   it('consulta metadatos con y sin filtro', () => {
     repository.findAll().subscribe(v => expect(v).toEqual([entity])); let req = http.expectOne(r => r.url === url && !r.params.has('idParametro')); req.flush({ mensajes: [], metadatos: [entity] });

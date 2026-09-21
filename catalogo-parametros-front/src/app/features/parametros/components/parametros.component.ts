@@ -1,5 +1,5 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+
 import { ReactiveFormsModule, FormBuilder, FormGroup, Validators, FormsModule } from '@angular/forms';
 import { EventStreamService } from '../../../core/realtime/event-stream.service';
 import { Parametro, TipoParametro } from '../domain/parametro';
@@ -9,10 +9,9 @@ import { FuncionalidadesRepository } from '../../funcionalidades/domain/funciona
 import { Subscription } from 'rxjs';
 
 @Component({
-  selector: 'app-parametros',
-  standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, FormsModule],
-  template: `
+    selector: 'app-parametros',
+    imports: [ReactiveFormsModule, FormsModule],
+    template: `
     <div class="parametros">
       <div class="page-header">
         <h1>Parametros</h1>
@@ -29,13 +28,17 @@ import { Subscription } from 'rxjs';
         </div>
       </div>
 
-      <div class="card" *ngIf="errorMessage">
-        <div class="alert alert-error">{{ errorMessage }}</div>
-      </div>
+      @if (errorMessage) {
+        <div class="card">
+          <div class="alert alert-error">{{ errorMessage }}</div>
+        </div>
+      }
 
-      <div class="card" *ngIf="successMessage">
-        <div class="alert alert-success">{{ successMessage }}</div>
-      </div>
+      @if (successMessage) {
+        <div class="card">
+          <div class="alert alert-success">{{ successMessage }}</div>
+        </div>
+      }
 
       <div class="card">
         <div class="card-header">
@@ -45,103 +48,120 @@ import { Subscription } from 'rxjs';
           </span>
         </div>
 
-        <div class="table-container" *ngIf="filteredParametros.length > 0">
-          <table>
-            <thead>
-              <tr>
-                <th>Nombre</th>
-                <th>Funcionalidad</th>
-                <th>Tipo Parametro</th>
-                <th>Estado</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let param of filteredParametros">
-                <td>{{ param.nombre }}</td>
-                <td>{{ getFuncionalidadNombre(param.idFuncionalidad) }}</td>
-                <td>{{ getTipoParametroNombre(param.idTipoParametro) }}</td>
-                <td>
-                  <span class="badge" [class.badge-success]="param.activo" [class.badge-danger]="!param.activo">
-                    {{ param.activo ? 'Activo' : 'Inactivo' }}
-                  </span>
-                </td>
-                <td>
-                  <button class="btn btn-warning btn-sm" (click)="editParametro(param)">Editar</button>
-                  <button class="btn btn-secondary btn-sm" (click)="changeStatus(param)">
-                    {{ param.activo ? 'Desactivar' : 'Activar' }}
-                  </button>
-                  <button class="btn btn-danger btn-sm" (click)="deleteParametro(param.id)">Eliminar</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        @if (filteredParametros.length > 0) {
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Funcionalidad</th>
+                  <th>Tipo Parametro</th>
+                  <th>Estado</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (param of filteredParametros; track param) {
+                  <tr>
+                    <td>{{ param.nombre }}</td>
+                    <td>{{ getFuncionalidadNombre(param.idFuncionalidad) }}</td>
+                    <td>{{ getTipoParametroNombre(param.idTipoParametro) }}</td>
+                    <td>
+                      <span class="badge" [class.badge-success]="param.activo" [class.badge-danger]="!param.activo">
+                        {{ param.activo ? 'Activo' : 'Inactivo' }}
+                      </span>
+                    </td>
+                    <td>
+                      <button class="btn btn-warning btn-sm" (click)="editParametro(param)">Editar</button>
+                      <button class="btn btn-secondary btn-sm" (click)="changeStatus(param)">
+                        {{ param.activo ? 'Desactivar' : 'Activar' }}
+                      </button>
+                      <button class="btn btn-danger btn-sm" (click)="deleteParametro(param.id)">Eliminar</button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
 
-        <div class="empty-state" *ngIf="filteredParametros.length === 0 && !loading">
-          <div class="empty-state-icon">🔧</div>
-          <h3>No hay parametros</h3>
-          <p>Comienza creando un nuevo parametro</p>
-        </div>
+        @if (filteredParametros.length === 0 && !loading) {
+          <div class="empty-state">
+            <div class="empty-state-icon">🔧</div>
+            <h3>No hay parametros</h3>
+            <p>Comienza creando un nuevo parametro</p>
+          </div>
+        }
 
-        <div class="loading" *ngIf="loading">
-          <div class="spinner"></div>
-        </div>
+        @if (loading) {
+          <div class="loading">
+            <div class="spinner"></div>
+          </div>
+        }
 
-        <div class="pagination" *ngIf="!loading && parametros.length > 0">
-          <button class="btn btn-secondary btn-sm" (click)="changePage(page - 1)" [disabled]="page <= 1">Anterior</button>
-          <span style="font-size: 0.9rem; color: #334155; font-weight: 600;">Página {{ page }}</span>
-          <button class="btn btn-secondary btn-sm" (click)="changePage(page + 1)" [disabled]="parametros.length < pageSize">Siguiente</button>
-        </div>
+        @if (!loading && parametros.length > 0) {
+          <div class="pagination">
+            <button class="btn btn-secondary btn-sm" (click)="changePage(page - 1)" [disabled]="page <= 1">Anterior</button>
+            <span style="font-size: 0.9rem; color: #334155; font-weight: 600;">Página {{ page }}</span>
+            <button class="btn btn-secondary btn-sm" (click)="changePage(page + 1)" [disabled]="parametros.length < pageSize">Siguiente</button>
+          </div>
+        }
       </div>
     </div>
 
     <!-- Modal -->
-    <div class="modal-overlay" *ngIf="showModal" (click)="closeModalOnOverlay($event)">
-      <div class="modal">
-        <div class="modal-header">
-          <h3 class="modal-title">{{ isEditing ? 'Editar' : 'Nuevo' }} Parametro</h3>
-          <button class="modal-close" (click)="closeModal()">&times;</button>
-        </div>
-        <div class="modal-body">
-          <form [formGroup]="parametroForm" (ngSubmit)="saveParametro()">
-            <div class="form-group">
-              <label class="form-label">Nombre</label>
-              <input type="text" class="form-control" formControlName="nombre" placeholder="Nombre del parametro">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Funcionalidad</label>
-              <select class="form-control" formControlName="idFuncionalidad">
-                <option value="">Seleccione una funcionalidad</option>
-                <option *ngFor="let func of funcionalidades" [value]="func.id">{{ func.nombre }}</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Tipo Parametro</label>
-              <select class="form-control" formControlName="idTipoParametro">
-                <option value="">Seleccione un tipo</option>
-                <option *ngFor="let tipo of tiposParametro" [value]="tipo.id">{{ tipo.nombre }}</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Estado</label>
-              <select class="form-control" formControlName="activo">
-                <option [value]="true">Activo</option>
-                <option [value]="false">Inactivo</option>
-              </select>
-            </div>
-          </form>
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
-          <button class="btn btn-primary" (click)="saveParametro()" [disabled]="parametroForm.invalid || saving">
-            {{ saving ? 'Guardando...' : (isEditing ? 'Actualizar' : 'Crear') }}
-          </button>
+    @if (showModal) {
+      <div class="modal-overlay" (click)="closeModalOnOverlay($event)">
+        <div class="modal">
+          <div class="modal-header">
+            <h3 class="modal-title">{{ isEditing ? 'Editar' : 'Nuevo' }} Parametro</h3>
+            <button class="modal-close" (click)="closeModal()">&times;</button>
+          </div>
+          <div class="modal-body">
+            <form [formGroup]="parametroForm" (ngSubmit)="saveParametro()">
+              <div class="form-group">
+                <label class="form-label">Nombre</label>
+                <input type="text" class="form-control" formControlName="nombre" placeholder="Nombre del parametro">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Funcionalidad</label>
+                <select class="form-control" formControlName="idFuncionalidad">
+                  <option value="">Seleccione una funcionalidad</option>
+                  @for (func of funcionalidades; track func) {
+                    <option [value]="func.id">{{ func.nombre }}</option>
+                  }
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Tipo Parametro</label>
+                <select class="form-control" formControlName="idTipoParametro">
+                  <option value="">Seleccione un tipo</option>
+                  @for (tipo of tiposParametro; track tipo) {
+                    <option [value]="tipo.id">{{ tipo.nombre }}</option>
+                  }
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Estado</label>
+                <select class="form-control" formControlName="activo">
+                  <option [value]="true">Activo</option>
+                  <option [value]="false">Inactivo</option>
+                </select>
+              </div>
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
+            <button class="btn btn-primary" (click)="saveParametro()" [disabled]="parametroForm.invalid || saving">
+              {{ saving ? 'Guardando...' : (isEditing ? 'Actualizar' : 'Crear') }}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  `,
-  styles: [`
+    }
+    `,
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styles: [`
     .parametros {
       max-width: 1200px;
       margin: 0 auto;
@@ -238,12 +258,12 @@ export class ParametrosComponent implements OnInit, OnDestroy {
     const sub = this.eventStream.connect<any>(this.repository.eventsUrl, 'parametro').subscribe({
       next: (data: any) => {
         this.isConnected = true;
-        
+
         const entity = data.parametro;
         const eventType = data.event;
-        
+
         if (!entity) return;
-        
+
         switch (eventType) {
           case 'CREATED':
             if (!this.parametros.find(p => p.id === entity.id)) {
