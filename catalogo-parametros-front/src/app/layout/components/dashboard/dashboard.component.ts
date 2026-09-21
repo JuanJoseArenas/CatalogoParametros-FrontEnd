@@ -56,6 +56,15 @@ import { RouterLink } from '@angular/router';
             <p>Gestiona los parametros del sistema</p>
           </div>
           <a routerLink="/parametros" class="btn btn-primary">Ver</a>
+        
+        </div>
+                <div class="stat-card">
+          <div class="stat-icon">💿</div>
+          <div class="stat-info">
+            <h3>Metadatos</h3>
+            <p>Administra los Metadatos</p>
+          </div>
+          <a routerLink="/metadatos" class="btn btn-primary">Ver</a>
         </div>
       </div>
     </div>
