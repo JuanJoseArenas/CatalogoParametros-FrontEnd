@@ -1,24 +1,24 @@
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { EventStreamService } from '../../../core/realtime/event-stream.service';
-import { Organizacion } from '../domain/organizacion';
-import { OrganizacionesRepository } from '../domain/organizaciones.repository';
-import { fechaConZona } from '../../../shared/utils/date.utils';
+import { FormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { EventStreamService } from '../../../../core/realtime/event-stream.service';
+import { Organizacion } from '../../domain/organizacion';
+import { OrganizacionesRepository } from '../../domain/organizaciones.repository';
+import { fechaConZona } from '../../../../shared/utils/date.utils';
+import { ConnectionStatusComponent } from '../../../../shared/ui/connection-status/connection-status.component';
+import { PageMessagesComponent } from '../../../../shared/ui/page-messages/page-messages.component';
+import { OrganizacionFormComponent } from '../components/organizacion-form.component';
+import { OrganizacionesTableComponent } from '../components/organizaciones-table.component';
 import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-organizaciones',
-    imports: [CommonModule, ReactiveFormsModule, FormsModule],
+    imports: [FormsModule, ConnectionStatusComponent, PageMessagesComponent, OrganizacionFormComponent, OrganizacionesTableComponent],
     template: `
     <div class="organizaciones">
       <div class="page-header">
         <h1>Organizaciones</h1>
         <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-          <div class="connection-status" [class.connected]="isConnected" [class.disconnected]="!isConnected">
-            <span class="status-dot" [class.connected]="isConnected" [class.disconnected]="!isConnected"></span>
-            {{ isConnected ? 'En vivo' : 'Desconectado' }}
-          </div>
+          <app-connection-status [connected]="isConnected" />
           <div class="search-bar">
             <span class="search-icon">🔍</span>
             <input type="text" placeholder="Buscar organizacion..." [(ngModel)]="searchTerm">
@@ -27,110 +27,28 @@ import { Subscription } from 'rxjs';
         </div>
       </div>
 
-      @if (errorMessage) {
-        <div class="card">
-          <div class="alert alert-error">{{ errorMessage }}</div>
-        </div>
-      }
+      <app-page-messages [error]="errorMessage" [success]="successMessage" />
 
-      @if (successMessage) {
-        <div class="card">
-          <div class="alert alert-success">{{ successMessage }}</div>
-        </div>
-      }
-
-      <div class="card">
-        <div class="card-header">
-          <h2 class="card-title">Lista de Organizaciones</h2>
-          <span style="font-size: 0.85rem; color: #64748b; font-weight: 500;">
-            {{ filteredOrganizaciones.length }} registro(s) en pagina {{ page }}
-          </span>
-        </div>
-
-        @if (filteredOrganizaciones.length > 0) {
-          <div class="table-container">
-            <table>
-              <thead>
-                <tr>
-                  <th>Nombre</th>
-                  <th>Fecha Inicio</th>
-                  <th>Fecha Fin</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (org of filteredOrganizaciones; track org) {
-                  <tr>
-                    <td>{{ org.nombre }}</td>
-                    <td>{{ (org.fechaInicio | slice:0:10) || '-' }}</td>
-                    <td>{{ (org.fechaFinal | slice:0:10) || '-' }}</td>
-                    <td>
-                      <button class="btn btn-warning btn-sm" (click)="editOrganizacion(org)">Editar</button>
-                      <button class="btn btn-danger btn-sm" (click)="deleteOrganizacion(org.id)">Eliminar</button>
-                    </td>
-                  </tr>
-                }
-              </tbody>
-            </table>
-          </div>
-        }
-
-        @if (filteredOrganizaciones.length === 0 && !loading) {
-          <div class="empty-state">
-            <div class="empty-state-icon">🏢</div>
-            <h3>No hay organizaciones</h3>
-            <p>Comienza creando una nueva organizacion</p>
-          </div>
-        }
-
-        @if (loading) {
-          <div class="loading">
-            <div class="spinner"></div>
-          </div>
-        }
-
-        @if (!loading && organizaciones.length > 0) {
-          <div class="pagination">
-            <button class="btn btn-secondary btn-sm" (click)="changePage(page - 1)" [disabled]="page <= 1">Anterior</button>
-            <span style="font-size: 0.9rem; color: #334155; font-weight: 600;">Página {{ page }}</span>
-            <button class="btn btn-secondary btn-sm" (click)="changePage(page + 1)" [disabled]="organizaciones.length < pageSize">Siguiente</button>
-          </div>
-        }
-      </div>
+      <app-organizaciones-table
+        [organizaciones]="filteredOrganizaciones"
+        [loading]="loading"
+        [page]="page"
+        [pageSize]="pageSize"
+        [totalOnPage]="organizaciones.length"
+        (edit)="editOrganizacion($event)"
+        (remove)="deleteOrganizacion($event)"
+        (pageChange)="changePage($event)"
+      />
     </div>
 
-    <!-- Modal -->
     @if (showModal) {
-      <div class="modal-overlay" (click)="closeModalOnOverlay($event)">
-        <div class="modal">
-          <div class="modal-header">
-            <h3 class="modal-title">{{ isEditing ? 'Editar' : 'Nueva' }} Organizacion</h3>
-            <button class="modal-close" (click)="closeModal()">&times;</button>
-          </div>
-          <div class="modal-body">
-            <form [formGroup]="organizacionForm" (ngSubmit)="saveOrganizacion()">
-              <div class="form-group">
-                <label class="form-label">Nombre</label>
-                <input type="text" class="form-control" formControlName="nombre" placeholder="Nombre de la organizacion">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Fecha Inicio</label>
-                <input type="date" class="form-control" formControlName="fechaInicio">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Fecha Fin</label>
-                <input type="date" class="form-control" formControlName="fechaFinal">
-              </div>
-            </form>
-          </div>
-          <div class="modal-footer">
-            <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
-            <button class="btn btn-primary" (click)="saveOrganizacion()" [disabled]="organizacionForm.invalid || saving">
-              {{ saving ? 'Guardando...' : (isEditing ? 'Actualizar' : 'Crear') }}
-            </button>
-          </div>
-        </div>
-      </div>
+      <app-organizacion-form
+        [form]="organizacionForm"
+        [editing]="isEditing"
+        [saving]="saving"
+        (save)="saveOrganizacion()"
+        (cancel)="closeModal()"
+      />
     }
     `,
     changeDetection: ChangeDetectionStrategy.Eager,
@@ -138,13 +56,6 @@ import { Subscription } from 'rxjs';
     .organizaciones {
       max-width: 1200px;
       margin: 0 auto;
-    }
-    .pagination {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      padding: 16px 0;
     }
   `]
 })

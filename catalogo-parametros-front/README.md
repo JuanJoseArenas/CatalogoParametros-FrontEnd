@@ -21,8 +21,9 @@ src/app/
 ├── features/                 # Modulos verticales e independientes
 │   └── <feature>/
 │       ├── domain/           # Entidades y puertos; no conoce Angular HTTP
-│       ├── data/             # Adaptadores HTTP que implementan los puertos
-│       ├── components/       # Capa de presentacion
+│       ├── infrastructure/   # Adaptadores HTTP que implementan los puertos
+│       ├── presentation/     # Paginas y componentes de la feature
+│       │   └── components/   # UI especifica y desacoplada de la pagina
 │       └── <feature>.routes.ts # Composicion y proveedores de la feature
 ├── layout/                   # Estructura visual global
 └── shared/                   # Contratos y utilidades sin logica de negocio
@@ -35,13 +36,16 @@ o probar una pantalla con un repositorio falso no exige modificar el componente.
 
 ### Regla de dependencias
 
-`presentation -> domain <- data`
+`presentation -> domain <- infrastructure`
 
-- `domain` contiene reglas, entidades y contratos; nunca importa desde `data`.
-- `data` conoce HTTP y el backend, e implementa contratos de `domain`.
-- `components` coordina estado de UI y consume únicamente contratos de `domain`.
+- `domain` contiene reglas, entidades y contratos; nunca importa desde `infrastructure`.
+- `infrastructure` conoce HTTP y el backend, e implementa contratos de `domain`.
+- `presentation` coordina estado de UI y consume únicamente contratos de `domain`.
+- Las paginas viven en `presentation/pages`; formularios u otras piezas propias de
+  una feature viven en `presentation/components`.
 - `core` no contiene lógica propia de una feature.
-- `shared` solo aloja piezas reutilizadas por más de una feature.
+- `shared` solo aloja piezas reutilizadas por más de una feature, como mensajes,
+  paginacion, estado de conexion y el formulario comun de entidades relacionadas.
 
 ## Requisitos
 

@@ -1,8 +1,8 @@
 import { FormBuilder } from '@angular/forms';
 import { of, Subject, throwError } from 'rxjs';
-import { EventStreamService } from '../../../core/realtime/event-stream.service';
-import { ModulosRepository } from '../../modulos/domain/modulos.repository';
-import { FuncionalidadesRepository } from '../domain/funcionalidades.repository';
+import { EventStreamService } from '../../../../core/realtime/event-stream.service';
+import { ModulosRepository } from '../../../modulos/domain/modulos.repository';
+import { FuncionalidadesRepository } from '../../domain/funcionalidades.repository';
 import { FuncionalidadesComponent } from './funcionalidades.component';
 
 describe('FuncionalidadesComponent', () => {

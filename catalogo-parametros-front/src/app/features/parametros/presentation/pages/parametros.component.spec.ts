@@ -1,8 +1,8 @@
 import { FormBuilder } from '@angular/forms';
 import { of, Subject, throwError } from 'rxjs';
-import { EventStreamService } from '../../../core/realtime/event-stream.service';
-import { FuncionalidadesRepository } from '../../funcionalidades/domain/funcionalidades.repository';
-import { ParametrosRepository } from '../domain/parametros.repository';
+import { EventStreamService } from '../../../../core/realtime/event-stream.service';
+import { FuncionalidadesRepository } from '../../../funcionalidades/domain/funcionalidades.repository';
+import { ParametrosRepository } from '../../domain/parametros.repository';
 import { ParametrosComponent } from './parametros.component';
 
 describe('ParametrosComponent', () => {

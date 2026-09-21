@@ -1,26 +1,26 @@
 
 import { Component, OnDestroy, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, Subscription } from 'rxjs';
-import { EventStreamService } from '../../../core/realtime/event-stream.service';
-import { Metadato, TipoMetadato } from '../domain/metadato';
-import { MetadatosRepository } from '../domain/metadatos.repository';
-import { Parametro } from '../../parametros/domain/parametro';
-import { ParametrosRepository } from '../../parametros/domain/parametros.repository';
+import { EventStreamService } from '../../../../core/realtime/event-stream.service';
+import { Metadato, TipoMetadato } from '../../domain/metadato';
+import { MetadatosRepository } from '../../domain/metadatos.repository';
+import { Parametro } from '../../../parametros/domain/parametro';
+import { ParametrosRepository } from '../../../parametros/domain/parametros.repository';
+import { ConnectionStatusComponent } from '../../../../shared/ui/connection-status/connection-status.component';
+import { PageMessagesComponent } from '../../../../shared/ui/page-messages/page-messages.component';
+import { MetadatoFormComponent } from '../components/metadato-form.component';
 
 @Component({
     selector: 'app-metadatos',
-    imports: [ReactiveFormsModule, FormsModule],
+    imports: [FormsModule, ConnectionStatusComponent, PageMessagesComponent, MetadatoFormComponent],
     template: `
     <div class="metadatos">
       <div class="page-header">
         <h1>Metadatos</h1>
         <div class="header-actions">
-          <div class="connection-status" [class.connected]="isConnected" [class.disconnected]="!isConnected">
-            <span class="status-dot" [class.connected]="isConnected" [class.disconnected]="!isConnected"></span>
-            {{ isConnected ? 'En vivo' : 'Desconectado' }}
-          </div>
+          <app-connection-status [connected]="isConnected" />
           <div class="search-bar">
             <span class="search-icon">🔍</span>
             <input type="text" placeholder="Buscar metadato..." [(ngModel)]="searchTerm">
@@ -29,12 +29,7 @@ import { ParametrosRepository } from '../../parametros/domain/parametros.reposit
         </div>
       </div>
 
-      @if (errorMessage) {
-        <div class="card"><div class="alert alert-error">{{ errorMessage }}</div></div>
-      }
-      @if (successMessage) {
-        <div class="card"><div class="alert alert-success">{{ successMessage }}</div></div>
-      }
+      <app-page-messages [error]="errorMessage" [success]="successMessage" />
 
       <div class="card">
         <div class="card-header">
@@ -73,62 +68,11 @@ import { ParametrosRepository } from '../../parametros/domain/parametros.reposit
     </div>
 
     @if (showModal) {
-      <div class="modal-overlay" (click)="closeModalOnOverlay($event)">
-        <div class="modal">
-          <div class="modal-header"><h3 class="modal-title">{{ isEditing ? 'Editar' : 'Nuevo' }} Metadato</h3><button class="modal-close" (click)="closeModal()">&times;</button></div>
-          <div class="modal-body">
-            <form [formGroup]="metadatoForm" (ngSubmit)="saveMetadato()">
-              <div class="form-group">
-                <label class="form-label">Parámetro</label>
-                <select class="form-control" formControlName="idParametro">
-                  <option value="">Seleccione un parámetro</option>
-                  @for (parametro of parametros; track parametro) {
-                    <option [value]="parametro.id">{{ parametro.nombre }}</option>
-                  }
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Tipo de Metadato</label>
-                <select class="form-control" formControlName="idTipoMetadato" (change)="onTipoChange()">
-                  <option value="">Seleccione un tipo</option>
-                  @for (tipo of tiposMetadato; track tipo) {
-                    <option [value]="tipo.id">
-                      {{ tipo.tipo }}{{ tipo.detalle ? ' - ' + tipo.detalle : '' }}
-                    </option>
-                  }
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Valor</label>
-                @if (selectedTipo === 'json') {
-                  <textarea class="form-control value-input" formControlName="valor"
-                  placeholder='Ejemplo: {"propiedad":"valor"} o ["valor1","valor2"]'></textarea>
-                }
-                @if (selectedTipo === 'date') {
-                  <input type="date" class="form-control" formControlName="valor">
-                }
-                @if (selectedTipo !== 'json' && selectedTipo !== 'date') {
-                  <input type="text" class="form-control"
-                    formControlName="valor" [placeholder]="selectedTipo === 'alfanumerico' ? 'Ingrese un valor alfanumérico' : 'Seleccione primero un tipo de metadato'">
-                }
-                @if (selectedTipo === 'json') {
-                  <small class="field-help">Debe ser un objeto o un arreglo JSON válido.</small>
-                }
-                @if (selectedTipo === 'date') {
-                  <small class="field-help">La fecha se enviará en formato yyyy-MM-dd.</small>
-                }
-                @if (selectedTipo === 'alfanumerico') {
-                  <small class="field-help">El valor se enviará como una cadena de texto.</small>
-                }
-              </div>
-            </form>
-          </div>
-          <div class="modal-footer">
-            <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
-            <button class="btn btn-primary" (click)="saveMetadato()" [disabled]="metadatoForm.invalid || saving">{{ saving ? 'Guardando...' : (isEditing ? 'Actualizar' : 'Crear') }}</button>
-          </div>
-        </div>
-      </div>
+      <app-metadato-form
+        [form]="metadatoForm" [parametros]="parametros" [tipos]="tiposMetadato"
+        [selectedType]="selectedTipo" [editing]="isEditing" [saving]="saving"
+        (typeChange)="onTipoChange()" (save)="saveMetadato()" (cancel)="closeModal()"
+      />
     }
     `,
     changeDetection: ChangeDetectionStrategy.Eager,
@@ -138,8 +82,6 @@ import { ParametrosRepository } from '../../parametros/domain/parametros.reposit
     .header-actions { flex-wrap: wrap; }
     .record-count { font-size: .85rem; color: #64748b; font-weight: 500; }
     .value-preview { display: block; max-width: 420px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: monospace; }
-    .value-input { min-height: 130px; resize: vertical; font-family: monospace; }
-    .field-help { display: block; margin-top: 6px; color: #64748b; font-size: .8rem; }
   `]
 })
 export class MetadatosComponent implements OnInit, OnDestroy {

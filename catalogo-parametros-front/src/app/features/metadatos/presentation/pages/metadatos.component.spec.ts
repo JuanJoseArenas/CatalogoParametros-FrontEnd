@@ -1,8 +1,8 @@
 import { FormBuilder } from '@angular/forms';
 import { of, Subject, throwError } from 'rxjs';
-import { EventStreamService } from '../../../core/realtime/event-stream.service';
-import { ParametrosRepository } from '../../parametros/domain/parametros.repository';
-import { MetadatosRepository } from '../domain/metadatos.repository';
+import { EventStreamService } from '../../../../core/realtime/event-stream.service';
+import { ParametrosRepository } from '../../../parametros/domain/parametros.repository';
+import { MetadatosRepository } from '../../domain/metadatos.repository';
 import { MetadatosComponent } from './metadatos.component';
 
 describe('MetadatosComponent', () => {

@@ -1,27 +1,28 @@
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
-import { EventStreamService } from '../../../core/realtime/event-stream.service';
-import { Modulo } from '../domain/modulo';
-import { ModulosRepository } from '../domain/modulos.repository';
-import { Aplicacion } from '../../aplicaciones/domain/aplicacion';
-import { AplicacionesRepository } from '../../aplicaciones/domain/aplicaciones.repository';
-import { fechaConZona } from '../../../shared/utils/date.utils';
+import { EventStreamService } from '../../../../core/realtime/event-stream.service';
+import { Modulo } from '../../domain/modulo';
+import { ModulosRepository } from '../../domain/modulos.repository';
+import { Aplicacion } from '../../../aplicaciones/domain/aplicacion';
+import { AplicacionesRepository } from '../../../aplicaciones/domain/aplicaciones.repository';
+import { fechaConZona } from '../../../../shared/utils/date.utils';
+import { ConnectionStatusComponent } from '../../../../shared/ui/connection-status/connection-status.component';
+import { PageMessagesComponent } from '../../../../shared/ui/page-messages/page-messages.component';
+import { PaginationComponent } from '../../../../shared/ui/pagination/pagination.component';
+import { RelatedEntityFormComponent, SelectOption } from '../../../../shared/ui/related-entity-form/related-entity-form.component';
 import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-modulos',
-    imports: [CommonModule, ReactiveFormsModule, FormsModule],
+    imports: [CommonModule, FormsModule, ConnectionStatusComponent, PageMessagesComponent, PaginationComponent, RelatedEntityFormComponent],
     template: `
     <div class="modulos">
       <div class="page-header">
         <h1>Modulos</h1>
         <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-          <div class="connection-status" [class.connected]="isConnected" [class.disconnected]="!isConnected">
-            <span class="status-dot" [class.connected]="isConnected" [class.disconnected]="!isConnected"></span>
-            {{ isConnected ? 'En vivo' : 'Desconectado' }}
-          </div>
+          <app-connection-status [connected]="isConnected" />
           <div class="search-bar">
             <span class="search-icon">🔍</span>
             <input type="text" placeholder="Buscar modulo..." [(ngModel)]="searchTerm">
@@ -30,17 +31,7 @@ import { Subscription } from 'rxjs';
         </div>
       </div>
 
-      @if (errorMessage) {
-        <div class="card">
-          <div class="alert alert-error">{{ errorMessage }}</div>
-        </div>
-      }
-
-      @if (successMessage) {
-        <div class="card">
-          <div class="alert alert-success">{{ successMessage }}</div>
-        </div>
-      }
+      <app-page-messages [error]="errorMessage" [success]="successMessage" />
 
       <div class="card">
         <div class="card-header">
@@ -104,63 +95,21 @@ import { Subscription } from 'rxjs';
         }
 
         @if (!loading && modulos.length > 0) {
-          <div class="pagination">
-            <button class="btn btn-secondary btn-sm" (click)="changePage(page - 1)" [disabled]="page <= 1">Anterior</button>
-            <span style="font-size: 0.9rem; color: #334155; font-weight: 600;">Página {{ page }}</span>
-            <button class="btn btn-secondary btn-sm" (click)="changePage(page + 1)" [disabled]="modulos.length < pageSize">Siguiente</button>
-          </div>
+          <app-pagination [page]="page" [hasNext]="modulos.length >= pageSize" (pageChange)="changePage($event)" />
         }
       </div>
     </div>
 
-    <!-- Modal -->
     @if (showModal) {
-      <div class="modal-overlay" (click)="closeModalOnOverlay($event)">
-        <div class="modal">
-          <div class="modal-header">
-            <h3 class="modal-title">{{ isEditing ? 'Editar' : 'Nuevo' }} Modulo</h3>
-            <button class="modal-close" (click)="closeModal()">&times;</button>
-          </div>
-          <div class="modal-body">
-            <form [formGroup]="moduloForm" (ngSubmit)="saveModulo()">
-              <div class="form-group">
-                <label class="form-label">Nombre</label>
-                <input type="text" class="form-control" formControlName="nombre" placeholder="Nombre del modulo">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Aplicacion</label>
-                <select class="form-control" formControlName="idAplicacion">
-                  <option value="">Seleccione una aplicacion</option>
-                  @for (app of aplicaciones; track app) {
-                    <option [value]="app.id">{{ app.nombre }}</option>
-                  }
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Fecha Inicio</label>
-                <input type="date" class="form-control" formControlName="fechaInicio">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Fecha Fin</label>
-                <input type="date" class="form-control" formControlName="fechaFinal">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Estado</label>
-                <select class="form-control" formControlName="activo">
-                  <option [value]="true">Activo</option>
-                  <option [value]="false">Inactivo</option>
-                </select>
-              </div>
-            </form>
-          </div>
-          <div class="modal-footer">
-            <button class="btn btn-secondary" (click)="closeModal()">Cancelar</button>
-            <button class="btn btn-primary" (click)="saveModulo()" [disabled]="moduloForm.invalid || saving">
-              {{ saving ? 'Guardando...' : (isEditing ? 'Actualizar' : 'Crear') }}
-            </button>
-          </div>
-        </div>
-      </div>
+      <app-related-entity-form
+        [form]="moduloForm" [options]="aplicacionOptions"
+        entityLabel="Modulo" relationLabel="Aplicacion"
+        relationControl="idAplicacion" activeControl="activo"
+        createLabel="Nuevo" relationArticle="una"
+        activeLabel="Activo" inactiveLabel="Inactivo"
+        [editing]="isEditing" [saving]="saving"
+        (save)="saveModulo()" (cancel)="closeModal()"
+      />
     }
     `,
     changeDetection: ChangeDetectionStrategy.Eager,
@@ -168,13 +117,6 @@ import { Subscription } from 'rxjs';
     .modulos {
       max-width: 1200px;
       margin: 0 auto;
-    }
-    .pagination {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      padding: 16px 0;
     }
   `]
 })
@@ -194,6 +136,10 @@ export class ModulosComponent implements OnInit, OnDestroy {
   page = 1;
   pageSize = 10;
   private subscriptions: Subscription[] = [];
+
+  get aplicacionOptions(): SelectOption[] {
+    return this.aplicaciones.map(item => ({ id: item.id, name: item.nombre }));
+  }
 
   constructor(private repository: ModulosRepository, private aplicacionesRepository: AplicacionesRepository, private fb: FormBuilder, private eventStream: EventStreamService) {
     this.moduloForm = this.fb.group({

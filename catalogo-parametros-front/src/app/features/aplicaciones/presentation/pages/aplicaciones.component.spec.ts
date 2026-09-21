@@ -1,8 +1,8 @@
 import { FormBuilder } from '@angular/forms';
 import { of, Subject, throwError } from 'rxjs';
-import { EventStreamService } from '../../../core/realtime/event-stream.service';
-import { OrganizacionesRepository } from '../../organizaciones/domain/organizaciones.repository';
-import { AplicacionesRepository } from '../domain/aplicaciones.repository';
+import { EventStreamService } from '../../../../core/realtime/event-stream.service';
+import { OrganizacionesRepository } from '../../../organizaciones/domain/organizaciones.repository';
+import { AplicacionesRepository } from '../../domain/aplicaciones.repository';
 import { AplicacionesComponent } from './aplicaciones.component';
 
 describe('AplicacionesComponent', () => {
