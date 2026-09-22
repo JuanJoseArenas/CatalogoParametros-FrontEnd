@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
-import { HttpAplicacionesRepository } from './data/http-aplicaciones.repository';
+import { HttpAplicacionesRepository } from './infrastructure/http-aplicaciones.repository';
 import { AplicacionesRepository } from './domain/aplicaciones.repository';
-import { HttpOrganizacionesRepository } from '../organizaciones/data/http-organizaciones.repository';
+import { HttpOrganizacionesRepository } from '../organizaciones/infrastructure/http-organizaciones.repository';
 import { OrganizacionesRepository } from '../organizaciones/domain/organizaciones.repository';
 
 export const APLICACIONES_ROUTES: Routes = [{
@@ -10,5 +10,5 @@ export const APLICACIONES_ROUTES: Routes = [{
     { provide: AplicacionesRepository, useClass: HttpAplicacionesRepository },
     { provide: OrganizacionesRepository, useClass: HttpOrganizacionesRepository }
   ],
-  loadComponent: () => import('./components/aplicaciones.component').then(m => m.AplicacionesComponent)
+  loadComponent: () => import('./presentation/pages/aplicaciones.component').then(m => m.AplicacionesComponent)
 }];

@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
-import { HttpFuncionalidadesRepository } from './data/http-funcionalidades.repository';
+import { HttpFuncionalidadesRepository } from './infrastructure/http-funcionalidades.repository';
 import { FuncionalidadesRepository } from './domain/funcionalidades.repository';
-import { HttpModulosRepository } from '../modulos/data/http-modulos.repository';
+import { HttpModulosRepository } from '../modulos/infrastructure/http-modulos.repository';
 import { ModulosRepository } from '../modulos/domain/modulos.repository';
 
 export const FUNCIONALIDADES_ROUTES: Routes = [{
@@ -10,5 +10,5 @@ export const FUNCIONALIDADES_ROUTES: Routes = [{
     { provide: FuncionalidadesRepository, useClass: HttpFuncionalidadesRepository },
     { provide: ModulosRepository, useClass: HttpModulosRepository }
   ],
-  loadComponent: () => import('./components/funcionalidades.component').then(m => m.FuncionalidadesComponent)
+  loadComponent: () => import('./presentation/pages/funcionalidades.component').then(m => m.FuncionalidadesComponent)
 }];

@@ -30,9 +30,9 @@ steps:
     fetchDepth: 0
 
   - task: UseNode@1
-    displayName: Configurar Node.js 20
+    displayName: Configurar Node.js 22
     inputs:
-      version: 20.x
+      version: 22.x
 
   - task: Cache@2
     displayName: Cache de npm

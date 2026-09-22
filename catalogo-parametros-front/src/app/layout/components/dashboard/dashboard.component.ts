@@ -1,12 +1,11 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectionStrategy } from '@angular/core';
+
 import { RouterLink } from '@angular/router';
 
 @Component({
-  selector: 'app-dashboard',
-  standalone: true,
-  imports: [CommonModule, RouterLink],
-  template: `
+    selector: 'app-dashboard',
+    imports: [RouterLink],
+    template: `
     <div class="dashboard">
       <div class="header">
         <h1>Dashboard</h1>
@@ -57,11 +56,21 @@ import { RouterLink } from '@angular/router';
             <p>Gestiona los parametros del sistema</p>
           </div>
           <a routerLink="/parametros" class="btn btn-primary">Ver</a>
+        
+        </div>
+                <div class="stat-card">
+          <div class="stat-icon">💿</div>
+          <div class="stat-info">
+            <h3>Metadatos</h3>
+            <p>Administra los Metadatos</p>
+          </div>
+          <a routerLink="/metadatos" class="btn btn-primary">Ver</a>
         </div>
       </div>
     </div>
   `,
-  styles: [`
+    changeDetection: ChangeDetectionStrategy.Eager,
+    styles: [`
     .dashboard {
       max-width: 1200px;
       margin: 0 auto;
