@@ -1,3 +1,4 @@
+import { fechaParaFormulario } from '../../../../shared/utils/date.utils';
 import { FormBuilder } from '@angular/forms';
 import { of, Subject, throwError } from 'rxjs';
 import { EventStreamService } from '../../../../core/realtime/event-stream.service';
@@ -40,5 +41,28 @@ describe('FuncionalidadesComponent', () => {
     spyOn(console, 'error'); modules.findAll.and.returnValue(throwError(() => ({}))); component.loadModulos(); expect(console.error).toHaveBeenCalled();
     repository.create.and.returnValue(throwError(() => ({}))); component.funcionalidadForm.setValue({ nombre: 'F', idModulo: 'm1', activo: true, fechaInicio: '2026-01-01', fechaFinal: '2026-02-01' }); component.saveFuncionalidad(); expect(component.errorMessage).toContain('crear');
     spyOn(window, 'confirm').and.returnValue(true); repository.delete.and.returnValue(throwError(() => ({}))); component.deleteFuncionalidad('f1'); expect(component.errorMessage).toContain('eliminar');
+  });
+
+  it('conserva el instante y la precisi?n al editar solo el nombre desde otra zona', () => {
+    const fechaInicio = '2026-11-01T01:30:25.123456-05:00';
+    const fechaFinal = '2026-12-31T23:59:59+05:30';
+    repository.update.and.returnValue(of({ mensajes: ['ok'] }));
+    component.editFuncionalidad({ id: '1', nombre: 'Original', idModulo: 'm1', activo: true, fechaInicio, fechaFinal });
+    expect(component.funcionalidadForm.value.fechaInicio).toBe(fechaParaFormulario(fechaInicio));
+    component.funcionalidadForm.patchValue({ nombre: 'Nuevo' });
+    component.saveFuncionalidad();
+    expect(repository.update).toHaveBeenCalledWith('1', jasmine.objectContaining({ nombre: 'Nuevo', fechaInicio, fechaFinal }));
+  });
+
+  it('env?a la hora elegida con desfase local y rechaza fechas inv?lidas', () => {
+    repository.create.and.returnValue(of({ mensajes: ['ok'] }));
+    component.funcionalidadForm.patchValue({ nombre: 'Nueva', idModulo: 'm1', activo: true, fechaInicio: '2026-07-15T14:35:42', fechaFinal: '2026-12-31T18:20:00' });
+    component.saveFuncionalidad();
+    const enviado = repository.create.calls.mostRecent().args[0] as { fechaInicio: string };
+    expect(enviado.fechaInicio).toMatch(/^2026-07-15T14:35:42[+-]\d{2}:\d{2}$/);
+    repository.create.calls.reset();
+    component.funcionalidadForm.patchValue({ nombre: 'Nueva', idModulo: 'm1', activo: true, fechaInicio: '2026-02-30T14:00:00', fechaFinal: '2026-12-31T18:20:00' });
+    component.saveFuncionalidad();
+    expect(repository.create).not.toHaveBeenCalled();
   });
 });

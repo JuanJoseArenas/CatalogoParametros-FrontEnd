@@ -7,7 +7,7 @@ import { Funcionalidad } from '../../domain/funcionalidad';
 import { FuncionalidadesRepository } from '../../domain/funcionalidades.repository';
 import { Modulo } from '../../../modulos/domain/modulo';
 import { ModulosRepository } from '../../../modulos/domain/modulos.repository';
-import { fechaConZona } from '../../../../shared/utils/date.utils';
+import { fechaConZona, fechaParaFormulario, mostrarFechaLocal, fechaLocalValida } from '../../../../shared/utils/date.utils';
 import { ConnectionStatusComponent } from '../../../../shared/ui/connection-status/connection-status.component';
 import { PageMessagesComponent } from '../../../../shared/ui/page-messages/page-messages.component';
 import { PaginationComponent } from '../../../../shared/ui/pagination/pagination.component';
@@ -59,8 +59,8 @@ import { Subscription } from 'rxjs';
                   <tr>
                     <td>{{ func.nombre }}</td>
                     <td>{{ getModuloNombre(func.idModulo) }}</td>
-                    <td>{{ (func.fechaInicio | slice:0:10) || '-' }}</td>
-                    <td>{{ (func.fechaFinal | slice:0:10) || '-' }}</td>
+                    <td>{{ mostrarFechaLocal(func.fechaInicio) }}</td>
+                    <td>{{ mostrarFechaLocal(func.fechaFinal) }}</td>
                     <td>
                       <span class="badge" [class.badge-success]="func.activo" [class.badge-danger]="!func.activo">
                         {{ func.activo ? 'Activo' : 'Inactivo' }}
@@ -134,6 +134,8 @@ export class FuncionalidadesComponent implements OnInit, OnDestroy {
   isConnected = false;
   page = 1;
   pageSize = 10;
+  readonly mostrarFechaLocal = mostrarFechaLocal;
+  private fechasOriginales: { fechaInicio?: string; fechaFinal?: string } = {};
   private subscriptions: Subscription[] = [];
 
   get moduloOptions(): SelectOption[] {
@@ -243,6 +245,7 @@ export class FuncionalidadesComponent implements OnInit, OnDestroy {
     this.showModal = true;
     this.isEditing = false;
     this.editingId = null;
+    this.fechasOriginales = {};
     this.funcionalidadForm.reset({ nombre: '', idModulo: '', activo: true, fechaInicio: '', fechaFinal: '' });
   }
 
@@ -250,12 +253,13 @@ export class FuncionalidadesComponent implements OnInit, OnDestroy {
     this.showModal = true;
     this.isEditing = true;
     this.editingId = func.id;
+    this.fechasOriginales = { fechaInicio: func.fechaInicio, fechaFinal: func.fechaFinal };
     this.funcionalidadForm.reset({
       nombre: func.nombre,
       idModulo: func.idModulo,
       activo: func.activo,
-      fechaInicio: func.fechaInicio?.slice(0, 10) || '',
-      fechaFinal: func.fechaFinal?.slice(0, 10) || ''
+      fechaInicio: fechaParaFormulario(func.fechaInicio),
+      fechaFinal: fechaParaFormulario(func.fechaFinal)
     });
   }
 
@@ -263,6 +267,7 @@ export class FuncionalidadesComponent implements OnInit, OnDestroy {
     this.showModal = false;
     this.isEditing = false;
     this.editingId = null;
+    this.fechasOriginales = {};
     this.funcionalidadForm.reset({ nombre: '', idModulo: '', activo: true, fechaInicio: '', fechaFinal: '' });
   }
 
@@ -278,6 +283,12 @@ export class FuncionalidadesComponent implements OnInit, OnDestroy {
       return;
     }
 
+    if (![this.funcionalidadForm.value.fechaInicio, this.funcionalidadForm.value.fechaFinal]
+      .every(fecha => fechaLocalValida(fecha || ''))) {
+      this.errorMessage = 'Ingrese fechas y horas v?lidas para su zona horaria.';
+      return;
+    }
+
     this.saving = true;
     this.errorMessage = '';
     this.successMessage = '';
@@ -289,10 +300,10 @@ export class FuncionalidadesComponent implements OnInit, OnDestroy {
     };
 
     if (this.funcionalidadForm.value.fechaInicio) {
-      data.fechaInicio = fechaConZona(this.funcionalidadForm.value.fechaInicio);
+      data.fechaInicio = fechaConZona(this.funcionalidadForm.value.fechaInicio, this.fechasOriginales.fechaInicio);
     }
     if (this.funcionalidadForm.value.fechaFinal) {
-      data.fechaFinal = fechaConZona(this.funcionalidadForm.value.fechaFinal);
+      data.fechaFinal = fechaConZona(this.funcionalidadForm.value.fechaFinal, this.fechasOriginales.fechaFinal);
     }
 
     if (this.isEditing && this.editingId) {

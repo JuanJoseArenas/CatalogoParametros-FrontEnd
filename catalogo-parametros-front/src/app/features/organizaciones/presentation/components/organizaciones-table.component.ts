@@ -1,3 +1,4 @@
+import { mostrarFechaLocal } from '../../../../shared/utils/date.utils';
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { Organizacion } from '../../domain/organizacion';
 import { PaginationComponent } from '../../../../shared/ui/pagination/pagination.component';
@@ -25,8 +26,8 @@ import { PaginationComponent } from '../../../../shared/ui/pagination/pagination
               @for (organizacion of organizaciones(); track organizacion.id) {
                 <tr>
                   <td>{{ organizacion.nombre }}</td>
-                  <td>{{ organizacion.fechaInicio?.slice(0, 10) || '-' }}</td>
-                  <td>{{ organizacion.fechaFinal?.slice(0, 10) || '-' }}</td>
+                  <td>{{ mostrarFechaLocal(organizacion.fechaInicio) }}</td>
+                  <td>{{ mostrarFechaLocal(organizacion.fechaFinal) }}</td>
                   <td>
                     <button class="btn btn-warning btn-sm" (click)="edit.emit(organizacion)">Editar</button>
                     <button class="btn btn-danger btn-sm" (click)="remove.emit(organizacion.id)">Eliminar</button>
@@ -59,6 +60,7 @@ import { PaginationComponent } from '../../../../shared/ui/pagination/pagination
   `
 })
 export class OrganizacionesTableComponent {
+  readonly mostrarFechaLocal = mostrarFechaLocal;
   readonly organizaciones = input.required<Organizacion[]>();
   readonly loading = input(false);
   readonly page = input.required<number>();
