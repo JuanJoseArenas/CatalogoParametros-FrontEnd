@@ -18,6 +18,7 @@ export interface SelectOption {
           <button class="modal-close" (click)="cancel.emit()">&times;</button>
         </div>
         <div class="modal-body">
+          <p class="field-help">Las fechas y horas se muestran en la zona horaria de su dispositivo.</p>
           <form [formGroup]="form()" (ngSubmit)="save.emit()">
             <div class="form-group">
               <label class="form-label">Nombre</label>
@@ -33,12 +34,12 @@ export interface SelectOption {
               </select>
             </div>
             <div class="form-group">
-              <label class="form-label">Fecha Inicio</label>
-              <input type="date" class="form-control" formControlName="fechaInicio">
+              <label class="form-label">Fecha y hora de inicio</label>
+              <input type="datetime-local" step="1" class="form-control" formControlName="fechaInicio">
             </div>
             <div class="form-group">
-              <label class="form-label">Fecha Fin</label>
-              <input type="date" class="form-control" formControlName="fechaFinal">
+              <label class="form-label">Fecha y hora de fin</label>
+              <input type="datetime-local" step="1" class="form-control" formControlName="fechaFinal">
             </div>
             <div class="form-group">
               <label class="form-label">Estado</label>

@@ -3,7 +3,7 @@ import { FormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms'
 import { EventStreamService } from '../../../../core/realtime/event-stream.service';
 import { Organizacion } from '../../domain/organizacion';
 import { OrganizacionesRepository } from '../../domain/organizaciones.repository';
-import { fechaConZona } from '../../../../shared/utils/date.utils';
+import { fechaConZona, fechaParaFormulario, mostrarFechaLocal, fechaLocalValida } from '../../../../shared/utils/date.utils';
 import { ConnectionStatusComponent } from '../../../../shared/ui/connection-status/connection-status.component';
 import { PageMessagesComponent } from '../../../../shared/ui/page-messages/page-messages.component';
 import { OrganizacionFormComponent } from '../components/organizacion-form.component';
@@ -73,6 +73,8 @@ export class OrganizacionesComponent implements OnInit, OnDestroy {
   isConnected = false;
   page = 1;
   pageSize = 10;
+  readonly mostrarFechaLocal = mostrarFechaLocal;
+  private fechasOriginales: { fechaInicio?: string; fechaFinal?: string } = {};
   private subscriptions: Subscription[] = [];
 
   constructor(private repository: OrganizacionesRepository, private fb: FormBuilder, private eventStream: EventStreamService) {
@@ -159,6 +161,7 @@ export class OrganizacionesComponent implements OnInit, OnDestroy {
     this.showModal = true;
     this.isEditing = false;
     this.editingId = null;
+    this.fechasOriginales = {};
     this.organizacionForm.reset({ nombre: '', fechaInicio: '', fechaFinal: '' });
   }
 
@@ -166,10 +169,11 @@ export class OrganizacionesComponent implements OnInit, OnDestroy {
     this.showModal = true;
     this.isEditing = true;
     this.editingId = org.id;
+    this.fechasOriginales = { fechaInicio: org.fechaInicio, fechaFinal: org.fechaFinal };
     this.organizacionForm.reset({
       nombre: org.nombre,
-      fechaInicio: org.fechaInicio?.slice(0, 10) || '',
-      fechaFinal: org.fechaFinal?.slice(0, 10) || ''
+      fechaInicio: fechaParaFormulario(org.fechaInicio),
+      fechaFinal: fechaParaFormulario(org.fechaFinal)
     });
   }
 
@@ -177,6 +181,7 @@ export class OrganizacionesComponent implements OnInit, OnDestroy {
     this.showModal = false;
     this.isEditing = false;
     this.editingId = null;
+    this.fechasOriginales = {};
     this.organizacionForm.reset({ nombre: '', fechaInicio: '', fechaFinal: '' });
   }
 
@@ -192,6 +197,12 @@ export class OrganizacionesComponent implements OnInit, OnDestroy {
       return;
     }
 
+    if (![this.organizacionForm.value.fechaInicio, this.organizacionForm.value.fechaFinal]
+      .every(fecha => fechaLocalValida(fecha || ''))) {
+      this.errorMessage = 'Ingrese fechas y horas v?lidas para su zona horaria.';
+      return;
+    }
+
     this.saving = true;
     this.errorMessage = '';
     this.successMessage = '';
@@ -201,10 +212,10 @@ export class OrganizacionesComponent implements OnInit, OnDestroy {
     };
 
     if (this.organizacionForm.value.fechaInicio) {
-      data.fechaInicio = fechaConZona(this.organizacionForm.value.fechaInicio);
+      data.fechaInicio = fechaConZona(this.organizacionForm.value.fechaInicio, this.fechasOriginales.fechaInicio);
     }
     if (this.organizacionForm.value.fechaFinal) {
-      data.fechaFinal = fechaConZona(this.organizacionForm.value.fechaFinal);
+      data.fechaFinal = fechaConZona(this.organizacionForm.value.fechaFinal, this.fechasOriginales.fechaFinal);
     }
 
     if (this.isEditing && this.editingId) {

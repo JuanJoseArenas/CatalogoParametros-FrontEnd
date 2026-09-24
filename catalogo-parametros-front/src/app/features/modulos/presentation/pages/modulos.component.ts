@@ -7,7 +7,7 @@ import { Modulo } from '../../domain/modulo';
 import { ModulosRepository } from '../../domain/modulos.repository';
 import { Aplicacion } from '../../../aplicaciones/domain/aplicacion';
 import { AplicacionesRepository } from '../../../aplicaciones/domain/aplicaciones.repository';
-import { fechaConZona } from '../../../../shared/utils/date.utils';
+import { fechaConZona, fechaParaFormulario, mostrarFechaLocal, fechaLocalValida } from '../../../../shared/utils/date.utils';
 import { ConnectionStatusComponent } from '../../../../shared/ui/connection-status/connection-status.component';
 import { PageMessagesComponent } from '../../../../shared/ui/page-messages/page-messages.component';
 import { PaginationComponent } from '../../../../shared/ui/pagination/pagination.component';
@@ -59,8 +59,8 @@ import { Subscription } from 'rxjs';
                   <tr>
                     <td>{{ mod.nombre }}</td>
                     <td>{{ getAplicacionNombre(mod.idAplicacion) }}</td>
-                    <td>{{ (mod.fechaInicio | slice:0:10) || '-' }}</td>
-                    <td>{{ (mod.fechaFinal | slice:0:10) || '-' }}</td>
+                    <td>{{ mostrarFechaLocal(mod.fechaInicio) }}</td>
+                    <td>{{ mostrarFechaLocal(mod.fechaFinal) }}</td>
                     <td>
                       <span class="badge" [class.badge-success]="mod.activo" [class.badge-danger]="!mod.activo">
                         {{ mod.activo ? 'Activo' : 'Inactivo' }}
@@ -135,6 +135,8 @@ export class ModulosComponent implements OnInit, OnDestroy {
   isConnected = false;
   page = 1;
   pageSize = 10;
+  readonly mostrarFechaLocal = mostrarFechaLocal;
+  private fechasOriginales: { fechaInicio?: string; fechaFinal?: string } = {};
   private subscriptions: Subscription[] = [];
 
   get aplicacionOptions(): SelectOption[] {
@@ -243,6 +245,7 @@ export class ModulosComponent implements OnInit, OnDestroy {
     this.showModal = true;
     this.isEditing = false;
     this.editingId = null;
+    this.fechasOriginales = {};
     this.moduloForm.reset({ nombre: '', idAplicacion: '', activo: true, fechaInicio: '', fechaFinal: '' });
   }
 
@@ -250,12 +253,13 @@ export class ModulosComponent implements OnInit, OnDestroy {
     this.showModal = true;
     this.isEditing = true;
     this.editingId = mod.id;
+    this.fechasOriginales = { fechaInicio: mod.fechaInicio, fechaFinal: mod.fechaFinal };
     this.moduloForm.reset({
       nombre: mod.nombre,
       idAplicacion: mod.idAplicacion,
       activo: mod.activo,
-      fechaInicio: mod.fechaInicio?.slice(0, 10) || '',
-      fechaFinal: mod.fechaFinal?.slice(0, 10) || ''
+      fechaInicio: fechaParaFormulario(mod.fechaInicio),
+      fechaFinal: fechaParaFormulario(mod.fechaFinal)
     });
   }
 
@@ -263,6 +267,7 @@ export class ModulosComponent implements OnInit, OnDestroy {
     this.showModal = false;
     this.isEditing = false;
     this.editingId = null;
+    this.fechasOriginales = {};
     this.moduloForm.reset({ nombre: '', idAplicacion: '', activo: true, fechaInicio: '', fechaFinal: '' });
   }
 
@@ -278,6 +283,12 @@ export class ModulosComponent implements OnInit, OnDestroy {
       return;
     }
 
+    if (![this.moduloForm.value.fechaInicio, this.moduloForm.value.fechaFinal]
+      .every(fecha => fechaLocalValida(fecha || ''))) {
+      this.errorMessage = 'Ingrese fechas y horas v?lidas para su zona horaria.';
+      return;
+    }
+
     this.saving = true;
     this.errorMessage = '';
     this.successMessage = '';
@@ -289,10 +300,10 @@ export class ModulosComponent implements OnInit, OnDestroy {
     };
 
     if (this.moduloForm.value.fechaInicio) {
-      data.fechaInicio = fechaConZona(this.moduloForm.value.fechaInicio);
+      data.fechaInicio = fechaConZona(this.moduloForm.value.fechaInicio, this.fechasOriginales.fechaInicio);
     }
     if (this.moduloForm.value.fechaFinal) {
-      data.fechaFinal = fechaConZona(this.moduloForm.value.fechaFinal);
+      data.fechaFinal = fechaConZona(this.moduloForm.value.fechaFinal, this.fechasOriginales.fechaFinal);
     }
 
     const request = this.isEditing && this.editingId
