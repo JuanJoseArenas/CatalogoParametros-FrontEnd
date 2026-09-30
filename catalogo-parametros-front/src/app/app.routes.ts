@@ -1,5 +1,9 @@
 import { Routes } from '@angular/router';
 export const appRoutes: Routes = [
+  { path: 'estados-ambiente', loadChildren: () => import('./features/estados-ambiente/estados-ambiente.routes').then(m => m.ESTADOS_AMBIENTE_ROUTES) },
+  { path: 'estados-metadato-ambiente', loadChildren: () => import('./features/estados-metadato-ambiente/estados-metadato-ambiente.routes').then(m => m.ESTADOS_METADATO_AMBIENTE_ROUTES) },
+  { path: 'metadatos-ambiente', loadChildren: () => import('./features/metadatos-ambiente/metadatos-ambiente.routes').then(m => m.METADATOS_AMBIENTE_ROUTES) },
+  { path: 'ambientes', loadChildren: () => import('./features/ambientes/ambientes.routes').then(m => m.AMBIENTES_ROUTES) },
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
   { path: 'dashboard', loadComponent: () => import('./layout/components/dashboard/dashboard.component').then(m => m.DashboardComponent) },
   { path: 'organizaciones', loadChildren: () => import('./features/organizaciones/organizaciones.routes').then(m => m.ORGANIZACIONES_ROUTES) },

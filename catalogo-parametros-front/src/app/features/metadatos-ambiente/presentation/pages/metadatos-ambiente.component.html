@@ -1,0 +1,127 @@
+<div class="page-header">
+  <h1>Metadatos por ambiente</h1>
+  <div class="actions">
+    <span class="connection" role="status">{{ connectionStatus }}</span>
+    <button class="btn btn-secondary" [disabled]="loading" (click)="loadMetadatos(); loadCatalogos()">Actualizar lista</button>
+    <button class="btn btn-primary" (click)="openModal()">+ Nueva relación</button>
+  </div>
+</div>
+<p class="help">Relacione un parámetro con un ambiente y su estado de metadato.</p>
+<app-page-messages [error]="errorMessage" [success]="successMessage" />
+<app-page-messages [error]="catalogError" />
+@if (catalogError) {
+  <button class="btn btn-secondary" (click)="loadCatalogos()">Reintentar cargar catálogos</button>
+}
+<div class="card">
+  <div class="card-header">
+    <h2 class="card-title">Relaciones de parámetros y ambientes</h2>
+    <input class="form-control" aria-label="Buscar en esta página" placeholder="Buscar en esta página..." [(ngModel)]="searchTerm">
+  </div>
+  @if (loading) {
+    <div class="loading" role="status">Cargando relaciones...</div>
+  } @else {
+    @if (filteredMetadatos.length) {
+      <div class="table-container">
+        <table>
+          <thead><tr><th>Parámetro</th><th>Ambiente</th><th>Estado del metadato</th><th>Acciones</th></tr></thead>
+          <tbody>
+            @for (item of filteredMetadatos; track item.id) {
+              <tr>
+                <td>{{ nombre(parametros, item.idParametro) }}</td>
+                <td>{{ nombre(ambientes, item.idAmbiente) }}</td>
+                <td>{{ nombre(estados, item.idEstadoMetadatoAmbiente) }}</td>
+                <td class="actions">
+                  <button class="btn btn-secondary btn-sm" [disabled]="consulting" (click)="consultarMetadato(item.id)">Ver detalle</button>
+                  <button class="btn btn-warning btn-sm" (click)="openModal(item)">Editar</button>
+                  <button class="btn btn-danger btn-sm" [disabled]="deletingId !== null" (click)="deleteMetadato(item)">
+                    {{ deletingId === item.id ? 'Eliminando...' : 'Eliminar' }}
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else if (!errorMessage) {
+      <div class="empty-state">
+        <h3>{{ searchTerm.trim() ? 'No hay coincidencias en esta página' : 'No hay relaciones de ambientes' }}</h3>
+        <p>{{ searchTerm.trim() ? 'Pruebe con otro nombre.' : 'Cree una relación para comenzar.' }}</p>
+      </div>
+    }
+    <app-pagination [page]="page" [hasNext]="metadatos.length >= pageSize" (pageChange)="changePage($event)" />
+  }
+</div>
+
+@if (showModal) {
+  <div class="modal-overlay">
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="metadato-title" (keydown.escape)="closeModal()">
+      <div class="modal-header">
+        <h3 id="metadato-title" class="modal-title">{{ editingId ? 'Editar relación' : 'Nueva relación' }}</h3>
+        <button class="modal-close" aria-label="Cerrar" [disabled]="saving" (click)="closeModal()">&times;</button>
+      </div>
+      <form [formGroup]="metadatoForm" (ngSubmit)="saveMetadato()">
+        <div class="modal-body">
+          <app-page-messages [error]="formError || catalogError" />
+          @if (loadingCatalogos) { <p role="status">Cargando opciones...</p> }
+          @if (catalogError) {
+            <button type="button" class="btn btn-secondary" (click)="loadCatalogos()">Reintentar cargar opciones</button>
+          }
+          <div class="form-group">
+            <label class="form-label" for="relacion-parametro">Parámetro</label>
+            <select id="relacion-parametro" class="form-control" formControlName="idParametro">
+              <option value="">Seleccione un parámetro</option>
+              @for (item of parametros; track item.id) { <option [value]="item.id">{{ item.nombre }}</option> }
+            </select>
+            @if (catalogosDisponibles && !parametros.length) { <p>No hay parámetros. <a routerLink="/parametros">Crear un parámetro</a></p> }
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="relacion-ambiente">Ambiente</label>
+            <select id="relacion-ambiente" class="form-control" formControlName="idAmbiente">
+              <option value="">Seleccione un ambiente</option>
+              @for (item of ambientes; track item.id) { <option [value]="item.id">{{ item.nombre }}</option> }
+            </select>
+            @if (catalogosDisponibles && !ambientes.length) { <p>No hay ambientes. <a routerLink="/ambientes">Crear un ambiente</a></p> }
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="relacion-estado">Estado del metadato</label>
+            <select id="relacion-estado" class="form-control" formControlName="idEstadoMetadatoAmbiente">
+              <option value="">Seleccione un estado</option>
+              @for (item of estados; track item.id) { <option [value]="item.id">{{ item.nombre }}</option> }
+            </select>
+            @if (catalogosDisponibles && !estados.length) { <p>No hay estados. <a routerLink="/estados-metadato-ambiente">Crear un estado de metadato</a></p> }
+          </div>
+          @if (metadatoForm.touched && metadatoForm.invalid) {
+            <p role="alert">Seleccione el parámetro, el ambiente y el estado del metadato.</p>
+          }
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" [disabled]="saving" (click)="closeModal()">Cancelar</button>
+          <button type="submit" class="btn btn-primary" [disabled]="saving || metadatoForm.invalid || !catalogosDisponibles">
+            {{ saving ? 'Guardando...' : (editingId ? 'Actualizar' : 'Crear') }}
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+}
+
+@if (detalle; as item) {
+  <div class="modal-overlay">
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="detalle-title" (keydown.escape)="detalle = null">
+      <div class="modal-header">
+        <h3 id="detalle-title" class="modal-title">Detalle de la relación</h3>
+        <button class="modal-close" aria-label="Cerrar detalle" (click)="detalle = null">&times;</button>
+      </div>
+      <div class="modal-body">
+        <dl>
+          <dt>Parámetro</dt><dd>{{ nombre(parametros, item.idParametro) }}</dd>
+          <dt>Ambiente</dt><dd>{{ nombre(ambientes, item.idAmbiente) }}</dd>
+          <dt>Estado del metadato</dt><dd>{{ nombre(estados, item.idEstadoMetadatoAmbiente) }}</dd>
+          <dt>ID</dt><dd>{{ item.id }}</dd>
+        </dl>
+      </div>
+      <div class="modal-footer"><button class="btn btn-secondary" (click)="detalle = null">Cerrar</button></div>
+    </section>
+  </div>
+}
+

@@ -1,0 +1,91 @@
+<div class="page-header">
+  <h1>Estados de metadatos por ambiente</h1>
+  <div class="actions">
+    <span class="connection" role="status">{{ connectionStatus }}</span>
+    <button class="btn btn-secondary" [disabled]="loading" (click)="loadEstadosMetadatoAmbiente()">Actualizar lista</button>
+    <button class="btn btn-primary" (click)="openModal()">+ Nuevo estado de metadato por ambiente</button>
+  </div>
+</div>
+<app-page-messages [error]="errorMessage" [success]="successMessage" />
+<div class="card">
+  <div class="card-header">
+    <h2 class="card-title">Lista de estados de metadatos por ambiente</h2>
+    <input class="form-control" aria-label="Buscar por nombre en esta página"
+      placeholder="Buscar en esta página..." [(ngModel)]="searchTerm">
+  </div>
+  @if (loading) {
+    <div class="loading" role="status">Cargando estados de metadatos por ambiente...</div>
+  } @else {
+    @if (filteredEstadosMetadatoAmbiente.length) {
+      <div class="table-container">
+        <table>
+          <thead><tr><th>Nombre</th><th>Acciones</th></tr></thead>
+          <tbody>
+            @for (estadoMetadatoAmbiente of filteredEstadosMetadatoAmbiente; track estadoMetadatoAmbiente.id) {
+              <tr>
+                <td>{{ estadoMetadatoAmbiente.nombre }}</td>
+                <td class="actions">
+                  <button class="btn btn-secondary btn-sm" [disabled]="consulting" (click)="consultarEstadoMetadatoAmbiente(estadoMetadatoAmbiente.id)">Ver detalle</button>
+                  <button class="btn btn-warning btn-sm" (click)="openModal(estadoMetadatoAmbiente)">Editar</button>
+                  <button class="btn btn-danger btn-sm" [disabled]="deletingId !== null" (click)="deleteEstadoMetadatoAmbiente(estadoMetadatoAmbiente)">
+                    {{ deletingId === estadoMetadatoAmbiente.id ? 'Eliminando...' : 'Eliminar' }}
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else if (!errorMessage) {
+      <div class="empty-state">
+        <h3>{{ searchTerm.trim() ? 'No hay coincidencias en esta página' : 'No hay estados de metadatos por ambiente' }}</h3>
+        <p>{{ searchTerm.trim() ? 'Pruebe con otro nombre.' : 'Cree un estado de metadato por ambiente para comenzar.' }}</p>
+      </div>
+    }
+    <app-pagination [page]="page" [hasNext]="estadosMetadatoAmbiente.length >= pageSize" (pageChange)="changePage($event)" />
+  }
+</div>
+
+@if (showModal) {
+  <div class="modal-overlay">
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="estadoMetadatoAmbiente-title" (keydown.escape)="closeModal()">
+      <div class="modal-header">
+        <h3 id="estadoMetadatoAmbiente-title" class="modal-title">{{ editingId ? 'Editar estado de metadato por ambiente' : 'Nuevo estado de metadato por ambiente' }}</h3>
+        <button class="modal-close" aria-label="Cerrar" [disabled]="saving" (click)="closeModal()">&times;</button>
+      </div>
+      <form [formGroup]="estadoMetadatoAmbienteForm" (ngSubmit)="saveEstadoMetadatoAmbiente()">
+        <div class="modal-body">
+          <app-page-messages [error]="formError" />
+          <div class="form-group">
+            <label class="form-label" for="estadoMetadatoAmbiente-nombre">Nombre</label>
+            <input id="estadoMetadatoAmbiente-nombre" class="form-control" formControlName="nombre" autocomplete="off" aria-describedby="nombre-error">
+            @if (estadoMetadatoAmbienteForm.controls.nombre.touched && estadoMetadatoAmbienteForm.controls.nombre.invalid) {
+              <p id="nombre-error" role="alert">Ingrese un nombre que no esté vacío.</p>
+            }
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" [disabled]="saving" (click)="closeModal()">Cancelar</button>
+          <button type="submit" class="btn btn-primary" [disabled]="saving || estadoMetadatoAmbienteForm.invalid">
+            {{ saving ? 'Guardando...' : (editingId ? 'Actualizar' : 'Crear') }}
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+}
+
+@if (detalle; as estadoMetadatoAmbiente) {
+  <div class="modal-overlay">
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="detalle-title" (keydown.escape)="detalle = null">
+      <div class="modal-header">
+        <h3 id="detalle-title" class="modal-title">Detalle del estado de metadato por ambiente</h3>
+        <button class="modal-close" aria-label="Cerrar detalle" (click)="detalle = null">&times;</button>
+      </div>
+      <div class="modal-body">
+        <dl><dt>Nombre</dt><dd>{{ estadoMetadatoAmbiente.nombre }}</dd><dt>ID</dt><dd class="identifier">{{ estadoMetadatoAmbiente.id }}</dd></dl>
+      </div>
+      <div class="modal-footer"><button class="btn btn-secondary" (click)="detalle = null">Cerrar</button></div>
+    </section>
+  </div>
+}
