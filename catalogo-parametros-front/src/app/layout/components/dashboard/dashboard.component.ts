@@ -66,6 +66,38 @@ import { RouterLink } from '@angular/router';
           </div>
           <a routerLink="/metadatos" class="btn btn-primary">Ver</a>
         </div>
+        <div class="stat-card">
+          <div class="stat-icon" aria-hidden="true">🌐</div>
+          <div class="stat-info">
+            <h3>Ambientes</h3>
+            <p>Administra los ambientes del catálogo</p>
+          </div>
+          <a routerLink="/ambientes" class="btn btn-primary">Ver</a>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" aria-hidden="true">🚦</div>
+          <div class="stat-info">
+            <h3>Estados de ambiente</h3>
+            <p>Administra el catálogo de estados de ambiente</p>
+          </div>
+          <a routerLink="/estados-ambiente" class="btn btn-primary">Ver</a>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" aria-hidden="true">✅</div>
+          <div class="stat-info">
+            <h3>Estados de metadatos por ambiente</h3>
+            <p>Administra los estados disponibles para las relaciones</p>
+          </div>
+          <a routerLink="/estados-metadato-ambiente" class="btn btn-primary">Ver</a>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" aria-hidden="true">🔗</div>
+          <div class="stat-info">
+            <h3>Metadatos por ambiente</h3>
+            <p>Relaciona parámetros, ambientes y estados de metadato</p>
+          </div>
+          <a routerLink="/metadatos-ambiente" class="btn btn-primary">Ver</a>
+        </div>
       </div>
     </div>
   `,

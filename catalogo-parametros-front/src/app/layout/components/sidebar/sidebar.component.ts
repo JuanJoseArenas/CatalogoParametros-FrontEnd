@@ -54,6 +54,30 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
               Metadatos
             </a>
           </li>
+          <li class="nav-item">
+            <a routerLink="/ambientes" routerLinkActive="active" class="nav-link">
+              <span class="nav-icon" aria-hidden="true">🌐</span>
+              Ambientes
+            </a>
+          </li>
+          <li class="nav-item">
+            <a routerLink="/estados-ambiente" routerLinkActive="active" class="nav-link">
+              <span class="nav-icon" aria-hidden="true">🚦</span>
+              Estados de ambiente
+            </a>
+          </li>
+          <li class="nav-item">
+            <a routerLink="/estados-metadato-ambiente" routerLinkActive="active" class="nav-link">
+              <span class="nav-icon" aria-hidden="true">✅</span>
+              Estados de metadatos por ambiente
+            </a>
+          </li>
+          <li class="nav-item">
+            <a routerLink="/metadatos-ambiente" routerLinkActive="active" class="nav-link">
+              <span class="nav-icon" aria-hidden="true">🔗</span>
+              Metadatos por ambiente
+            </a>
+          </li>
         </ul>
       </nav>
       <div class="sidebar-footer">

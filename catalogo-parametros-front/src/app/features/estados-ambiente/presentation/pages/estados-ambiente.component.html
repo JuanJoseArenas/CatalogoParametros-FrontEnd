@@ -1,0 +1,91 @@
+<div class="page-header">
+  <h1>Estados de ambiente</h1>
+  <div class="actions">
+    <span class="connection" role="status">{{ connectionStatus }}</span>
+    <button class="btn btn-secondary" [disabled]="loading" (click)="loadEstadosAmbiente()">Actualizar lista</button>
+    <button class="btn btn-primary" (click)="openModal()">+ Nuevo estado de ambiente</button>
+  </div>
+</div>
+<app-page-messages [error]="errorMessage" [success]="successMessage" />
+<div class="card">
+  <div class="card-header">
+    <h2 class="card-title">Lista de estados de ambiente</h2>
+    <input class="form-control" aria-label="Buscar por nombre en esta página"
+      placeholder="Buscar en esta página..." [(ngModel)]="searchTerm">
+  </div>
+  @if (loading) {
+    <div class="loading" role="status">Cargando estados de ambiente...</div>
+  } @else {
+    @if (filteredEstadosAmbiente.length) {
+      <div class="table-container">
+        <table>
+          <thead><tr><th>Nombre</th><th>Acciones</th></tr></thead>
+          <tbody>
+            @for (estadoAmbiente of filteredEstadosAmbiente; track estadoAmbiente.id) {
+              <tr>
+                <td>{{ estadoAmbiente.nombre }}</td>
+                <td class="actions">
+                  <button class="btn btn-secondary btn-sm" [disabled]="consulting" (click)="consultarEstadoAmbiente(estadoAmbiente.id)">Ver detalle</button>
+                  <button class="btn btn-warning btn-sm" (click)="openModal(estadoAmbiente)">Editar</button>
+                  <button class="btn btn-danger btn-sm" [disabled]="deletingId !== null" (click)="deleteEstadoAmbiente(estadoAmbiente)">
+                    {{ deletingId === estadoAmbiente.id ? 'Eliminando...' : 'Eliminar' }}
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else if (!errorMessage) {
+      <div class="empty-state">
+        <h3>{{ searchTerm.trim() ? 'No hay coincidencias en esta página' : 'No hay estados de ambiente' }}</h3>
+        <p>{{ searchTerm.trim() ? 'Pruebe con otro nombre.' : 'Cree un estado de ambiente para comenzar.' }}</p>
+      </div>
+    }
+    <app-pagination [page]="page" [hasNext]="estadosAmbiente.length >= pageSize" (pageChange)="changePage($event)" />
+  }
+</div>
+
+@if (showModal) {
+  <div class="modal-overlay">
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="estadoAmbiente-title" (keydown.escape)="closeModal()">
+      <div class="modal-header">
+        <h3 id="estadoAmbiente-title" class="modal-title">{{ editingId ? 'Editar estado de ambiente' : 'Nuevo estado de ambiente' }}</h3>
+        <button class="modal-close" aria-label="Cerrar" [disabled]="saving" (click)="closeModal()">&times;</button>
+      </div>
+      <form [formGroup]="estadoAmbienteForm" (ngSubmit)="saveEstadoAmbiente()">
+        <div class="modal-body">
+          <app-page-messages [error]="formError" />
+          <div class="form-group">
+            <label class="form-label" for="estadoAmbiente-nombre">Nombre</label>
+            <input id="estadoAmbiente-nombre" class="form-control" formControlName="nombre" autocomplete="off" aria-describedby="nombre-error">
+            @if (estadoAmbienteForm.controls.nombre.touched && estadoAmbienteForm.controls.nombre.invalid) {
+              <p id="nombre-error" role="alert">Ingrese un nombre que no esté vacío.</p>
+            }
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" [disabled]="saving" (click)="closeModal()">Cancelar</button>
+          <button type="submit" class="btn btn-primary" [disabled]="saving || estadoAmbienteForm.invalid">
+            {{ saving ? 'Guardando...' : (editingId ? 'Actualizar' : 'Crear') }}
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+}
+
+@if (detalle; as estadoAmbiente) {
+  <div class="modal-overlay">
+    <section class="modal" role="dialog" aria-modal="true" aria-labelledby="detalle-title" (keydown.escape)="detalle = null">
+      <div class="modal-header">
+        <h3 id="detalle-title" class="modal-title">Detalle del estado de ambiente</h3>
+        <button class="modal-close" aria-label="Cerrar detalle" (click)="detalle = null">&times;</button>
+      </div>
+      <div class="modal-body">
+        <dl><dt>Nombre</dt><dd>{{ estadoAmbiente.nombre }}</dd><dt>ID</dt><dd class="identifier">{{ estadoAmbiente.id }}</dd></dl>
+      </div>
+      <div class="modal-footer"><button class="btn btn-secondary" (click)="detalle = null">Cerrar</button></div>
+    </section>
+  </div>
+}
