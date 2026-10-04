@@ -11,6 +11,10 @@ RUN npm run build -- --configuration production
 
 # Servir los archivos compilados y redirigir la API al backend.
 FROM nginxinc/nginx-unprivileged:stable-alpine
+# Actualizar PCRE2 antes de volver al usuario sin privilegios.
+# CVE-2026-103111: versión corregida mínima según el reporte de Trivy.
+USER root
+RUN apk add --upgrade --no-cache 'pcre2>=10.49-r0'
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist/catalogo-parametros-front/browser/ /usr/share/nginx/html/
 USER nginx
