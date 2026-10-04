@@ -19,6 +19,8 @@ variables:
   NPM_CONFIG_CACHE: $(Pipeline.Workspace)/.npm
   SONAR_USER_HOME: $(Pipeline.Workspace)/.sonar
   SONAR_BINARY_CACHE: $(Pipeline.Workspace)/.sonar/native-sonar-scanner
+  TRIVY_CACHE_DIR: $(Pipeline.Workspace)/.trivy/cache
+  TRIVY_VERSION: '0.74.0'
   IMAGE_REPOSITORY: simon4219/catalogo-parametros-frontend
   IMAGE_VERSION_PREFIX: '0.0'
   # La version se asigna al latest ANTERIOR, no a la imagen nueva.
@@ -47,6 +49,27 @@ steps:
     inputs:
       key: 'sonar-front | "$(Agent.OS)"'
       path: $(SONAR_USER_HOME)
+
+  - task: Cache@2
+    displayName: Cache de Trivy
+    inputs:
+      key: 'trivy | "$(Agent.OS)" | "$(TRIVY_VERSION)"'
+      restoreKeys: |
+        trivy | "$(Agent.OS)"
+      path: $(TRIVY_CACHE_DIR)
+
+  - bash: |
+      set -euo pipefail
+
+      paquete_trivy="$(Agent.TempDirectory)/trivy_$(TRIVY_VERSION)_Linux-64bit.deb"
+
+      wget --quiet \
+        --output-document "$paquete_trivy" \
+        "https://github.com/aquasecurity/trivy/releases/download/v$(TRIVY_VERSION)/trivy_$(TRIVY_VERSION)_Linux-64bit.deb"
+
+      sudo dpkg --install "$paquete_trivy"
+      trivy --version
+    displayName: Instalar Trivy $(TRIVY_VERSION)
 
   - bash: npm ci
     displayName: Instalar dependencias bloqueadas
@@ -98,6 +121,20 @@ steps:
       SONAR_USER_HOME: $(SONAR_USER_HOME)
       SONAR_BINARY_CACHE: $(SONAR_BINARY_CACHE)
 
+  - bash: |
+      set -euo pipefail
+
+      trivy filesystem \
+        --cache-dir "$(TRIVY_CACHE_DIR)" \
+        --ignorefile .trivyignore.yaml \
+        --offline-scan \
+        --scanners vuln,secret,misconfig \
+        --severity HIGH,CRITICAL \
+        --exit-code 1 \
+        .
+    displayName: Analizar dependencias, secretos y configuración con Trivy
+    workingDirectory: $(FRONTEND_DIRECTORY)
+
   - task: Docker@2
     displayName: Autenticarse en Docker Hub
     condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/develop'), ne(variables['Build.Reason'], 'PullRequest'))
@@ -119,6 +156,15 @@ steps:
 
       echo "Construyendo nueva imagen..."
       docker build --file Dockerfile --tag "$imagen_nueva" .
+
+      # Bloquear la publicación antes de modificar etiquetas en Docker Hub.
+      echo "Analizando nueva imagen con Trivy..."
+      trivy image \
+        --cache-dir "$(TRIVY_CACHE_DIR)" \
+        --scanners vuln,secret \
+        --severity HIGH,CRITICAL \
+        --exit-code 1 \
+        "$imagen_nueva"
 
       archivo_error="$(mktemp)"
       trap 'rm -f "$archivo_error"' EXIT
