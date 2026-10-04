@@ -124,9 +124,15 @@ steps:
   - bash: |
       set -euo pipefail
 
+      # El archivo de excepciones es opcional; sin él se analiza sin exclusiones.
+      opciones_ignore=()
+      if [[ -f .trivyignore.yaml ]]; then
+        opciones_ignore=(--ignorefile .trivyignore.yaml)
+      fi
+
       trivy filesystem \
         --cache-dir "$(TRIVY_CACHE_DIR)" \
-        --ignorefile .trivyignore.yaml \
+        "${opciones_ignore[@]}" \
         --offline-scan \
         --scanners vuln,secret,misconfig \
         --severity HIGH,CRITICAL \
@@ -155,7 +161,7 @@ steps:
       fi
 
       echo "Construyendo nueva imagen..."
-      docker build --file Dockerfile --tag "$imagen_nueva" .
+      docker build --pull --file Dockerfile --tag "$imagen_nueva" .
 
       # Bloquear la publicación antes de modificar etiquetas en Docker Hub.
       echo "Analizando nueva imagen con Trivy..."
