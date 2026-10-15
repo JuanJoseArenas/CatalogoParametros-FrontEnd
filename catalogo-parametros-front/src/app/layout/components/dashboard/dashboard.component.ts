@@ -13,6 +13,8 @@ import { RouterLink } from '@angular/router';
       </div>
 
       <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon" aria-hidden="true">🔎</div><div class="stat-info"><h3>Consulta de parámetros</h3><p>Consulta los parámetros de una aplicación y ambiente mediante un token</p></div><a routerLink="/consulta-parametros" class="btn btn-primary">Consultar</a></div>
+        <div class="stat-card"><div class="stat-icon" aria-hidden="true">🔑</div><div class="stat-info"><h3>Tokens</h3><p>Crea tokens y administra su acceso a parámetros</p></div><a routerLink="/tokens" class="btn btn-primary">Ver</a></div>
         <div class="stat-card">
           <div class="stat-icon">🏢</div>
           <div class="stat-info">

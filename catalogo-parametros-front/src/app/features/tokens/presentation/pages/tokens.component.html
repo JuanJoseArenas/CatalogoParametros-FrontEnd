@@ -1,0 +1,30 @@
+<div class="page-header"><h1>Tokens</h1><div class="actions"><button class="btn btn-secondary" [disabled]="loading || busy" (click)="load()">Actualizar lista</button><button class="btn btn-primary" [disabled]="!ready || busy" (click)="showCreate = true">+ Nuevo token</button></div></div>
+<app-page-messages [error]="errorMessage" [success]="successMessage" />
+<div class="card"><div class="card-header"><h2 class="card-title">Lista de tokens</h2><input class="form-control" aria-label="Buscar tokens" placeholder="Buscar por ID, aplicación, ambiente o estado" [(ngModel)]="search"></div>
+@if (loading) { <p role="status">Cargando tokens...</p> } @else {
+<div class="table-container"><table><thead><tr><th>ID</th><th>Aplicación</th><th>Ambiente</th><th>Estado</th><th>Expiración</th><th>Acciones</th></tr></thead><tbody>
+@for (token of filteredTokens; track token.id) { <tr><td>{{ token.id }}</td><td>{{ appName(token.aplicacionId) }}</td><td>{{ environmentName(token.ambienteId) }}</td><td>{{ stateName(token.estadoToken) }}</td><td>{{ token.fechaExpiracion ? (token.fechaExpiracion | date:'medium') : 'Sin expiración' }}</td><td><button class="btn btn-secondary btn-sm" [disabled]="busy" (click)="detail(token.id)">Ver detalle y gestionar</button></td></tr> }
+</tbody></table></div>@if (!filteredTokens.length && !errorMessage) { <p class="empty-state">No hay tokens que mostrar.</p> }
+}</div>
+@if (showCreate) {
+<div class="modal-overlay"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="create-title" (keydown.escape)="!busy && closeCreate()"><div class="modal-header"><h2 id="create-title">Nuevo token</h2><button class="modal-close" aria-label="Cerrar" [disabled]="busy" (click)="closeCreate()">&times;</button></div>
+<form [formGroup]="form" (ngSubmit)="create()"><div class="modal-body">
+<app-page-messages [error]="errorMessage" />
+<p>Guarde el secreto antes de crear el token. Después no podrá recuperarlo.</p>
+<div class="form-group"><label class="form-label" for="secret">Secreto</label><input id="secret" class="form-control" type="password" autocomplete="new-password" formControlName="token"></div>
+<div class="form-group"><label class="form-label" for="app">Aplicación</label><select id="app" class="form-control" formControlName="aplicacionId"><option value="">Seleccione una aplicación</option>@for (app of aplicaciones; track app.id) { <option [value]="app.id">{{ app.nombre }}</option> }</select></div>
+<div class="form-group"><label class="form-label" for="environment">Ambiente</label><select id="environment" class="form-control" formControlName="ambienteId"><option value="">Seleccione un ambiente</option>@for (environment of ambientes; track environment.id) { <option [value]="environment.id">{{ environment.nombre }}</option> }</select></div>
+<div class="form-group"><label class="form-label" for="initial-state">Estado</label><select id="initial-state" class="form-control" formControlName="estadoToken"><option value="">Seleccione un estado</option>@for (state of estados; track state.id) { <option [value]="state.id">{{ state.estado }}</option> }</select></div>
+<div class="form-group"><label class="form-label" for="expiration">Expiración (hora local)</label><input id="expiration" class="form-control" type="datetime-local" formControlName="fechaExpiracion"></div>
+</div><div class="modal-footer"><button type="button" class="btn btn-secondary" [disabled]="busy" (click)="closeCreate()">Cancelar</button><button class="btn btn-primary" type="submit" [disabled]="busy || form.invalid">{{ busy ? 'Guardando...' : 'Crear token' }}</button></div></form></section></div>
+}
+@if (selected; as token) {
+<div class="card"><div class="card-header"><h2>Detalle del token</h2><button class="btn btn-secondary" [disabled]="busy" (click)="closeDetail()">Cerrar detalle</button></div><div class="modal-body">
+<dl><dt>ID</dt><dd>{{ token.id }}</dd><dt>Aplicación</dt><dd>{{ appName(token.aplicacionId) }}</dd><dt>Ambiente</dt><dd>{{ environmentName(token.ambienteId) }}</dd><dt>Creación</dt><dd>{{ token.fechaCreacion | date:'medium' }}</dd><dt>Expiración</dt><dd>{{ token.fechaExpiracion ? (token.fechaExpiracion | date:'medium') : 'Sin expiración' }}</dd></dl>
+<label class="form-label" for="state">Estado</label><div class="actions"><select id="state" class="form-control" [(ngModel)]="estado" [disabled]="busy">@for (state of estados; track state.id) { <option [value]="state.id">{{ state.estado }}</option> }</select><button class="btn btn-primary" [disabled]="busy || !estado || estado === token.estadoToken" (click)="changeState()">Actualizar estado</button></div>
+<div class="form-group"><label class="form-label" for="validation-secret">Secreto para validar el token</label><input id="validation-secret" class="form-control" type="password" autocomplete="off" [(ngModel)]="secreto" [disabled]="busy"></div>
+<div class="actions"><button class="btn btn-secondary" [disabled]="busy || !secreto.trim()" (click)="validate()">Validar token</button><a class="btn btn-primary" routerLink="/consulta-parametros" [queryParams]="{ token: token.id }">Ir a consulta de parámetros</a></div>
+@if (busy) { <p role="status">Procesando...</p> }
+
+</div></div>
+}

@@ -1,0 +1,50 @@
+<div class="page-header"><h1>Consulta de parámetros</h1><button class="btn btn-secondary" [disabled]="loading || busy" (click)="load()">Actualizar tokens</button></div>
+<p>Seleccione el token de la aplicación y el ambiente que desea consultar e ingrese su secreto.</p>
+<app-page-messages [error]="errorMessage" />
+<div class="card"><form class="query-form" (ngSubmit)="parameters()">
+<div class="form-group"><label class="form-label" for="query-token">Token</label><select id="query-token" name="token" class="form-control" [(ngModel)]="tokenId" (ngModelChange)="clearResult()" [disabled]="loading || busy" required><option value="">Seleccione un token</option>
+@for (token of tokens; track token.id) { <option [value]="token.id">{{ appName(token.aplicacionId) }} · {{ environmentName(token.ambienteId) }} · Creado {{ token.fechaCreacion | date:'medium' }}</option> }
+</select></div>
+<div class="form-group"><label class="form-label" for="query-secret">Secreto del token</label><input id="query-secret" name="secret" type="password" autocomplete="off" class="form-control" [(ngModel)]="secreto" [disabled]="loading || busy" required></div>
+<button type="submit" class="btn btn-primary" [disabled]="loading || busy || !tokenId || !secreto.trim()">{{ busy ? 'Consultando...' : 'Consultar parámetros' }}</button>
+@if (loading) { <p role="status">Cargando tokens...</p> } @else if (!tokens.length && !errorMessage) { <p>No hay tokens disponibles. Cree uno en el apartado Tokens.</p> }
+</form></div>
+@if (parametros; as result) {
+<section class="card" aria-labelledby="resumen-title">
+<div class="card-header"><h2 id="resumen-title" class="card-title">Resumen de parámetros</h2></div>
+<div class="table-container"><table>
+<thead><tr><th scope="col">Parámetro</th><th scope="col">Activo</th><th scope="col">Ambiente</th><th scope="col">Metadato</th></tr></thead>
+<tbody>
+@for (detail of result.parametros; track detail.parametro.id) {
+<tr><td>{{ detail.parametro.nombre }}</td><td>{{ detail.parametro.activo ? 'Sí' : 'No' }}</td><td>{{ result.ambiente?.nombre ?? 'Sin información' }}</td><td>
+@for (metadata of detail.metadatos; track metadata.metadato.id) {
+<div><strong>{{ metadata.tipoMetadato?.tipo ?? 'Metadato' }}</strong>
+@if (metadata.metadato.valor === null || metadata.metadato.valor === undefined) { <p>Sin valor</p> } @else { <pre class="metadata-value">{{ metadata.metadato.valor | json }}</pre> }
+</div>
+} @empty { <span>Sin metadatos</span> }
+</td></tr>
+} @empty { <tr><td colspan="4">No hay parámetros autorizados para este token.</td></tr> }
+</tbody></table></div>
+</section>
+<section aria-label="Resultado de parámetros autorizados">
+<h3>Parámetros autorizados</h3>
+<app-token-entity-details title="Aplicación asociada al token" [data]="result.aplicacion" />
+<app-token-entity-details title="Ambiente" [data]="result.ambiente" />
+@if (!result.parametros.length) { <p>No hay parámetros autorizados para este token.</p> }
+@for (detail of result.parametros; track detail.parametro.id) {
+<details class="parameter-detail" open><summary>{{ detail.parametro.nombre }}</summary>
+<app-token-entity-details title="Parámetro" [data]="detail.parametro" />
+<app-token-entity-details title="Tipo de parámetro" [data]="detail.tipoParametro" />
+<app-token-entity-details title="Funcionalidad" [data]="detail.funcionalidad" />
+<app-token-entity-details title="Módulo" [data]="detail.modulo" />
+<h4>Metadatos ({{ detail.metadatos.length }})</h4>
+@for (metadata of detail.metadatos; track metadata.metadato.id) {
+<app-token-entity-details title="Metadato" [data]="metadata.metadato" />
+<app-token-entity-details title="Tipo y detalle del metadato" [data]="metadata.tipoMetadato" />
+} @empty { <p>Este parámetro no tiene metadatos.</p> }
+<app-token-entity-details title="Asociación parámetro-ambiente" [data]="detail.configuracionAmbiente ? { parametro: detail.parametro.nombre, ambiente: result.ambiente?.nombre ?? 'Sin información', estado: detail.configuracionAmbiente.estado?.nombre ?? 'Sin información' } : null" />
+<app-token-entity-details title="Estado de la asociación" [data]="detail.configuracionAmbiente?.estado ?? null" />
+</details>
+}
+</section>
+}

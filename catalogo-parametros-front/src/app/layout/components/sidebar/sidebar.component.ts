@@ -78,6 +78,8 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
               Metadatos por ambiente
             </a>
           </li>
+        <li class="nav-item"><a routerLink="/tokens" routerLinkActive="active" class="nav-link"><span class="nav-icon" aria-hidden="true">🔑</span>Tokens</a></li>
+        <li class="nav-item"><a routerLink="/consulta-parametros" routerLinkActive="active" class="nav-link"><span class="nav-icon" aria-hidden="true">🔎</span>Consulta de parámetros</a></li>
         </ul>
       </nav>
       <div class="sidebar-footer">
