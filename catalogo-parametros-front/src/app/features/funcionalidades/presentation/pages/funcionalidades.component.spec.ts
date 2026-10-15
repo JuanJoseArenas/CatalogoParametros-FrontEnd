@@ -43,6 +43,54 @@ describe('FuncionalidadesComponent', () => {
     spyOn(window, 'confirm').and.returnValue(true); repository.delete.and.returnValue(throwError(() => ({}))); component.deleteFuncionalidad('f1'); expect(component.errorMessage).toContain('eliminar');
   });
 
+  it('usa mensajes predeterminados cuando el servidor no devuelve mensajes de éxito', () => {
+    const value = { nombre: 'Crear', idModulo: 'm1', activo: true, fechaInicio: '2026-01-01', fechaFinal: '2026-12-31' };
+    repository.create.and.returnValue(of({ mensajes: [] }));
+    component.funcionalidadForm.setValue(value);
+    component.saveFuncionalidad();
+    expect(component.successMessage).toBe('Funcionalidad creada exitosamente');
+    expect(component.saving).toBeFalse();
+    expect(component.showModal).toBeFalse();
+
+    repository.update.and.returnValue(of({ mensajes: [] }));
+    component.editFuncionalidad({ id: 'f1', ...value });
+    component.saveFuncionalidad();
+    expect(component.successMessage).toBe('Funcionalidad actualizada exitosamente');
+
+    spyOn(window, 'confirm').and.returnValue(true);
+    repository.delete.and.returnValue(of({ mensajes: [] }));
+    component.deleteFuncionalidad('f1');
+    expect(component.successMessage).toBe('Funcionalidad eliminada exitosamente');
+  });
+
+  it('activa y desactiva solo la funcionalidad seleccionada sin mensajes del servidor', () => {
+    const item = { id: 'f1', nombre: 'Crear', idModulo: 'm1', activo: false };
+    const other = { ...item, id: 'f2' };
+    component.funcionalidades = [item, other];
+    repository.changeStatus.and.returnValue(of({ mensajes: [] }));
+    component.changeStatus(item);
+    expect(repository.changeStatus).toHaveBeenCalledWith('f1', true);
+    expect(component.funcionalidades[0].activo).toBeTrue();
+    expect(component.funcionalidades[1]).toBe(other);
+    expect(component.successMessage).toBe('Funcionalidad activada exitosamente');
+    component.changeStatus(component.funcionalidades[0]);
+    expect(repository.changeStatus).toHaveBeenCalledWith('f1', false);
+    expect(component.funcionalidades[0].activo).toBeFalse();
+    expect(component.successMessage).toBe('Funcionalidad desactivada exitosamente');
+  });
+
+  for (const message of ['Error del servidor', '']) {
+    it(`conserva la edición tras un fallo al actualizar con mensaje "${message}"`, () => {
+      component.editFuncionalidad({ id: 'f1', nombre: 'Crear', idModulo: 'm1', activo: true, fechaInicio: '2026-01-01', fechaFinal: '2026-12-31' });
+      repository.update.and.returnValue(throwError(() => new Error(message)));
+      component.saveFuncionalidad();
+      expect(component.errorMessage).toBe(message || 'Error al actualizar la funcionalidad');
+      expect(component.saving).toBeFalse();
+      expect(component.showModal).toBeTrue();
+      expect(component.editingId).toBe('f1');
+    });
+  }
+
   it('conserva el instante y la precisi?n al editar solo el nombre desde otra zona', () => {
     const fechaInicio = '2026-11-01T01:30:25.123456-05:00';
     const fechaFinal = '2026-12-31T23:59:59+05:30';
