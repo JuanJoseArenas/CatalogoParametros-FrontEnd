@@ -4,6 +4,9 @@ import { handleApiError } from './api-error';
 describe('handleApiError', () => {
   const cases: Array<[number, unknown, string]> = [
     [0, {}, 'No se pudo conectar con el servidor'],
+    [401, {}, 'La sesión ha expirado. Inicia sesión nuevamente'],
+    [403, {}, 'No tienes permiso para realizar esta operación'],
+    [503, {}, 'El servicio no está disponible. Intenta nuevamente más tarde'],
     [404, {}, 'Recurso no encontrado'],
     [400, { mensajes: ['dato inválido'] }, 'dato inválido'],
     [400, {}, 'Solicitud incorrecta'],

@@ -6,6 +6,12 @@ export function handleApiError(error: HttpErrorResponse): Observable<never> {
 
   if (error.status === 0) {
     message = 'No se pudo conectar con el servidor';
+  } else if (error.status === 401) {
+    message = 'La sesión ha expirado. Inicia sesión nuevamente';
+  } else if (error.status === 403) {
+    message = 'No tienes permiso para realizar esta operación';
+  } else if (error.status === 503) {
+    message = 'El servicio no está disponible. Intenta nuevamente más tarde';
   } else if (error.status === 404) {
     message = 'Recurso no encontrado';
   } else if (error.status === 400 || error.status === 409) {

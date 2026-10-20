@@ -21,6 +21,7 @@ variables:
   SONAR_BINARY_CACHE: $(Pipeline.Workspace)/.sonar/native-sonar-scanner
   IMAGE_REPOSITORY: simon4219/catalogo-parametros-frontend
   IMAGE_VERSION_PREFIX: '0.0'
+  SECURITY_UI_COMMIT: '6e6ed9b5854ad52176d7b3cd6b6f55052bdf357b'
   # La version se asigna al latest ANTERIOR, no a la imagen nueva.
   # Los PR tienen un contador separado y nunca publican imagenes.
   IMAGE_VERSION_PATCH: $[counter(format('docker-front-{0}-{1}', variables['IMAGE_VERSION_PREFIX'], variables['Build.SourceBranch']), 2)]
@@ -118,7 +119,7 @@ steps:
       fi
 
       echo "Construyendo nueva imagen..."
-      docker build --file Dockerfile --tag "$imagen_nueva" .
+      docker build --build-context "security_ui=https://github.com/Seguridad-UCO/security-ui.git#${SECURITY_UI_COMMIT}" --file Dockerfile --tag "$imagen_nueva" .
 
       archivo_error="$(mktemp)"
       trap 'rm -f "$archivo_error"' EXIT

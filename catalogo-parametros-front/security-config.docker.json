@@ -1,0 +1,5 @@
+{
+  "pdpUrl": "http://localhost:18080",
+  "securityUiUrl": "/security-ui/security-administration.js",
+  "applicationName": "Catalogo"
+}

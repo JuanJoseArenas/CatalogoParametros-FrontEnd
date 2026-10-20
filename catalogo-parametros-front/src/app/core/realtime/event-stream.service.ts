@@ -5,7 +5,7 @@ import { Observable } from 'rxjs';
 export class EventStreamService {
   connect<T>(url: string, eventName: string): Observable<T> {
     return new Observable<T>(observer => {
-      const source = new EventSource(url);
+      const source = new EventSource(url, { withCredentials: true });
       source.addEventListener(eventName, event => {
         try {
           observer.next(JSON.parse((event as MessageEvent<string>).data) as T);
