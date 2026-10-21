@@ -18,6 +18,21 @@ describe('Cookies de la API protegida', () => {
   });
   afterEach(() => requests.verify());
 
+  it('no envia credenciales a otra ruta del mismo servidor', () => {
+    const url = `${environment.apiUrl}-otro/parametros`;
+    http.get(url).subscribe();
+    const request = requests.expectOne(url);
+    expect(request.request.withCredentials).toBeFalse();
+    request.flush({});
+  });
+
+  it('incluye credenciales en la raiz exacta de la API', () => {
+    http.get(environment.apiUrl).subscribe();
+    const request = requests.expectOne(environment.apiUrl);
+    expect(request.request.withCredentials).toBeTrue();
+    request.flush({});
+  });
+
   it('incluye credenciales al consultar el catálogo', () => {
     const url = `${environment.apiUrl}/parametros`;
     http.get(url).subscribe();
