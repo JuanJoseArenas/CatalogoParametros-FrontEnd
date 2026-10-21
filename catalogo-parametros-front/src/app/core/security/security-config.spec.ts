@@ -1,4 +1,4 @@
-import { loadSecurityConfig } from './security-config';
+import { loadSecurityConfig, trustedPdpUrl } from './security-config';
 
 describe('Configuracion de seguridad', () => {
   const config = {
@@ -47,4 +47,22 @@ describe('Configuracion de seguridad', () => {
     spyOn(window, 'fetch').and.rejectWith(new TypeError('network'));
     await expectAsync(loadSecurityConfig()).toBeRejectedWithError(TypeError, 'network');
   });
+
+  it('normaliza la barra final del PDP permitido', () => {
+    expect(trustedPdpUrl({ ...config, pdpUrl: 'http://localhost:18080/' }))
+      .toBe('http://localhost:18080');
+  });
+
+  for (const pdpUrl of [
+    'http://localhost.otro.example:18080',
+    'http://localhost:18081',
+    'http://usuario:clave@localhost:18080',
+    'http://localhost:18080/otro',
+    'http://localhost:18080/?destino=otro',
+    'http://localhost:18080/#otro'
+  ]) {
+    it(`rechaza un destino de sesion no permitido: ${pdpUrl}`, () => {
+      expect(() => trustedPdpUrl({ ...config, pdpUrl })).toThrowError(/confianza/);
+    });
+  }
 });

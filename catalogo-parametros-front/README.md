@@ -138,7 +138,10 @@ Configure `src/assets/security-config.json`: `pdpUrl`, `securityUiUrl`,
 `applicationName` y, opcionalmente, `applicationId` (preferido si conoce su UUID).
 El nombre debe coincidir exactamente con el registro en Seguridad y con
 `SECURITY_APPLICATION_NAME` del backend. Se usa `Catalogo`, nombre registrado en Seguridad. Este JSON es público: no contiene tokens ni secretos.
-Se carga en cada arranque, por lo que puede sustituirse al desplegar sin recompilar.
+Se carga en cada arranque. El destino del BFF debe pertenecer a `TRUSTED_PDP_URLS`
+en `src/app/core/security/security-config.ts`; el laboratorio permite
+`http://localhost:18080`. El JSON no puede autorizar servidores nuevos para recibir
+cookies o iniciar el login. El retorno del login debe pertenecer al origen del host.
 
 En desarrollo, inicie Security UI desde `../../Seguridad/security-ui` con
 `npm run build` y `npm run preview`: publica el bundle en el puerto 5175.
@@ -151,7 +154,8 @@ lo sirve desde `/security-ui/`. `security-config.docker.json` configura este mon
 Para construir directamente con Docker, agregue
 `--build-context security_ui=../../Seguridad/security-ui` al comando de build. El pipeline usa el contexto Git de Security UI fijado por
 `SECURITY_UI_COMMIT`; actualice ese commit al adoptar una nueva versión validada.
-En producción, sustituya el JSON por las URLs HTTPS de su despliegue; configure
+En producción, agregue el origen HTTPS del BFF a la lista de confianza antes de
+compilar y sustituya el JSON por las URLs HTTPS de su despliegue; configure
 CSP para permitir el bundle en `script-src` y el BFF en `connect-src`.
 
 El alta de aplicación, administrador adicional y la cadena recurso → rol → perfil

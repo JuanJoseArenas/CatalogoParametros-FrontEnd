@@ -20,10 +20,27 @@ describe('Sesión central', () => {
   });
 
   it('conserva ruta y parámetros al construir el retorno del login', () => {
-    const returnTo = 'http://localhost:4200/parametros?page=2&nombre=uno';
+    const returnTo = `${window.location.origin}/parametros?page=2&nombre=uno`;
     const url = new URL(loginUrl(config, returnTo));
     expect(url.origin).toBe(config.pdpUrl);
     expect(url.pathname).toBe('/oauth2/authorization/keycloak');
     expect(url.searchParams.get('return_to')).toBe(returnTo);
+  });
+
+  it('rechaza un retorno de login hacia un servidor externo', () => {
+    expect(() => loginUrl(config, 'https://otro.example/')).toThrowError(/retorno/);
+    expect(() => loginUrl(config, '//otro.example/')).toThrowError(/retorno/);
+  });
+
+  it('no envia la sesion a un servidor indicado por una configuracion manipulada', async () => {
+    const fetchSpy = spyOn(window, 'fetch');
+    await expectAsync(requireSession({ ...config, pdpUrl: 'https://otro.example' }))
+      .toBeRejectedWithError(/confianza/);
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
+  it('no construye un login hacia un servidor externo', () => {
+    expect(() => loginUrl({ ...config, pdpUrl: 'https://otro.example' }, window.location.href))
+      .toThrowError(/confianza/);
   });
 });
