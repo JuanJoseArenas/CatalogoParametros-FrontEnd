@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./.angular/microfrontend-aot",
+    "rootDir": "./src",
+    "declaration": true,
+    "sourceMap": false,
+    "types": []
+  },
+  "angularCompilerOptions": { "compilationMode": "full" },
+  "files": ["src/microfrontend/public-api.ts", "src/microfrontend/styles.d.ts"]
+}

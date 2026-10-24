@@ -70,7 +70,7 @@
             <label class="form-label" for="relacion-parametro">Parámetro</label>
             <select id="relacion-parametro" class="form-control" formControlName="idParametro">
               <option value="">Seleccione un parámetro</option>
-              @for (item of parametros; track item.id) { <option [value]="item.id">{{ item.nombre }}</option> }
+              @for (item of parametros; track item.id) { <option [value]="item.id" [disabled]="!disponibleParaUso(item)">{{ item.nombre }}{{ !disponibleParaUso(item) ? ' (No disponible)' : '' }}</option> }
             </select>
             @if (catalogosDisponibles && !parametros.length) { <p>No hay parámetros. <a routerLink="/parametros">Crear un parámetro</a></p> }
           </div>

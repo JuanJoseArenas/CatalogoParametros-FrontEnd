@@ -26,9 +26,13 @@ export function fechaLocalValida(fecha: string): boolean {
 
 export function fechaConZona(fecha: string, original?: string | null): string {
   const normalizada = fecha.length === 10 ? `${fecha}T00:00:00` : fecha.length === 16 ? `${fecha}:00` : fecha;
-  // Conserva precisión, offset y el instante original, incluso durante la hora repetida del cambio estacional.
+  // Entrega UTC conservando instante y precision, incluso en la hora repetida del cambio estacional.
   if (original && /(?:Z|[+-]\d{2}:\d{2})$/.test(original)
-    && normalizada === fechaParaFormulario(original)) return original;
+    && normalizada === fechaParaFormulario(original)) {
+    const utc = new Date(original).toISOString();
+    const fraccion = original.match(/\.(\d+)(?:Z|[+-]\d{2}:\d{2})$/)?.[1];
+    return fraccion ? utc.replace(/\.\d+Z$/, `.${fraccion}Z`) : utc;
+  }
   if (!fechaLocalValida(fecha) || !fecha) throw new Error('La fecha y hora local no son válidas.');
   const fechaLocal = new Date(normalizada);
   const offsetMinutos = -fechaLocal.getTimezoneOffset();
@@ -36,5 +40,5 @@ export function fechaConZona(fecha: string, original?: string | null): string {
   const horas = String(Math.floor(Math.abs(offsetMinutos) / 60)).padStart(2, '0');
   const minutos = String(Math.abs(offsetMinutos) % 60).padStart(2, '0');
 
-  return `${normalizada}${signo}${horas}:${minutos}`;
+  return new Date(`${normalizada}${signo}${horas}:${minutos}`).toISOString();
 }

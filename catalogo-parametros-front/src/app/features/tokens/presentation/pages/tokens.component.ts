@@ -2,9 +2,13 @@ import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/
 import { RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Observable, Subscription, finalize, forkJoin } from 'rxjs';
+import { Observable, Subscription, finalize, forkJoin, timer } from 'rxjs';
+import { disponibleParaUso } from '../../../../shared/utils/disponibilidad';
+import { fechaConZona } from '../../../../shared/utils/date.utils';
 import { HttpTokensRepository } from '../../infrastructure/http-tokens.repository';
 import { EstadoToken, Token } from '../../domain/token';
+import { generarSecretoIntegracion, propiedadesIntegracion } from '../../domain/credencial-integracion';
+import { environment } from '../../../../../environments/environment';
 import { Aplicacion } from '../../../aplicaciones/domain/aplicacion';
 import { Ambiente } from '../../../ambientes/domain/ambiente';
 import { HttpAplicacionesRepository } from '../../../aplicaciones/infrastructure/http-aplicaciones.repository';
@@ -17,6 +21,8 @@ export class TokensComponent implements OnInit, OnDestroy {
   tokens: Token[] = []; estados: EstadoToken[] = []; aplicaciones: Aplicacion[] = []; ambientes: Ambiente[] = [];
   loading = false; busy = false; ready = false; showCreate = false; search = ''; errorMessage = ''; successMessage = '';
   selected: Token | null = null; estado = ''; secreto = '';
+  credencialGenerada: { id: string; secreto: string; propiedades: string } | null = null;
+  mostrarSecretoGenerado = false;
   readonly form = new FormGroup({
     token: new FormControl('', { nonNullable:true, validators:[Validators.required, Validators.pattern(/\S/)] }),
     estadoToken: new FormControl('', { nonNullable:true, validators:Validators.required }),
@@ -26,8 +32,25 @@ export class TokensComponent implements OnInit, OnDestroy {
   });
   private readonly subscriptions = new Subscription();
   constructor(private readonly repository: HttpTokensRepository, private readonly apps: HttpAplicacionesRepository, private readonly environments: HttpAmbientesRepository) {}
-  ngOnInit() { this.load(); }
-  ngOnDestroy() { this.subscriptions.unsubscribe(); this.secreto = ''; this.form.reset(); }
+  readonly disponibleParaUso = disponibleParaUso;
+  ngOnInit() {
+    this.load();
+    this.subscriptions.add(timer(30000, 30000).subscribe(() => {
+      if (!this.busy && !this.showCreate) this.load();
+    }));
+  }
+  ngOnDestroy() { this.subscriptions.unsubscribe(); this.secreto = ''; this.credencialGenerada = null; this.form.reset(); }
+  generarSecreto() { this.form.controls.token.setValue(generarSecretoIntegracion()); }
+  abrirCreacion() {
+    this.cerrarCredencial();
+    this.form.reset({ token: generarSecretoIntegracion(), estadoToken: this.estados.find(e => e.estado.toLowerCase() === 'activo')?.id ?? '' });
+    this.showCreate = true;
+  }
+  cerrarCredencial() { this.credencialGenerada = null; this.mostrarSecretoGenerado = false; }
+  async copiarCredencial(valor: string) {
+    try { await navigator.clipboard.writeText(valor); this.successMessage = 'Copiado al portapapeles.'; }
+    catch { this.errorMessage = 'No fue posible copiar. Seleccione el texto y cópielo manualmente.'; }
+  }
   get filteredTokens() { const term = this.search.trim().toLocaleLowerCase(); return this.tokens.filter(t => [t.id, this.appName(t.aplicacionId), this.environmentName(t.ambienteId), this.stateName(t.estadoToken)].some(v => v.toLocaleLowerCase().includes(term))); }
   appName(id:string) { return this.aplicaciones.find(a => a.id === id)?.nombre ?? id; }
   environmentName(id:string) { return this.ambientes.find(a => a.id === id)?.nombre ?? id; }
@@ -46,7 +69,13 @@ export class TokensComponent implements OnInit, OnDestroy {
     this.form.markAllAsTouched(); if (this.form.invalid || this.busy) return;
     const value = this.form.getRawValue();
     if (value.fechaExpiracion && new Date(value.fechaExpiracion).getTime() <= Date.now()) { this.errorMessage = 'La expiración debe ser posterior a la fecha actual.'; return; }
-    this.run(this.repository.create({ ...value, token:value.token.trim(), fechaExpiracion:value.fechaExpiracion ? `${value.fechaExpiracion}:00` : null }), response => {
+    this.run(this.repository.create({ ...value, token:value.token.trim(), fechaExpiracion:value.fechaExpiracion ? fechaConZona(value.fechaExpiracion) : null }), response => {
+      const creado = response.tokens[0];
+      if (creado) this.credencialGenerada = {
+        id: creado.id, secreto: value.token.trim(),
+        propiedades: propiedadesIntegracion(new URL(environment.apiUrl, window.location.origin).href, creado.id, creado.aplicacionId)
+      };
+      this.mostrarSecretoGenerado = false;
       this.successMessage = response.mensajes[0] || 'Token creado.'; this.closeCreate(); this.load();
     });
   }

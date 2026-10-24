@@ -22,4 +22,11 @@ describe('RelatedEntityFormComponent', () => {
     fixture.nativeElement.querySelector('.modal-close').click();
     expect(cancelled).toBeTrue();
   });
+  it('muestra registros inactivos para consulta y evita seleccionarlos como padre', () => {
+    fixture.componentRef.setInput('options', [{ id: '1', name: 'Padre', disabled: true }]);
+    fixture.detectChanges();
+    const option = fixture.nativeElement.querySelector('option[value="1"]') as HTMLOptionElement;
+    expect(option.disabled).toBeTrue();
+    expect(option.textContent).toContain('No disponible');
+  });
 });

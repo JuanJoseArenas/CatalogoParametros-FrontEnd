@@ -4,6 +4,7 @@ import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 export interface SelectOption {
   id: string;
   name: string;
+  disabled?: boolean;
 }
 
 @Component({
@@ -29,7 +30,7 @@ export interface SelectOption {
               <select class="form-control" [formControlName]="relationControl()">
                 <option value="">Seleccione {{ relationArticle() }} {{ relationLabel().toLowerCase() }}</option>
                 @for (option of options(); track option.id) {
-                  <option [value]="option.id">{{ option.name }}</option>
+                  <option [value]="option.id" [disabled]="option.disabled">{{ option.name }}{{ option.disabled ? ' (No disponible)' : '' }}</option>
                 }
               </select>
             </div>

@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Funcionalidad } from '../../../funcionalidades/domain/funcionalidad';
 import { TipoParametro } from '../../domain/parametro';
+import { disponibleParaUso } from '../../../../shared/utils/disponibilidad';
 
 @Component({
   selector: 'app-parametro-form',
@@ -14,7 +15,7 @@ import { TipoParametro } from '../../domain/parametro';
         <div class="modal-body">
           <form [formGroup]="form()" (ngSubmit)="save.emit()">
             <div class="form-group"><label class="form-label">Nombre</label><input class="form-control" formControlName="nombre" placeholder="Nombre del parametro"></div>
-            <div class="form-group"><label class="form-label">Funcionalidad</label><select class="form-control" formControlName="idFuncionalidad"><option value="">Seleccione una funcionalidad</option>@for (item of funcionalidades(); track item.id) { <option [value]="item.id">{{ item.nombre }}</option> }</select></div>
+            <div class="form-group"><label class="form-label">Funcionalidad</label><select class="form-control" formControlName="idFuncionalidad"><option value="">Seleccione una funcionalidad</option>@for (item of funcionalidades(); track item.id) { <option [value]="item.id" [disabled]="!disponibleParaUso(item)">{{ item.nombre }}{{ !disponibleParaUso(item) ? ' (No disponible)' : '' }}</option> }</select></div>
             <div class="form-group"><label class="form-label">Tipo Parametro</label><select class="form-control" formControlName="idTipoParametro"><option value="">Seleccione un tipo</option>@for (item of tipos(); track item.id) { <option [value]="item.id">{{ item.nombre }}</option> }</select></div>
             <div class="form-group"><label class="form-label">Estado</label><select class="form-control" formControlName="activo"><option [value]="true">Activo</option><option [value]="false">Inactivo</option></select></div>
           </form>
@@ -25,6 +26,7 @@ import { TipoParametro } from '../../domain/parametro';
   `
 })
 export class ParametroFormComponent {
+  readonly disponibleParaUso = disponibleParaUso;
   readonly form = input.required<FormGroup>();
   readonly funcionalidades = input.required<Funcionalidad[]>();
   readonly tipos = input.required<TipoParametro[]>();

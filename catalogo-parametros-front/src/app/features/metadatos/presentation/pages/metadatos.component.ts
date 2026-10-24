@@ -10,6 +10,9 @@ import { Parametro } from '../../../parametros/domain/parametro';
 import { ParametrosRepository } from '../../../parametros/domain/parametros.repository';
 import { ConnectionStatusComponent } from '../../../../shared/ui/connection-status/connection-status.component';
 import { PageMessagesComponent } from '../../../../shared/ui/page-messages/page-messages.component';
+import { Ambiente } from '../../../ambientes/domain/ambiente';
+import { AmbientesRepository } from '../../../ambientes/domain/ambientes.repository';
+import { loadAllPages } from '../../../../shared/utils/load-all-pages';
 import { MetadatoFormComponent } from '../components/metadato-form.component';
 
 @Component({
@@ -39,12 +42,13 @@ import { MetadatoFormComponent } from '../components/metadato-form.component';
         @if (filteredMetadatos.length > 0) {
           <div class="table-container">
             <table>
-              <thead><tr><th>Parámetro</th><th>Tipo de Metadato</th><th>Valor</th><th>Acciones</th></tr></thead>
+              <thead><tr><th>Parámetro</th><th>Tipo de Metadato</th><th>Ambiente</th><th>Valor</th><th>Acciones</th></tr></thead>
               <tbody>
                 @for (metadato of filteredMetadatos; track metadato) {
                   <tr>
                     <td>{{ getParametroNombre(metadato.idParametro) }}</td>
                     <td>{{ getTipoNombre(metadato.idTipoMetadato) }}</td>
+                    <td>{{ getAmbienteNombre(metadato.idAmbiente) }}</td>
                     <td><span class="value-preview" [title]="formatValor(metadato.valor)">{{ formatValor(metadato.valor) }}</span></td>
                     <td>
                       <button class="btn btn-warning btn-sm" (click)="editMetadato(metadato)">Editar</button>
@@ -69,7 +73,7 @@ import { MetadatoFormComponent } from '../components/metadato-form.component';
 
     @if (showModal) {
       <app-metadato-form
-        [form]="metadatoForm" [parametros]="parametros" [tipos]="tiposMetadato"
+        [form]="metadatoForm" [parametros]="parametros" [tipos]="tiposMetadato" [ambientes]="ambientes"
         [selectedType]="selectedTipo" [editing]="isEditing" [saving]="saving"
         (typeChange)="onTipoChange()" (save)="saveMetadato()" (cancel)="closeModal()"
       />
@@ -85,6 +89,7 @@ import { MetadatoFormComponent } from '../components/metadato-form.component';
   `]
 })
 export class MetadatosComponent implements OnInit, OnDestroy {
+  ambientes: Ambiente[] = [];
   metadatos: Metadato[] = [];
   parametros: Parametro[] = [];
   tiposMetadato: TipoMetadato[] = [];
@@ -100,16 +105,16 @@ export class MetadatosComponent implements OnInit, OnDestroy {
   searchTerm = '';
   private subscriptions: Subscription[] = [];
 
-  constructor(private repository: MetadatosRepository, private parametrosRepository: ParametrosRepository, private eventStream: EventStreamService, fb: FormBuilder) {
-    this.metadatoForm = fb.group({ idParametro: ['', Validators.required], idTipoMetadato: ['', Validators.required], valor: ['', Validators.required] });
+  constructor(private repository: MetadatosRepository, private parametrosRepository: ParametrosRepository, private eventStream: EventStreamService, fb: FormBuilder, private ambientesRepository: AmbientesRepository) {
+    this.metadatoForm = fb.group({ idParametro: ['', Validators.required], idTipoMetadato: ['', Validators.required], idAmbiente: ['', Validators.required], valor: ['', Validators.required] });
   }
 
   ngOnInit(): void {
     this.loadMetadatos();
-    forkJoin({ parametros: this.parametrosRepository.findAll(), tipos: this.repository.findTypes() }).subscribe({
-      next: data => { this.parametros = data.parametros; this.tiposMetadato = data.tipos; },
+    this.subscriptions.push(forkJoin({ parametros: this.parametrosRepository.findAll(), tipos: this.repository.findTypes(), ambientes: loadAllPages((p, s) => this.ambientesRepository.findPage(p, s)) }).subscribe({
+      next: data => { this.parametros = data.parametros; this.tiposMetadato = data.tipos; this.ambientes = data.ambientes; },
       error: err => { this.errorMessage = err.message || 'Error al cargar los datos del formulario'; }
-    });
+    }));
     this.connectSse();
   }
 
@@ -118,7 +123,7 @@ export class MetadatosComponent implements OnInit, OnDestroy {
   get filteredMetadatos(): Metadato[] {
     const term = this.searchTerm.trim().toLowerCase();
     if (!term) return this.metadatos;
-    return this.metadatos.filter(item => this.formatValor(item.valor).toLowerCase().includes(term) || this.getParametroNombre(item.idParametro).toLowerCase().includes(term) || this.getTipoNombre(item.idTipoMetadato).toLowerCase().includes(term));
+    return this.metadatos.filter(item => this.formatValor(item.valor).toLowerCase().includes(term) || this.getParametroNombre(item.idParametro).toLowerCase().includes(term) || this.getTipoNombre(item.idTipoMetadato).toLowerCase().includes(term) || this.getAmbienteNombre(item.idAmbiente).toLowerCase().includes(term));
   }
 
   get selectedTipo(): string {
@@ -135,12 +140,29 @@ export class MetadatosComponent implements OnInit, OnDestroy {
   }
 
   getParametroNombre(id: string): string { return this.parametros.find(item => item.id === id)?.nombre || 'N/A'; }
+  getAmbienteNombre(id: string | null): string { return this.ambientes.find(a => a.id === id)?.nombre ?? 'Sin ambiente: requiere asignacion'; }
   getTipoNombre(id: string): string { return this.tiposMetadato.find(item => item.id === id)?.tipo || 'N/A'; }
   formatValor(valor: Metadato['valor']): string {
     return typeof valor === 'string' ? valor : JSON.stringify(valor);
   }
   connectSse(): void {
-    const subscription = this.eventStream.connect<any>(this.repository.eventsUrl, 'metadato').subscribe({
+    this.subscriptions.push(this.eventStream.connect<{ event: string; ambiente?: Ambiente }>(this.ambientesRepository.eventsUrl, 'ambiente').subscribe({
+      next: data => {
+        const entity = data.ambiente; if (!entity) return;
+        if (data.event === 'CREATED' && !this.ambientes.some(item => item.id === entity.id)) this.ambientes = [...this.ambientes, entity];
+        if (data.event === 'UPDATED') this.ambientes = this.ambientes.map(item => item.id === entity.id ? entity : item);
+        if (data.event === 'DELETED') this.ambientes = this.ambientes.filter(item => item.id !== entity.id);
+      }, error: () => { /* El servicio SSE reintenta la conexion. */ }
+    }));
+    this.subscriptions.push(this.eventStream.connect<{ event: string; parametro?: Parametro }>(this.parametrosRepository.eventsUrl, 'parametro').subscribe({
+      next: data => {
+        const entity = data.parametro; if (!entity) return;
+        if (data.event === 'CREATED' && !this.parametros.some(item => item.id === entity.id)) this.parametros = [...this.parametros, entity];
+        if (data.event === 'UPDATED') this.parametros = this.parametros.map(item => item.id === entity.id ? entity : item);
+        if (data.event === 'DELETED') this.parametros = this.parametros.filter(item => item.id !== entity.id);
+      }, error: () => { /* El servicio SSE reintenta la conexion. */ }
+    }));
+    const subscription = this.eventStream.connect<any>(this.repository.eventsUrl, 'metadato', connected => this.isConnected = connected).subscribe({
       next: data => {
         this.isConnected = true;
         const entity = data.metadato as Metadato;
@@ -158,7 +180,7 @@ export class MetadatosComponent implements OnInit, OnDestroy {
     this.showModal = true;
     this.isEditing = false;
     this.editingId = null;
-    this.metadatoForm.reset({ idParametro: '', idTipoMetadato: '', valor: '' });
+    this.metadatoForm.reset({ idParametro: '', idTipoMetadato: '', idAmbiente: '', valor: '' });
   }
 
   onTipoChange(): void {
@@ -173,6 +195,7 @@ export class MetadatosComponent implements OnInit, OnDestroy {
     this.metadatoForm.reset({
       idParametro: metadato.idParametro,
       idTipoMetadato: metadato.idTipoMetadato,
+      idAmbiente: metadato.idAmbiente ?? '',
       valor: typeof metadato.valor === 'string' ? metadato.valor : JSON.stringify(metadato.valor, null, 2)
     });
   }
@@ -181,7 +204,7 @@ export class MetadatosComponent implements OnInit, OnDestroy {
     this.showModal = false;
     this.isEditing = false;
     this.editingId = null;
-    this.metadatoForm.reset({ idParametro: '', idTipoMetadato: '', valor: '' });
+    this.metadatoForm.reset({ idParametro: '', idTipoMetadato: '', idAmbiente: '', valor: '' });
   }
   closeModalOnOverlay(event: Event): void { if (event.target === event.currentTarget) this.closeModal(); }
 
@@ -192,7 +215,7 @@ export class MetadatosComponent implements OnInit, OnDestroy {
 
     this.saving = true; this.errorMessage = ''; this.successMessage = '';
     const formValue = this.metadatoForm.getRawValue();
-    const data = { idParametro: formValue.idParametro, idTipoMetadato: formValue.idTipoMetadato, valor };
+    const data = { idParametro: formValue.idParametro, idTipoMetadato: formValue.idTipoMetadato, idAmbiente: formValue.idAmbiente, valor };
     const request = this.isEditing && this.editingId
       ? this.repository.update(this.editingId, data)
       : this.repository.create(data);

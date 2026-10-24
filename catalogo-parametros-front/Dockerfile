@@ -19,7 +19,7 @@ USER node
 COPY --chown=node:node package.json package-lock.json ./
 RUN npm ci
 COPY --chown=node:node . .
-RUN npm run build -- --configuration production
+RUN npm run build -- --configuration production && npm run build:microfrontend
 
 # Servir los archivos compilados y redirigir la API al backend.
 FROM nginxinc/nginx-unprivileged:stable-alpine
@@ -29,6 +29,7 @@ USER root
 RUN apk add --upgrade --no-cache 'pcre2>=10.49-r0'
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist/catalogo-parametros-front/browser/ /usr/share/nginx/html/
+COPY --from=build /app/dist/parametros-ui/ /usr/share/nginx/html/parametros-ui/
 COPY --from=security-ui-build /security-ui/dist/ /usr/share/nginx/html/security-ui/
 COPY security-config.docker.json /usr/share/nginx/html/assets/security-config.json
 USER nginx
