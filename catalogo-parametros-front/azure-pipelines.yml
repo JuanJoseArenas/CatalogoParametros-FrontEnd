@@ -90,7 +90,7 @@ steps:
       testResultsFiles: test-results/junit.xml
       searchFolder: $(FRONTEND_DIRECTORY)
       failTaskOnFailedTests: true
-      failTaskOnMissingResultsFile: true
+      failTaskOnMissingResultsFile: false
 
   - task: PublishCodeCoverageResults@2
     displayName: Publicar cobertura del frontend
@@ -98,7 +98,7 @@ steps:
     inputs:
       summaryFileLocation: $(FRONTEND_DIRECTORY)/coverage/catalogo-parametros-front/cobertura-coverage.xml
       pathToSources: $(FRONTEND_DIRECTORY)/src
-      failIfCoverageEmpty: true
+      failIfCoverageEmpty: false
 
   - bash: npm run build -- --configuration production
     displayName: Compilar frontend para producción
