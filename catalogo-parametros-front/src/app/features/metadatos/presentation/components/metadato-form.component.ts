@@ -1,6 +1,8 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { disponibleParaUso } from '../../../../shared/utils/disponibilidad';
 import { Parametro } from '../../../parametros/domain/parametro';
+import { Ambiente } from '../../../ambientes/domain/ambiente';
 import { TipoMetadato } from '../../domain/metadato';
 
 @Component({
@@ -11,8 +13,9 @@ import { TipoMetadato } from '../../domain/metadato';
     <div class="modal-overlay" (click)="onOverlayClick($event)"><div class="modal">
       <div class="modal-header"><h3 class="modal-title">{{ editing() ? 'Editar' : 'Nuevo' }} Metadato</h3><button class="modal-close" (click)="cancel.emit()">&times;</button></div>
       <div class="modal-body"><form [formGroup]="form()" (ngSubmit)="save.emit()">
-        <div class="form-group"><label class="form-label">Parámetro</label><select class="form-control" formControlName="idParametro"><option value="">Seleccione un parámetro</option>@for (item of parametros(); track item.id) { <option [value]="item.id">{{ item.nombre }}</option> }</select></div>
+        <div class="form-group"><label class="form-label">Parámetro</label><select class="form-control" formControlName="idParametro"><option value="">Seleccione un parámetro</option>@for (item of parametros(); track item.id) { <option [value]="item.id" [disabled]="!disponibleParaUso(item)">{{ item.nombre }}{{ !disponibleParaUso(item) ? ' (No disponible)' : '' }}</option> }</select></div>
         <div class="form-group"><label class="form-label">Tipo de Metadato</label><select class="form-control" formControlName="idTipoMetadato" (change)="typeChange.emit()"><option value="">Seleccione un tipo</option>@for (item of tipos(); track item.id) { <option [value]="item.id">{{ item.tipo }}{{ item.detalle ? ' - ' + item.detalle : '' }}</option> }</select></div>
+        <div class="form-group"><label class="form-label">Ambiente</label><select class="form-control" formControlName="idAmbiente" required><option value="">Seleccione un ambiente</option>@for (item of ambientes(); track item.id) { <option [value]="item.id">{{ item.nombre }}</option> }</select><small>Este valor solo se entrega a tokens del ambiente seleccionado.</small></div>
         <div class="form-group"><label class="form-label">Valor</label>
           @if (selectedType() === 'json') { <textarea class="form-control value-input" formControlName="valor" placeholder='Ejemplo: {"propiedad":"valor"} o ["valor1","valor2"]'></textarea> }
           @if (selectedType() === 'date') { <input type="date" class="form-control" formControlName="valor"> }
@@ -28,9 +31,11 @@ import { TipoMetadato } from '../../domain/metadato';
   styles: [`.value-input { min-height: 130px; resize: vertical; font-family: monospace; } .field-help { display: block; margin-top: 6px; color: #64748b; font-size: .8rem; }`]
 })
 export class MetadatoFormComponent {
+  readonly disponibleParaUso = disponibleParaUso;
   readonly form = input.required<FormGroup>();
   readonly parametros = input.required<Parametro[]>();
   readonly tipos = input.required<TipoMetadato[]>();
+  readonly ambientes = input<Ambiente[]>([]);
   readonly selectedType = input('');
   readonly editing = input(false);
   readonly saving = input(false);

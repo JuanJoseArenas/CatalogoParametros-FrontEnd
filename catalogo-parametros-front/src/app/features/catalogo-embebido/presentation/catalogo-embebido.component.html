@@ -1,0 +1,66 @@
+<section class="catalogo-shell">
+  <p role="status"><small>{{ conectado() ? 'Cambios en tiempo real conectados' : 'Reconectando eventos; actualización periódica disponible' }}</small></p>
+  @if (cambiosPendientes() && editor()) { <p class="notice">Hay cambios externos pendientes. Se actualizarán al cerrar el formulario para conservar su edición.</p> }
+  <header class="catalogo-header">
+    <div><span class="eyebrow">CATÁLOGO DE PARÁMETROS</span><h2>Gestión de parámetros</h2><p>Gestiona la configuración de tu aplicación.</p></div>
+    <button type="button" class="secondary" [disabled]="loading() || busy()" (click)="actualizar()">{{ loading() ? 'Actualizando…' : 'Actualizar' }}</button>
+  </header>
+  @if (error()) { <p class="notice error" role="alert">{{ error() }}</p> }
+  @if (success()) { <p class="notice success" role="status">{{ success() }}</p> }
+  @if (loading() && !datos()) { <p role="status" class="empty">Cargando la configuración…</p> }
+  @if (datos(); as catalogo) {
+    @if (!appDisponible()) { <p class="notice">La aplicación está inactiva o fuera de vigencia. Puede consultar su configuración; las operaciones se validan en el servidor.</p> }
+    <nav class="tabs" aria-label="Secciones de parámetros">
+      @for (tab of tabs; track tab.id) { <button type="button" [class.selected]="recurso() === tab.id" [attr.aria-pressed]="recurso() === tab.id" [disabled]="busy()" (click)="elegir(tab.id)">{{ tab.label }}</button> }
+    </nav>
+    <div class="toolbar">
+      <h3>{{ titulo() }} <span class="count">{{ registros().length }}</span></h3>
+      <div class="actions"><input type="search" aria-label="Buscar registros" placeholder="Buscar por nombre o ID" [value]="busqueda()" (input)="busqueda.set($any($event.target).value)"><button type="button" [disabled]="busy() || !appDisponible()" (click)="abrir()">+ Nuevo registro</button></div>
+    </div>
+    <div class="table-scroll"><table>
+      <thead><tr><th>Registro</th><th>Estado</th>@if (recurso() === 'metadatos') { <th>Valor</th> }<th>Acciones</th></tr></thead>
+      <tbody>
+      @for (item of registros(); track item.id) {
+        <tr><td><strong>{{ nombre(item) }}</strong><small>{{ item.id }}</small></td><td><span class="badge" [class.inactive]="estado(item).toLowerCase() === 'inactivo'">{{ estado(item) }}</span></td>
+          @if (recurso() === 'metadatos') { <td><code>{{ resumen(item) }}</code></td> }
+          <td><div class="actions"><button type="button" class="secondary compact" [disabled]="busy()" (click)="abrir(item)">Editar</button><button type="button" class="danger compact" [disabled]="busy()" (click)="borrarId.set(item.id)">Eliminar</button></div></td></tr>
+      } @empty { <tr><td colspan="4" class="empty">No hay registros en esta sección.</td></tr> }
+      </tbody>
+    </table></div>
+  }
+  @if (borrarId()) {
+    <section class="confirm notice" role="alertdialog" aria-label="Confirmar eliminación"><p>¿Desea eliminar este registro? Las relaciones existentes pueden impedir la eliminación.</p><div class="actions"><button type="button" class="danger" [disabled]="busy()" (click)="eliminar()">Eliminar registro</button><button type="button" class="secondary" [disabled]="busy()" (click)="borrarId.set(null)">Cancelar</button></div></section>
+  }
+  @if (editor()) {
+    <div class="editor-backdrop"><section class="editor" role="dialog" aria-modal="true" aria-labelledby="catalogo-editor-title" (keydown.escape)="cerrar()">
+      <header><h3 id="catalogo-editor-title">{{ editingId() ? 'Editar' : 'Crear' }} · {{ titulo() }}</h3><button class="secondary compact" type="button" aria-label="Cerrar formulario" [disabled]="busy()" (click)="cerrar()">Cerrar</button></header>
+      <form [formGroup]="form" (ngSubmit)="guardar()">
+        @if (error()) { <p class="notice error" role="alert">{{ error() }}</p> }
+        <div class="fields">
+        @if (tieneEstado()) { <label>Nombre<input formControlName="nombre" maxlength="50" required></label> }
+        @if (recurso() !== 'modulos') {
+          <label>{{ recurso() === 'funcionalidades' ? 'Módulo' : recurso() === 'parametros' ? 'Funcionalidad' : 'Parámetro' }}
+          <select formControlName="idPadre" required><option value="">Seleccione un registro</option>@for (item of padres(); track item.id) { <option [value]="item.id" [disabled]="item.disabled">{{ item.nombre }}{{ item.disabled ? ' (No disponible)' : '' }}</option> }</select></label>
+        }
+        @if (recurso() === 'parametros') { <label>Tipo de parámetro<select formControlName="idTipo" required><option value="">Seleccione un tipo</option>@for (item of datos()?.tiposParametro; track item.id) { <option [value]="item.id">{{ item.nombre }}</option> }</select></label> }
+        @if (recurso() === 'metadatos') { <label>Tipo de metadato<select formControlName="idTipo" required><option value="">Seleccione un tipo</option>@for (item of datos()?.tiposMetadato; track item.id) { <option [value]="item.id">{{ item.tipo }}{{ item.detalle ? ' · ' + item.detalle : '' }}</option> }</select></label>
+          <label class="wide">Valor<textarea formControlName="valor" rows="6" placeholder='Ejemplos: "texto", 25, true, {"clave":"valor"}' required></textarea><small>Ingrese un valor JSON. Para texto, incluya las comillas.</small></label>
+        }
+        @if (recurso() === 'metadatos' || recurso() === 'metadatos-ambiente') {
+          <label>Ambiente<select formControlName="idAmbiente" required><option value="">Seleccione un ambiente</option>@for (item of datos()?.ambientes; track item.id) { <option [value]="item.id">{{ item.nombre }}</option> }</select></label>
+        }
+        @if (recurso() === 'metadatos-ambiente') {
+          <label>Estado de la asociación<select formControlName="idEstado" required><option value="">Seleccione un estado</option>@for (item of datos()?.estadosMetadatoAmbiente; track item.id) { <option [value]="item.id">{{ item.nombre }}</option> }</select></label>
+        }
+        @if (tieneEstado()) { <label class="check"><input type="checkbox" formControlName="activo"> Activo</label> }
+        @if (tieneFechas()) {
+          <label>Inicio de vigencia (hora local)<input type="datetime-local" step="1" formControlName="fechaInicio" required></label>
+          <label>Fin de vigencia (hora local)<input type="datetime-local" step="1" formControlName="fechaFinal" required></label>
+          <small class="wide">Las fechas se enviarán en UTC. Reactivar un registro exige padres activos y no reactiva sus dependientes.</small>
+        }
+        </div>
+        <footer><button type="button" class="secondary" [disabled]="busy()" (click)="cerrar()">Cancelar</button><button type="submit" [disabled]="busy() || form.invalid">{{ busy() ? 'Guardando…' : 'Guardar cambios' }}</button></footer>
+      </form>
+    </section></div>
+  }
+</section>

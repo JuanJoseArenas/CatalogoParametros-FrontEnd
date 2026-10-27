@@ -13,6 +13,7 @@ import { PageMessagesComponent } from '../../../../shared/ui/page-messages/page-
 import { PaginationComponent } from '../../../../shared/ui/pagination/pagination.component';
 import { RelatedEntityFormComponent, SelectOption } from '../../../../shared/ui/related-entity-form/related-entity-form.component';
 import { Subscription } from 'rxjs';
+import { disponibleParaUso } from '../../../../shared/utils/disponibilidad';
 
 @Component({
     selector: 'app-funcionalidades',
@@ -139,7 +140,7 @@ export class FuncionalidadesComponent implements OnInit, OnDestroy {
   private subscriptions: Subscription[] = [];
 
   get moduloOptions(): SelectOption[] {
-    return this.modulos.map(item => ({ id: item.id, name: item.nombre }));
+    return this.modulos.map(item => ({ id: item.id, name: item.nombre, disabled: !disponibleParaUso(item) }));
   }
 
   constructor(private repository: FuncionalidadesRepository, private modulosRepository: ModulosRepository, private fb: FormBuilder, private eventStream: EventStreamService) {

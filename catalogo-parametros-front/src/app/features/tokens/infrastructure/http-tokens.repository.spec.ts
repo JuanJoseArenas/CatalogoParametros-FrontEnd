@@ -12,6 +12,23 @@ describe('HttpTokensRepository', () => {
     repository = TestBed.inject(HttpTokensRepository); http = TestBed.inject(HttpTestingController);
   });
   afterEach(() => http.verify());
+  it('rechaza un detalle que no contiene el token solicitado', () => {
+    let error: Error | undefined;
+    repository.findById('id').subscribe({ error: value => error = value });
+    http.expectOne(`${url}/id`).flush({ tokens: [], mensajes: [] });
+    expect(error?.message).toContain('No se encontró el token');
+  });
+  it('devuelve el detalle y codifica el identificador en la ruta', () => {
+    const token = { id: 'id/con espacio', estadoToken: 'activo', aplicacionId: 'app', ambienteId: 'ambiente', fechaCreacion: '2026-10-21', fechaExpiracion: null };
+    repository.findById(token.id).subscribe(value => expect(value).toEqual(token));
+    http.expectOne(`${url}/id%2Fcon%20espacio`).flush({ tokens: [token], mensajes: [] });
+  });
+  it('conserva el error de permiso cuando se prohibe consultar parametros', () => {
+    let error: Error | undefined;
+    repository.findParameters('id', 'secret').subscribe({ error: value => error = value });
+    http.expectOne(`${url}/id/parametros`).flush({}, { status: 403, statusText: 'Forbidden' });
+    expect(error?.message).toContain('permiso');
+  });
   it('interpreta un 401 como validación negativa sin ocultar errores de conexión', () => {
     repository.validate('id', 'secret').subscribe(value => expect(value).toBeFalse());
     const req = http.expectOne(`${url}/id/validar`);

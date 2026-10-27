@@ -12,6 +12,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
       </div>
       <nav>
         <ul class="nav-menu">
+          <li class="nav-item"><a routerLink="/seguridad" routerLinkActive="active" class="nav-link"><span class="nav-icon" aria-hidden="true">🛡️</span>Seguridad</a></li>
           <li class="nav-item">
             <a routerLink="/dashboard" routerLinkActive="active" class="nav-link">
               <span class="nav-icon">📊</span>

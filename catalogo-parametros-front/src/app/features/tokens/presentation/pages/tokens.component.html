@@ -1,5 +1,20 @@
-<div class="page-header"><h1>Tokens</h1><div class="actions"><button class="btn btn-secondary" [disabled]="loading || busy" (click)="load()">Actualizar lista</button><button class="btn btn-primary" [disabled]="!ready || busy" (click)="showCreate = true">+ Nuevo token</button></div></div>
+<div class="page-header"><h1>Tokens</h1><div class="actions"><button class="btn btn-secondary" [disabled]="loading || busy" (click)="load()">Actualizar lista</button><button class="btn btn-primary" [disabled]="!ready || busy" (click)="abrirCreacion()">+ Nuevo token</button></div></div>
 <app-page-messages [error]="errorMessage" [success]="successMessage" />
+@if (credencialGenerada; as credencial) {
+<section class="card" aria-label="Credencial de integración">
+  <div class="card-header"><h2>Token de integración creado</h2><button class="btn btn-secondary" (click)="cerrarCredencial()">Ya guardé la credencial</button></div>
+  <div class="modal-body">
+    <p>El secreto se muestra solo en esta sesión. Guárdelo en la variable CATALOGO_PARAMETROS_SECRETO del backend consumidor.</p>
+    <p><strong>ID del token:</strong> {{ credencial.id }}</p>
+    <label for="secreto-generado">Secreto de consulta</label>
+    <div class="actions"><input id="secreto-generado" class="form-control" readonly [type]="mostrarSecretoGenerado ? 'text' : 'password'" [value]="credencial.secreto" autocomplete="off"><button class="btn btn-secondary" (click)="mostrarSecretoGenerado = !mostrarSecretoGenerado">{{ mostrarSecretoGenerado ? 'Ocultar' : 'Mostrar' }}</button><button class="btn btn-secondary" (click)="copiarCredencial(credencial.secreto)">Copiar secreto</button></div>
+    <label for="propiedades-integracion">Configuración del backend consumidor</label>
+    <textarea id="propiedades-integracion" class="form-control" readonly rows="5" [value]="credencial.propiedades"></textarea>
+    <button class="btn btn-secondary" (click)="copiarCredencial(credencial.propiedades)">Copiar properties</button>
+    <p>El secreto permite consultar los parámetros de la aplicación y ambiente asociados. No lo incluya en código frontend.</p>
+  </div>
+</section>
+}
 <div class="card"><div class="card-header"><h2 class="card-title">Lista de tokens</h2><input class="form-control" aria-label="Buscar tokens" placeholder="Buscar por ID, aplicación, ambiente o estado" [(ngModel)]="search"></div>
 @if (loading) { <p role="status">Cargando tokens...</p> } @else {
 <div class="table-container"><table><thead><tr><th>ID</th><th>Aplicación</th><th>Ambiente</th><th>Estado</th><th>Expiración</th><th>Acciones</th></tr></thead><tbody>
@@ -10,9 +25,9 @@
 <div class="modal-overlay"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="create-title" (keydown.escape)="!busy && closeCreate()"><div class="modal-header"><h2 id="create-title">Nuevo token</h2><button class="modal-close" aria-label="Cerrar" [disabled]="busy" (click)="closeCreate()">&times;</button></div>
 <form [formGroup]="form" (ngSubmit)="create()"><div class="modal-body">
 <app-page-messages [error]="errorMessage" />
-<p>Guarde el secreto antes de crear el token. Después no podrá recuperarlo.</p>
-<div class="form-group"><label class="form-label" for="secret">Secreto</label><input id="secret" class="form-control" type="password" autocomplete="new-password" formControlName="token"></div>
-<div class="form-group"><label class="form-label" for="app">Aplicación</label><select id="app" class="form-control" formControlName="aplicacionId"><option value="">Seleccione una aplicación</option>@for (app of aplicaciones; track app.id) { <option [value]="app.id">{{ app.nombre }}</option> }</select></div>
+<p>Se generó un secreto seguro. Al crear el token podrá copiarlo junto con la configuración de integración; después no podrá recuperarlo del servidor.</p>
+<div class="form-group"><label class="form-label" for="secret">Secreto</label><input id="secret" class="form-control" type="password" autocomplete="new-password" formControlName="token"><button class="btn btn-secondary" type="button" [disabled]="busy" (click)="generarSecreto()">Generar secreto seguro</button></div>
+<div class="form-group"><label class="form-label" for="app">Aplicación</label><select id="app" class="form-control" formControlName="aplicacionId"><option value="">Seleccione una aplicación</option>@for (app of aplicaciones; track app.id) { <option [value]="app.id" [disabled]="!disponibleParaUso(app)">{{ app.nombre }}{{ !disponibleParaUso(app) ? " (No disponible)" : "" }}</option> }</select></div>
 <div class="form-group"><label class="form-label" for="environment">Ambiente</label><select id="environment" class="form-control" formControlName="ambienteId"><option value="">Seleccione un ambiente</option>@for (environment of ambientes; track environment.id) { <option [value]="environment.id">{{ environment.nombre }}</option> }</select></div>
 <div class="form-group"><label class="form-label" for="initial-state">Estado</label><select id="initial-state" class="form-control" formControlName="estadoToken"><option value="">Seleccione un estado</option>@for (state of estados; track state.id) { <option [value]="state.id">{{ state.estado }}</option> }</select></div>
 <div class="form-group"><label class="form-label" for="expiration">Expiración (hora local)</label><input id="expiration" class="form-control" type="datetime-local" formControlName="fechaExpiracion"></div>

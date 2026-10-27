@@ -1,5 +1,7 @@
 import { Routes } from '@angular/router';
 export const appRoutes: Routes = [
+  { path: 'aplicaciones/:id/administracion', loadComponent: () => import('./features/catalogo-embebido/presentation/catalogo-embebido-host.component').then(m => m.CatalogoEmbebidoHostComponent) },
+  { path: 'seguridad', loadComponent: () => import('./features/seguridad/security-administration.component').then(m => m.SecurityAdministrationComponent) },
   { path: 'consulta-parametros', loadChildren: () => import('./features/tokens/tokens.routes').then(m => m.CONSULTA_PARAMETROS_ROUTES) },
   { path: 'tokens', loadChildren: () => import('./features/tokens/tokens.routes').then(m => m.TOKENS_ROUTES) },
   { path: 'estados-ambiente', loadChildren: () => import('./features/estados-ambiente/estados-ambiente.routes').then(m => m.ESTADOS_AMBIENTE_ROUTES) },

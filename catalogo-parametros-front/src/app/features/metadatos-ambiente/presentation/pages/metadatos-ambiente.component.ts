@@ -11,6 +11,7 @@ import { AmbientesRepository } from '../../../ambientes/domain/ambientes.reposit
 import { EstadoMetadatoAmbiente } from '../../../estados-metadato-ambiente/domain/estado-metadato-ambiente';
 import { EstadosMetadatoAmbienteRepository } from '../../../estados-metadato-ambiente/domain/estados-metadato-ambiente.repository';
 import { Parametro } from '../../../parametros/domain/parametro';
+import { disponibleParaUso } from '../../../../shared/utils/disponibilidad';
 import { ParametrosRepository } from '../../../parametros/domain/parametros.repository';
 import { MetadatoAmbiente, MetadatoAmbienteEvent } from '../../domain/metadato-ambiente';
 import { MetadatosAmbienteRepository } from '../../domain/metadatos-ambiente.repository';
@@ -28,6 +29,7 @@ import { MetadatosAmbienteRepository } from '../../domain/metadatos-ambiente.rep
   `]
 })
 export class MetadatosAmbienteComponent implements OnInit, OnDestroy {
+  readonly disponibleParaUso = disponibleParaUso;
   metadatos: MetadatoAmbiente[] = [];
   ambientes: Ambiente[] = [];
   parametros: Parametro[] = [];

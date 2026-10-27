@@ -57,15 +57,15 @@ describe('ModulosComponent', () => {
     expect(component.moduloForm.value.fechaInicio).toBe(fechaParaFormulario(fechaInicio));
     component.moduloForm.patchValue({ nombre: 'Nuevo' });
     component.saveModulo();
-    expect(repository.update).toHaveBeenCalledWith('1', jasmine.objectContaining({ nombre: 'Nuevo', fechaInicio, fechaFinal }));
+    expect(repository.update).toHaveBeenCalledWith('1', jasmine.objectContaining({ nombre: 'Nuevo', fechaInicio: '2026-11-01T06:30:25.123456Z', fechaFinal: '2026-12-31T18:29:59.000Z' }));
   });
 
-  it('env?a la hora elegida con desfase local y rechaza fechas inv?lidas', () => {
+  it('env?a la hora elegida en UTC y rechaza fechas inv?lidas', () => {
     repository.create.and.returnValue(of({ mensajes: ['ok'] }));
     component.moduloForm.patchValue({ nombre: 'Nueva', idAplicacion: 'a1', activo: true, fechaInicio: '2026-07-15T14:35:42', fechaFinal: '2026-12-31T18:20:00' });
     component.saveModulo();
     const enviado = repository.create.calls.mostRecent().args[0] as { fechaInicio: string };
-    expect(enviado.fechaInicio).toMatch(/^2026-07-15T14:35:42[+-]\d{2}:\d{2}$/);
+    expect(enviado.fechaInicio).toBe(new Date('2026-07-15T14:35:42').toISOString());
     repository.create.calls.reset();
     component.moduloForm.patchValue({ nombre: 'Nueva', idAplicacion: 'a1', activo: true, fechaInicio: '2026-02-30T14:00:00', fechaFinal: '2026-12-31T18:20:00' });
     component.saveModulo();

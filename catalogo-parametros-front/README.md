@@ -75,14 +75,14 @@ La aplicacion estara disponible en `http://localhost:4200`
 Desde la carpeta `CatalogoParametros/CatalogoParametrosUcoLab` del workspace:
 
 ```bash
-docker compose up --build -d
+docker compose -f docker-compose.yml up --build -d
 ```
 
 El frontend queda disponible en `http://localhost:4200` y el backend en
 `http://localhost:8080`. El Compose incluye los servicios de infraestructura
 existentes y requiere las variables de Azure del backend previamente configuradas.
 Conservar la estructura de carpetas del workspace: el contexto de construccion
-del frontend es `../../CatalogoParametrosFrontend/CatalogoParametros-FrontEnd/catalogo-parametros-front`,
+del frontend es `../../CatalogoParametros-FrontEnd/catalogo-parametros-front`,
 relativo al Compose.
 
 El Dockerfile compila Angular en modo produccion y sirve el resultado con Nginx.
@@ -93,7 +93,7 @@ SSE. Las rutas de Angular pueden abrirse directamente o recargarse.
 Para reconstruir solo el frontend con el backend ya levantado:
 
 ```bash
-docker compose up --build -d --no-deps frontend
+docker compose -f docker-compose.yml up --build -d --no-deps frontend
 ```
 
 ### Desarrollo local
@@ -125,3 +125,39 @@ El frontend consume los siguientes endpoints del backend:
 - TypeScript 6.0
 - RxJS 7.8
 - CSS3 (sin frameworks adicionales)
+
+## Integración con Security Baseline
+
+El host consulta la sesión BFF antes de renderizar. Un 401 redirige al login central
+con la URL actual en `return_to`; un error de red o del BFF detiene el arranque y
+ofrece reintentar. Las llamadas HTTP al catálogo y los eventos SSE incluyen cookies.
+La ruta `/seguridad`, accesible desde la barra lateral, monta la API pública ESM
+`mount` de Security UI y ejecuta `unmount` al salir.
+
+Configure `src/assets/security-config.json`: `pdpUrl`, `securityUiUrl`,
+`applicationName` y, opcionalmente, `applicationId` (preferido si conoce su UUID).
+El nombre debe coincidir exactamente con el registro en Seguridad y con
+`SECURITY_APPLICATION_NAME` del backend. Se usa `Catalogo`, nombre registrado en Seguridad. Este JSON es público: no contiene tokens ni secretos.
+Se carga en cada arranque. El destino del BFF debe pertenecer a `TRUSTED_PDP_URLS`
+en `src/app/core/security/security-config.ts`; el laboratorio permite
+`http://localhost:18080`. El JSON no puede autorizar servidores nuevos para recibir
+cookies o iniciar el login. El retorno del login debe pertenecer al origen del host.
+
+En desarrollo, inicie Security UI desde `../../Seguridad/security-ui` con
+`npm run build` y `npm run preview`: publica el bundle en el puerto 5175.
+El host sigue usando `http://localhost:4200`; el BFF debe permitir ese origen en
+`PDP_SECURITY_CORS_ALLOWED_ORIGINS` y `PDP_LOGIN_ALLOWED_RETURN_ORIGINS`.
+El Compose local de Seguridad ya incluye ese origen.
+
+Docker Compose compila también Security UI mediante el contexto `security_ui` y
+lo sirve desde `/security-ui/`. `security-config.docker.json` configura este montaje.
+Para construir directamente con Docker, agregue
+`--build-context security_ui=../../Seguridad/security-ui` al comando de build. El pipeline usa el contexto Git de Security UI fijado por
+`SECURITY_UI_COMMIT`; actualice ese commit al adoptar una nueva versión validada.
+En producción, agregue el origen HTTPS del BFF a la lista de confianza antes de
+compilar y sustituya el JSON por las URLs HTTPS de su despliegue; configure
+CSP para permitir el bundle en `script-src` y el BFF en `connect-src`.
+
+El alta de aplicación, administrador adicional y la cadena recurso → rol → perfil
+→ usuario se realizan en Seguridad. Consulte la guía del backend en
+`docs/SEGURIDAD-INTEGRACION.md` para el arranque y la matriz de verificación.

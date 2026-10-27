@@ -5,7 +5,7 @@ describe('Fechas en la zona del navegador', () => {
     const offset = spyOn(Date.prototype, 'getTimezoneOffset');
     for (const [minutos, esperado] of [[300, '-05:00'], [240, '-04:00'], [-330, '+05:30'], [0, '+00:00']] as const) {
       offset.and.returnValue(minutos);
-      expect(fechaConZona('2026-07-15T12:34:56')).toBe('2026-07-15T12:34:56' + esperado);
+      expect(fechaConZona('2026-07-15T12:34:56')).toBe(new Date('2026-07-15T12:34:56' + esperado).toISOString());
     }
   });
 
@@ -13,8 +13,8 @@ describe('Fechas en la zona del navegador', () => {
     spyOn(Date.prototype, 'getTimezoneOffset').and.callFake(function(this: Date) {
       return this.getMonth() === 0 ? 300 : 240;
     });
-    expect(fechaConZona('2026-01-15T12:34')).toBe('2026-01-15T12:34:00-05:00');
-    expect(fechaConZona('2026-07-15T12:34:56')).toBe('2026-07-15T12:34:56-04:00');
+    expect(fechaConZona('2026-01-15T12:34')).toBe('2026-01-15T17:34:00.000Z');
+    expect(fechaConZona('2026-07-15T12:34:56')).toBe('2026-07-15T16:34:56.000Z');
   });
 
   it('convierte instantes equivalentes al mismo valor local y texto legible', () => {
@@ -27,7 +27,7 @@ describe('Fechas en la zona del navegador', () => {
 
   it('no pierde precisi?n ni cambia el instante cuando no se edita la fecha', () => {
     const original = '2026-11-01T01:30:25.123456-05:00';
-    expect(fechaConZona(fechaParaFormulario(original), original)).toBe(original);
+    expect(fechaConZona(fechaParaFormulario(original), original)).toBe('2026-11-01T06:30:25.123456Z');
   });
 
   it('valida vac?os, valores inv?lidos y fechas inexistentes', () => {
@@ -38,6 +38,6 @@ describe('Fechas en la zona del navegador', () => {
     expect(fechaLocalValida('')).toBeTrue();
     expect(fechaLocalValida('2026-02-30T10:00:00')).toBeFalse();
     expect(() => fechaConZona('incorrecta')).toThrow();
-    expect(fechaConZona('2026-01-15')).toContain('T00:00:00');
+    expect(fechaConZona('2026-01-15')).toMatch(/Z$/);
   });
 });
