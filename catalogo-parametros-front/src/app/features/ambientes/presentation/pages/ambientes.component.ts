@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Subscription, retry, tap } from 'rxjs';
+import { Subscription, retry } from 'rxjs';
 import { EventStreamService } from '../../../../core/realtime/event-stream.service';
+import { ConnectionStatusComponent } from '../../../../shared/ui/connection-status/connection-status.component';
 import { PageMessagesComponent } from '../../../../shared/ui/page-messages/page-messages.component';
 import { PaginationComponent } from '../../../../shared/ui/pagination/pagination.component';
 import { Ambiente, AmbienteEvent } from '../../domain/ambiente';
@@ -9,7 +10,7 @@ import { AmbientesRepository } from '../../domain/ambientes.repository';
 
 @Component({
   selector: 'app-ambientes',
-  imports: [FormsModule, ReactiveFormsModule, PageMessagesComponent, PaginationComponent],
+  imports: [FormsModule, ReactiveFormsModule, ConnectionStatusComponent, PageMessagesComponent, PaginationComponent],
   templateUrl: './ambientes.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
@@ -34,7 +35,7 @@ export class AmbientesComponent implements OnInit, OnDestroy {
   errorMessage = '';
   formError = '';
   successMessage = '';
-  connectionStatus = 'Esperando cambios en tiempo real';
+  isConnected = false;
   readonly ambienteForm = new FormGroup({
     nombre: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.pattern(/\S/)] })
   });
@@ -45,11 +46,9 @@ export class AmbientesComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadAmbientes();
-    this.subscriptions.add(this.eventStream.connect<AmbienteEvent>(this.repository.eventsUrl, 'ambiente').pipe(
-      tap({ error: () => this.connectionStatus = 'Reconectando cambios en tiempo real...' }),
+    this.subscriptions.add(this.eventStream.connect<AmbienteEvent>(this.repository.eventsUrl, 'ambiente', connected => this.isConnected = connected).pipe(
       retry({ delay: 3000 })
     ).subscribe(event => {
-      this.connectionStatus = 'Recibiendo cambios en tiempo real';
       if (event.ambiente && ['CREATED', 'UPDATED', 'DELETED'].includes(event.event)) {
         if (this.detalle?.id === event.ambiente.id) {
           this.detalle = event.event === 'DELETED' ? null : event.ambiente;

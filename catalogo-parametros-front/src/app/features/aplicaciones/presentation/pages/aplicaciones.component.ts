@@ -205,7 +205,7 @@ export class AplicacionesComponent implements OnInit, OnDestroy {
   }
 
   connectSse(): void {
-    const sub = this.eventStream.connect<any>(this.repository.eventsUrl, 'aplicacion').subscribe({
+    const sub = this.eventStream.connect<any>(this.repository.eventsUrl, 'aplicacion', connected => this.isConnected = connected).subscribe({
       next: (data: any) => {
         this.isConnected = true;
 

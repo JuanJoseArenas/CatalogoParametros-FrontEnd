@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Subscription, retry, tap } from 'rxjs';
+import { Subscription, retry } from 'rxjs';
 import { EventStreamService } from '../../../../core/realtime/event-stream.service';
+import { ConnectionStatusComponent } from '../../../../shared/ui/connection-status/connection-status.component';
 import { PageMessagesComponent } from '../../../../shared/ui/page-messages/page-messages.component';
 import { PaginationComponent } from '../../../../shared/ui/pagination/pagination.component';
 import { EstadoMetadatoAmbiente, EstadoMetadatoAmbienteEvent } from '../../domain/estado-metadato-ambiente';
@@ -9,7 +10,7 @@ import { EstadosMetadatoAmbienteRepository } from '../../domain/estados-metadato
 
 @Component({
   selector: 'app-estados-metadato-ambiente',
-  imports: [FormsModule, ReactiveFormsModule, PageMessagesComponent, PaginationComponent],
+  imports: [FormsModule, ReactiveFormsModule, ConnectionStatusComponent, PageMessagesComponent, PaginationComponent],
   templateUrl: './estados-metadato-ambiente.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
@@ -34,7 +35,7 @@ export class EstadosMetadatoAmbienteComponent implements OnInit, OnDestroy {
   errorMessage = '';
   formError = '';
   successMessage = '';
-  connectionStatus = 'Esperando cambios en tiempo real';
+  isConnected = false;
   readonly estadoMetadatoAmbienteForm = new FormGroup({
     nombre: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.pattern(/\S/)] })
   });
@@ -45,11 +46,9 @@ export class EstadosMetadatoAmbienteComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadEstadosMetadatoAmbiente();
-    this.subscriptions.add(this.eventStream.connect<EstadoMetadatoAmbienteEvent>(this.repository.eventsUrl, 'estadometadatoambiente').pipe(
-      tap({ error: () => this.connectionStatus = 'Reconectando cambios en tiempo real...' }),
+    this.subscriptions.add(this.eventStream.connect<EstadoMetadatoAmbienteEvent>(this.repository.eventsUrl, 'estadometadatoambiente', connected => this.isConnected = connected).pipe(
       retry({ delay: 3000 })
     ).subscribe(event => {
-      this.connectionStatus = 'Recibiendo cambios en tiempo real';
       if (event.estadoMetadatoAmbiente && ['CREATED', 'UPDATED', 'DELETED'].includes(event.event)) {
         if (this.detalle?.id === event.estadoMetadatoAmbiente.id) {
           this.detalle = event.event === 'DELETED' ? null : event.estadoMetadatoAmbiente;

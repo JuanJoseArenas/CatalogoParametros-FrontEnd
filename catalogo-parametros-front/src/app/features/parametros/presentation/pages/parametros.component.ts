@@ -192,7 +192,7 @@ export class ParametrosComponent implements OnInit, OnDestroy {
   }
 
   connectSse(): void {
-    const sub = this.eventStream.connect<any>(this.repository.eventsUrl, 'parametro').subscribe({
+    const sub = this.eventStream.connect<any>(this.repository.eventsUrl, 'parametro', connected => this.isConnected = connected).subscribe({
       next: (data: any) => {
         this.isConnected = true;
 
