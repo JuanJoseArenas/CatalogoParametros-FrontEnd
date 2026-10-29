@@ -23,10 +23,11 @@ RUN npm run build -- --configuration production && npm run build:microfrontend
 
 # Servir los archivos compilados y redirigir la API al backend.
 FROM nginxinc/nginx-unprivileged:stable-alpine
-# Actualizar PCRE2 antes de volver al usuario sin privilegios.
-# CVE-2026-103111: versión corregida mínima según el reporte de Trivy.
+# Actualizar los paquetes del runtime antes de volver al usuario sin privilegios.
+# Esto incluye las versiones corregidas de PCRE2, Brotli, curl y libcurl.
 USER root
-RUN apk add --upgrade --no-cache 'pcre2>=10.49-r0'
+RUN apk upgrade --no-cache \
+    && apk add --no-cache 'pcre2>=10.49-r0'
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist/catalogo-parametros-front/browser/ /usr/share/nginx/html/
 COPY --from=build /app/dist/parametros-ui/ /usr/share/nginx/html/parametros-ui/
