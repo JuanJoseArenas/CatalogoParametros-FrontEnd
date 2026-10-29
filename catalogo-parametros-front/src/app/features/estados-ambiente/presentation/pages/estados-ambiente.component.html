@@ -4,7 +4,8 @@
     <app-connection-status [connected]="isConnected" />
     <div class="search-bar">
       <span class="search-icon">🔍</span>
-      <input type="text" placeholder="Buscar estado..." [(ngModel)]="searchTerm">
+      <label class="search-label" for="estados-ambiente-search">Buscar estado</label>
+      <input id="estados-ambiente-search" type="text" placeholder="Buscar estado..." [(ngModel)]="searchTerm">
     </div>
     <button class="btn btn-secondary" [disabled]="loading" (click)="loadEstadosAmbiente()">Actualizar lista</button>
     <button class="btn btn-primary" (click)="openModal()">+ Nuevo estado de ambiente</button>
