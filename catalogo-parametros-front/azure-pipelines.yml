@@ -21,6 +21,7 @@ variables:
   SONAR_BINARY_CACHE: $(Pipeline.Workspace)/.sonar/native-sonar-scanner
   TRIVY_CACHE_DIR: $(Pipeline.Workspace)/.trivy/cache
   TRIVY_VERSION: '0.74.0'
+  # Cambio documental para ejecutar nuevamente la publicación inicial 0.1.0.
   IMAGE_REPOSITORY: simon4219/catalogo-parametros-frontend
   IMAGE_VERSION_PREFIX: '0.1'
   SECURITY_UI_COMMIT: '6e6ed9b5854ad52176d7b3cd6b6f55052bdf357b'
