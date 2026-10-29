@@ -1,4 +1,3 @@
-import { RouterLink } from '@angular/router';
 import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -17,7 +16,7 @@ import { Subscription } from 'rxjs';
 
 @Component({
     selector: 'app-aplicaciones',
-    imports: [RouterLink, CommonModule, FormsModule, ConnectionStatusComponent, PageMessagesComponent, PaginationComponent, RelatedEntityFormComponent],
+    imports: [CommonModule, FormsModule, ConnectionStatusComponent, PageMessagesComponent, PaginationComponent, RelatedEntityFormComponent],
     template: `
     <div class="aplicaciones">
       <div class="page-header">
@@ -70,7 +69,6 @@ import { Subscription } from 'rxjs';
                     <td>
                       <div style="display: flex; gap: 8px;">
                         <button class="btn btn-warning btn-sm" (click)="editAplicacion(app)">Editar</button>
-                        <a class="btn btn-secondary btn-sm" [routerLink]="['/aplicaciones', app.id, 'administracion']">Gestionar parámetros</a>
                         <button class="btn btn-secondary btn-sm" (click)="changeStatus(app)">
                           {{ app.activa ? 'Desactivar' : 'Activar' }}
                         </button>
