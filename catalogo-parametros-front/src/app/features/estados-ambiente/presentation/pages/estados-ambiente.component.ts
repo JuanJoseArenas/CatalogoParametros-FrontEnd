@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Subscription, retry, tap } from 'rxjs';
+import { Subscription, retry } from 'rxjs';
 import { EventStreamService } from '../../../../core/realtime/event-stream.service';
+import { ConnectionStatusComponent } from '../../../../shared/ui/connection-status/connection-status.component';
 import { PageMessagesComponent } from '../../../../shared/ui/page-messages/page-messages.component';
 import { PaginationComponent } from '../../../../shared/ui/pagination/pagination.component';
 import { EstadoAmbiente, EstadoAmbienteEvent } from '../../domain/estado-ambiente';
@@ -9,7 +10,7 @@ import { EstadosAmbienteRepository } from '../../domain/estados-ambiente.reposit
 
 @Component({
   selector: 'app-estados-ambiente',
-  imports: [FormsModule, ReactiveFormsModule, PageMessagesComponent, PaginationComponent],
+  imports: [FormsModule, ReactiveFormsModule, ConnectionStatusComponent, PageMessagesComponent, PaginationComponent],
   templateUrl: './estados-ambiente.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
@@ -34,7 +35,7 @@ export class EstadosAmbienteComponent implements OnInit, OnDestroy {
   errorMessage = '';
   formError = '';
   successMessage = '';
-  connectionStatus = 'Esperando cambios en tiempo real';
+  isConnected = false;
   readonly estadoAmbienteForm = new FormGroup({
     nombre: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.pattern(/\S/)] })
   });
@@ -45,11 +46,9 @@ export class EstadosAmbienteComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadEstadosAmbiente();
-    this.subscriptions.add(this.eventStream.connect<EstadoAmbienteEvent>(this.repository.eventsUrl, 'estadoambiente').pipe(
-      tap({ error: () => this.connectionStatus = 'Reconectando cambios en tiempo real...' }),
+    this.subscriptions.add(this.eventStream.connect<EstadoAmbienteEvent>(this.repository.eventsUrl, 'estadoambiente', connected => this.isConnected = connected).pipe(
       retry({ delay: 3000 })
     ).subscribe(event => {
-      this.connectionStatus = 'Recibiendo cambios en tiempo real';
       if (event.estadoAmbiente && ['CREATED', 'UPDATED', 'DELETED'].includes(event.event)) {
         if (this.detalle?.id === event.estadoAmbiente.id) {
           this.detalle = event.event === 'DELETED' ? null : event.estadoAmbiente;

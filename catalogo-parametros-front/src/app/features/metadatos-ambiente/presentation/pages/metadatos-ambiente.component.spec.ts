@@ -150,7 +150,7 @@ describe('MetadatosAmbienteComponent', () => {
 
   it('recibe el JSON real de SSE, refresca los catálogos y libera las suscripciones', () => {
     component.ngOnInit();
-    expect(stream.connect).toHaveBeenCalledWith(repository.eventsUrl, 'metadatoambiente');
+    expect(stream.connect).toHaveBeenCalledWith(repository.eventsUrl, 'metadatoambiente', jasmine.any(Function));
     component.detalle = entity;
     events.next({ event: 'UPDATED', metadatoAmbiente: { ...entity, idAmbiente: 'a2' } });
     expect(component.detalle?.idAmbiente).toBe('a2');

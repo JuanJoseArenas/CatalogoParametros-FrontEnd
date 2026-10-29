@@ -1,8 +1,9 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit } from '@angular/core';
 import { FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { Subscription, forkJoin, retry, tap } from 'rxjs';
+import { Subscription, forkJoin, retry } from 'rxjs';
 import { EventStreamService } from '../../../../core/realtime/event-stream.service';
+import { ConnectionStatusComponent } from '../../../../shared/ui/connection-status/connection-status.component';
 import { PageMessagesComponent } from '../../../../shared/ui/page-messages/page-messages.component';
 import { PaginationComponent } from '../../../../shared/ui/pagination/pagination.component';
 import { loadAllPages } from '../../../../shared/utils/load-all-pages';
@@ -18,7 +19,7 @@ import { MetadatosAmbienteRepository } from '../../domain/metadatos-ambiente.rep
 
 @Component({
   selector: 'app-metadatos-ambiente',
-  imports: [FormsModule, ReactiveFormsModule, RouterLink, PageMessagesComponent, PaginationComponent],
+  imports: [FormsModule, ReactiveFormsModule, RouterLink, ConnectionStatusComponent, PageMessagesComponent, PaginationComponent],
   templateUrl: './metadatos-ambiente.component.html',
   changeDetection: ChangeDetectionStrategy.Eager,
   styles: [`
@@ -50,7 +51,7 @@ export class MetadatosAmbienteComponent implements OnInit, OnDestroy {
   catalogError = '';
   formError = '';
   successMessage = '';
-  connectionStatus = 'Esperando cambios en tiempo real';
+  isConnected = false;
   readonly metadatoForm = new FormGroup({
     idParametro: new FormControl('', { nonNullable: true, validators: Validators.required }),
     idAmbiente: new FormControl('', { nonNullable: true, validators: Validators.required }),
@@ -71,11 +72,9 @@ export class MetadatosAmbienteComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadMetadatos();
     this.loadCatalogos();
-    this.subscriptions.add(this.eventStream.connect<MetadatoAmbienteEvent>(this.repository.eventsUrl, 'metadatoambiente').pipe(
-      tap({ error: () => this.connectionStatus = 'Reconectando cambios en tiempo real...' }),
+    this.subscriptions.add(this.eventStream.connect<MetadatoAmbienteEvent>(this.repository.eventsUrl, 'metadatoambiente', connected => this.isConnected = connected).pipe(
       retry({ delay: 3000 })
     ).subscribe(event => {
-      this.connectionStatus = 'Recibiendo cambios en tiempo real';
       if (!event.metadatoAmbiente || !['CREATED', 'UPDATED', 'DELETED'].includes(event.event)) return;
       if (this.detalle?.id === event.metadatoAmbiente.id) {
         this.detalle = event.event === 'DELETED' ? null : event.metadatoAmbiente;

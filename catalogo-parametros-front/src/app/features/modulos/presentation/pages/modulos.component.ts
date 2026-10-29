@@ -205,7 +205,7 @@ export class ModulosComponent implements OnInit, OnDestroy {
   }
 
   connectSse(): void {
-    const sub = this.eventStream.connect<any>(this.repository.eventsUrl, 'modulo').subscribe({
+    const sub = this.eventStream.connect<any>(this.repository.eventsUrl, 'modulo', connected => this.isConnected = connected).subscribe({
       next: (data: any) => {
         this.isConnected = true;
 

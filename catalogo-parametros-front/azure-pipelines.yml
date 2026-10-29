@@ -22,11 +22,11 @@ variables:
   TRIVY_CACHE_DIR: $(Pipeline.Workspace)/.trivy/cache
   TRIVY_VERSION: '0.74.0'
   IMAGE_REPOSITORY: simon4219/catalogo-parametros-frontend
-  IMAGE_VERSION_PREFIX: '0.0'
+  IMAGE_VERSION_PREFIX: '0.1'
   SECURITY_UI_COMMIT: '6e6ed9b5854ad52176d7b3cd6b6f55052bdf357b'
-  # La version se asigna al latest ANTERIOR, no a la imagen nueva.
+  # La version se publica con su etiqueta y tambien actualiza latest.
   # Los PR tienen un contador separado y nunca publican imagenes.
-  IMAGE_VERSION_PATCH: $[counter(format('docker-front-{0}-{1}', variables['IMAGE_VERSION_PREFIX'], variables['Build.SourceBranch']), 2)]
+  IMAGE_VERSION_PATCH: $[counter(format('docker-front-{0}-{1}', variables['IMAGE_VERSION_PREFIX'], variables['Build.SourceBranch']), 0)]
 
 steps:
   - checkout: self
@@ -101,7 +101,7 @@ steps:
       failIfCoverageEmpty: false
 
   - bash: npm run build -- --configuration production
-    displayName: Compilar frontend para producción
+    displayName: Compilar frontend para producciÃ³n
     workingDirectory: $(FRONTEND_DIRECTORY)
 
   - bash: |
@@ -125,7 +125,7 @@ steps:
   - bash: |
       set -euo pipefail
 
-      # El archivo de excepciones es opcional; sin él se analiza sin exclusiones.
+      # El archivo de excepciones es opcional; sin Ã©l se analiza sin exclusiones.
       opciones_ignore=()
       if [[ -f .trivyignore.yaml ]]; then
         opciones_ignore=(--ignorefile .trivyignore.yaml)
@@ -139,7 +139,7 @@ steps:
         --severity HIGH,CRITICAL \
         --exit-code 1 \
         .
-    displayName: Analizar dependencias, secretos y configuración con Trivy
+    displayName: Analizar dependencias, secretos y configuraciÃ³n con Trivy
     workingDirectory: $(FRONTEND_DIRECTORY)
 
   - task: Docker@2
@@ -153,18 +153,18 @@ steps:
       set -euo pipefail
 
       repositorio="${IMAGE_REPOSITORY}"
-      version_anterior="${IMAGE_VERSION_PREFIX}.${IMAGE_VERSION_PATCH}"
+      version_nueva="${IMAGE_VERSION_PREFIX}.${IMAGE_VERSION_PATCH}"
       imagen_nueva="catalogo-front-candidato:${BUILD_BUILDID}"
 
-      if [[ ! "$version_anterior" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-        echo "##vso[task.logissue type=error]La versión debe tener formato X.Y.Z."
+      if [[ ! "$version_nueva" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        echo "##vso[task.logissue type=error]La versiÃ³n debe tener formato X.Y.Z."
         exit 1
       fi
 
       echo "Construyendo nueva imagen..."
       docker build --pull --build-context "security_ui=https://github.com/Seguridad-UCO/security-ui.git#${SECURITY_UI_COMMIT}" --file Dockerfile --tag "$imagen_nueva" .
 
-      # Bloquear la publicación antes de modificar etiquetas en Docker Hub.
+      # Bloquear la publicaciÃ³n antes de modificar etiquetas en Docker Hub.
       echo "Analizando nueva imagen con Trivy..."
       trivy image \
         --cache-dir "$(TRIVY_CACHE_DIR)" \
@@ -173,41 +173,29 @@ steps:
         --exit-code 1 \
         "$imagen_nueva"
 
-      archivo_error="$(mktemp)"
-      trap 'rm -f "$archivo_error"' EXIT
-
-      echo "Buscando latest anterior..."
-      if docker pull "${repositorio}:latest" 2>"$archivo_error"; then
-        if docker manifest inspect "${repositorio}:${version_anterior}" > /dev/null 2>"$archivo_error"; then
-          echo "##vso[task.logissue type=error]La versión ${version_anterior} ya existe. No se sobrescribirá."
-          exit 1
-        elif ! grep -Eqi 'manifest unknown|no such manifest' "$archivo_error"; then
-          cat "$archivo_error" >&2
-          echo "##vso[task.logissue type=error]No se pudo comprobar si la versión histórica existe."
-          exit 1
-        fi
-
-        echo "Guardando latest anterior como ${repositorio}:${version_anterior}..."
-        docker tag "${repositorio}:latest" "${repositorio}:${version_anterior}"
-        docker push "${repositorio}:${version_anterior}"
-      elif grep -Eqi 'manifest unknown|no such manifest' "$archivo_error"; then
-        echo "No existe latest anterior. Se publicará el primer latest."
-      else
-        cat "$archivo_error" >&2
-        echo "##vso[task.logissue type=error]No se pudo descargar latest. Se cancela la publicación."
+      # No sobrescribir una version historica existente.
+      if docker manifest inspect "${repositorio}:${version_nueva}" > /dev/null 2>&1; then
+        echo "##vso[task.logissue type=error]La version ${version_nueva} ya existe. No se sobrescribira."
         exit 1
       fi
 
-      echo "Publicando nueva imagen como ${repositorio}:latest..."
+      echo "Publicando nueva imagen como ${repositorio}:${version_nueva} y latest..."
+      docker tag "$imagen_nueva" "${repositorio}:${version_nueva}"
       docker tag "$imagen_nueva" "${repositorio}:latest"
+      docker push "${repositorio}:${version_nueva}"
       docker push "${repositorio}:latest"
-    displayName: Versionar imagen anterior y publicar nueva como latest
+
+      echo "Publicacion completada: ${repositorio}:${version_nueva} y latest"
+      echo "Imagen actual: ${repositorio}:latest"
+    displayName: Publicar imagen versionada y latest
     condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/develop'), ne(variables['Build.Reason'], 'PullRequest'))
     workingDirectory: $(FRONTEND_DIRECTORY)
 
   - task: Docker@2
-    displayName: Cerrar sesión en Docker Hub
+    displayName: Cerrar sesiÃ³n en Docker Hub
     condition: and(always(), eq(variables['Build.SourceBranch'], 'refs/heads/develop'), ne(variables['Build.Reason'], 'PullRequest'))
     inputs:
       command: logout
       containerRegistry: DockerHubConnection
+
+

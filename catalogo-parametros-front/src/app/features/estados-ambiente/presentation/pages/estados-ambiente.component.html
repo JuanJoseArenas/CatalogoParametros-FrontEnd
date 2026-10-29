@@ -1,7 +1,12 @@
 <div class="page-header">
   <h1>Estados de ambiente</h1>
   <div class="actions">
-    <span class="connection" role="status">{{ connectionStatus }}</span>
+    <app-connection-status [connected]="isConnected" />
+    <div class="search-bar">
+      <span class="search-icon">🔍</span>
+      <label class="search-label" for="estados-ambiente-search">Buscar estado</label>
+      <input id="estados-ambiente-search" type="text" placeholder="Buscar estado..." [(ngModel)]="searchTerm">
+    </div>
     <button class="btn btn-secondary" [disabled]="loading" (click)="loadEstadosAmbiente()">Actualizar lista</button>
     <button class="btn btn-primary" (click)="openModal()">+ Nuevo estado de ambiente</button>
   </div>
@@ -10,8 +15,6 @@
 <div class="card">
   <div class="card-header">
     <h2 class="card-title">Lista de estados de ambiente</h2>
-    <input class="form-control" aria-label="Buscar por nombre en esta página"
-      placeholder="Buscar en esta página..." [(ngModel)]="searchTerm">
   </div>
   @if (loading) {
     <div class="loading" role="status">Cargando estados de ambiente...</div>
@@ -38,7 +41,7 @@
       </div>
     } @else if (!errorMessage) {
       <div class="empty-state">
-        <h3>{{ searchTerm.trim() ? 'No hay coincidencias en esta página' : 'No hay estados de ambiente' }}</h3>
+        <h3>{{ searchTerm.trim() ? 'No hay coincidencias en esta pÃ¡gina' : 'No hay estados de ambiente' }}</h3>
         <p>{{ searchTerm.trim() ? 'Pruebe con otro nombre.' : 'Cree un estado de ambiente para comenzar.' }}</p>
       </div>
     }
@@ -60,7 +63,7 @@
             <label class="form-label" for="estadoAmbiente-nombre">Nombre</label>
             <input id="estadoAmbiente-nombre" class="form-control" formControlName="nombre" autocomplete="off" aria-describedby="nombre-error">
             @if (estadoAmbienteForm.controls.nombre.touched && estadoAmbienteForm.controls.nombre.invalid) {
-              <p id="nombre-error" role="alert">Ingrese un nombre que no esté vacío.</p>
+              <p id="nombre-error" role="alert">Ingrese un nombre que no estÃ© vacÃ­o.</p>
             }
           </div>
         </div>
@@ -89,3 +92,5 @@
     </section>
   </div>
 }
+
+

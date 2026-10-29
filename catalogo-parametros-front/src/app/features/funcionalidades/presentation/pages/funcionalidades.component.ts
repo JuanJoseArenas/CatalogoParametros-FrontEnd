@@ -205,7 +205,7 @@ export class FuncionalidadesComponent implements OnInit, OnDestroy {
   }
 
   connectSse(): void {
-    const sub = this.eventStream.connect<any>(this.repository.eventsUrl, 'funcionalidad').subscribe({
+    const sub = this.eventStream.connect<any>(this.repository.eventsUrl, 'funcionalidad', connected => this.isConnected = connected).subscribe({
       next: (data: any) => {
         this.isConnected = true;
 

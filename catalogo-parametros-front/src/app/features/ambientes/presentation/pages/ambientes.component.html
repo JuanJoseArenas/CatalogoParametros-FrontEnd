@@ -1,7 +1,12 @@
 <div class="page-header">
   <h1>Ambientes</h1>
   <div class="actions">
-    <span class="connection" role="status">{{ connectionStatus }}</span>
+    <app-connection-status [connected]="isConnected" />
+    <div class="search-bar">
+      <span class="search-icon">🔍</span>
+      <label class="search-label" for="ambientes-search">Buscar ambiente</label>
+      <input id="ambientes-search" type="text" placeholder="Buscar ambiente..." [(ngModel)]="searchTerm">
+    </div>
     <button class="btn btn-secondary" [disabled]="loading" (click)="loadAmbientes()">Actualizar lista</button>
     <button class="btn btn-primary" (click)="openModal()">+ Nuevo ambiente</button>
   </div>
@@ -10,8 +15,6 @@
 <div class="card">
   <div class="card-header">
     <h2 class="card-title">Lista de ambientes</h2>
-    <input class="form-control" aria-label="Buscar por nombre en esta página"
-      placeholder="Buscar en esta página..." [(ngModel)]="searchTerm">
   </div>
   @if (loading) {
     <div class="loading" role="status">Cargando ambientes...</div>
@@ -38,7 +41,7 @@
       </div>
     } @else if (!errorMessage) {
       <div class="empty-state">
-        <h3>{{ searchTerm.trim() ? 'No hay coincidencias en esta página' : 'No hay ambientes' }}</h3>
+        <h3>{{ searchTerm.trim() ? 'No hay coincidencias en esta pÃ¡gina' : 'No hay ambientes' }}</h3>
         <p>{{ searchTerm.trim() ? 'Pruebe con otro nombre.' : 'Cree un ambiente para comenzar.' }}</p>
       </div>
     }
@@ -60,7 +63,7 @@
             <label class="form-label" for="ambiente-nombre">Nombre</label>
             <input id="ambiente-nombre" class="form-control" formControlName="nombre" autocomplete="off" aria-describedby="nombre-error">
             @if (ambienteForm.controls.nombre.touched && ambienteForm.controls.nombre.invalid) {
-              <p id="nombre-error" role="alert">Ingrese un nombre que no esté vacío.</p>
+              <p id="nombre-error" role="alert">Ingrese un nombre que no estÃ© vacÃ­o.</p>
             }
           </div>
         </div>
@@ -89,4 +92,6 @@
     </section>
   </div>
 }
+
+
 
