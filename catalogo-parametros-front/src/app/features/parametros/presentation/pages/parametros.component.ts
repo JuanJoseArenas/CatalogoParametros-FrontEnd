@@ -11,10 +11,11 @@ import { PageMessagesComponent } from '../../../../shared/ui/page-messages/page-
 import { PaginationComponent } from '../../../../shared/ui/pagination/pagination.component';
 import { ParametroFormComponent } from '../components/parametro-form.component';
 import { Subscription } from 'rxjs';
+import { CargaMasivaParametrosComponent } from '../components/carga-masiva-parametros.component';
 
 @Component({
     selector: 'app-parametros',
-    imports: [FormsModule, ConnectionStatusComponent, PageMessagesComponent, PaginationComponent, ParametroFormComponent],
+    imports: [FormsModule, ConnectionStatusComponent, PageMessagesComponent, PaginationComponent, ParametroFormComponent, CargaMasivaParametrosComponent],
     template: `
     <div class="parametros">
       <div class="page-header">
@@ -25,6 +26,7 @@ import { Subscription } from 'rxjs';
             <span class="search-icon">🔍</span>
             <input type="text" placeholder="Buscar parametro..." [(ngModel)]="searchTerm">
           </div>
+          <button class="btn btn-secondary" (click)="bulkOpen = true">Carga masiva</button>
           <button class="btn btn-primary" (click)="openModal()">+ Nuevo</button>
         </div>
       </div>
@@ -103,6 +105,9 @@ import { Subscription } from 'rxjs';
         (save)="saveParametro()" (cancel)="closeModal()"
       />
     }
+    @if (bulkOpen) {
+      <app-carga-masiva-parametros (closed)="bulkOpen = false" (completed)="loadParametros()" />
+    }
     `,
     changeDetection: ChangeDetectionStrategy.Eager,
     styles: [`
@@ -119,6 +124,7 @@ export class ParametrosComponent implements OnInit, OnDestroy {
   loading = false;
   saving = false;
   showModal = false;
+  bulkOpen = false;
   isEditing = false;
   editingId: string | null = null;
   errorMessage = '';
