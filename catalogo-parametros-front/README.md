@@ -1,5 +1,7 @@
 # Catalogo de Parametros - Frontend
 
+<!-- Nota de mantenimiento: este microfrontend conserva la configuración visual centralizada. -->
+
 Frontend desarrollado en Angular 22 para el sistema de catalogo de parametros.
 
 ## Caracteristicas
