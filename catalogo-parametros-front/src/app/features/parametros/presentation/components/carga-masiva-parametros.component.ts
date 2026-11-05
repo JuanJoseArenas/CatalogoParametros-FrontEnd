@@ -36,7 +36,7 @@ import { CargaMasivaResultado } from '../../domain/carga-masiva-parametros';
           </section>
         }
         @if (errorMessage) { <div class="field-error">{{ errorMessage }}</div> }
-        <footer class="bulk-footer"><button type="button" class="btn btn-secondary" [disabled]="busy" (click)="closed.emit()">Cancelar</button><button type="button" class="btn btn-primary" [disabled]="busy || !resultado?.ready" (click)="confirmar()">{{ busy ? 'Procesando...' : 'Confirmar carga' }}</button></footer>
+        <footer class="bulk-footer"><button type="button" class="btn btn-secondary" [disabled]="busy" (click)="closed.emit()">Cancelar</button><button type="button" class="btn btn-primary" [disabled]="busy || !puedeCargar" (click)="confirmar()">{{ busy ? 'Procesando...' : 'Confirmar carga' }}</button></footer>
       </section>
     </div>
   `,
@@ -53,6 +53,13 @@ export class CargaMasivaParametrosComponent {
   errorMessage = '';
 
   constructor(private readonly service: CargaMasivaParametrosService) {}
+
+  get puedeCargar(): boolean {
+    return this.file !== null
+      && this.resultado?.ready === true
+      && this.resultado.filasInvalidas === 0
+      && this.resultado.errores.length === 0;
+  }
 
   get fileError(): string {
     if (!this.file) return '';
@@ -75,7 +82,7 @@ export class CargaMasivaParametrosComponent {
   validar(): void {
     if (!this.file || this.fileError) return;
     this.busy = true; this.errorMessage = '';
-    this.service.validar(this.file).subscribe({ next: result => this.resultado = result, error: error => this.mostrarError(error), complete: () => this.busy = false });
+    this.service.validar(this.file).subscribe({ next: result => this.asignarResultado(result), error: error => this.mostrarError(error), complete: () => this.busy = false });
   }
 
   descargarReporte(): void {
@@ -87,10 +94,17 @@ export class CargaMasivaParametrosComponent {
   confirmar(): void {
     if (!this.file || !this.resultado?.ready) return;
     this.busy = true; this.errorMessage = '';
-    this.service.cargar(this.file).subscribe({ next: result => { this.resultado = result; if (result.ready) { this.completed.emit(); this.closed.emit(); } }, error: error => this.mostrarError(error), complete: () => this.busy = false });
+    this.service.cargar(this.file).subscribe({ next: result => { this.asignarResultado(result); if (result.ready) { this.completed.emit(); this.closed.emit(); } }, error: error => this.mostrarError(error), complete: () => this.busy = false });
   }
 
   closeOnBackdrop(event: MouseEvent): void { if (event.target === event.currentTarget) this.closed.emit(); }
   private descargar(blob: Blob, name: string): void { const url = URL.createObjectURL(blob); const anchor = document.createElement('a'); anchor.href = url; anchor.download = name; anchor.click(); URL.revokeObjectURL(url); }
+  private asignarResultado(result: CargaMasivaResultado): void {
+    this.resultado = {
+      ...result,
+      ready: result.ready === true,
+      errores: Array.isArray(result.errores) ? result.errores : []
+    };
+  }
   private mostrarError(error: Error): void { this.errorMessage = error.message || 'No fue posible procesar el archivo.'; this.busy = false; }
 }
