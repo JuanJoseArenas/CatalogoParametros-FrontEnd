@@ -3,12 +3,14 @@ import { HttpParametrosRepository } from './infrastructure/http-parametros.repos
 import { ParametrosRepository } from './domain/parametros.repository';
 import { HttpFuncionalidadesRepository } from '../funcionalidades/infrastructure/http-funcionalidades.repository';
 import { FuncionalidadesRepository } from '../funcionalidades/domain/funcionalidades.repository';
+import { CargaMasivaParametrosService } from './infrastructure/carga-masiva-parametros.service';
 
 export const PARAMETROS_ROUTES: Routes = [{
   path: '',
   providers: [
     { provide: ParametrosRepository, useClass: HttpParametrosRepository },
-    { provide: FuncionalidadesRepository, useClass: HttpFuncionalidadesRepository }
+    { provide: FuncionalidadesRepository, useClass: HttpFuncionalidadesRepository },
+    CargaMasivaParametrosService
   ],
   loadComponent: () => import('./presentation/pages/parametros.component').then(m => m.ParametrosComponent)
 }];

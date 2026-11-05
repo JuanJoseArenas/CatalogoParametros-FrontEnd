@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 export const appRoutes: Routes = [
+  { path: 'mensajes', loadComponent: () => import('./features/mensajes/messageucolab-admin.component').then(m => m.MessageUcoLabAdminComponent) },
   { path: 'aplicaciones/:id/administracion', loadComponent: () => import('./features/catalogo-embebido/presentation/catalogo-embebido-host.component').then(m => m.CatalogoEmbebidoHostComponent) },
   { path: 'seguridad', loadComponent: () => import('./features/seguridad/security-administration.component').then(m => m.SecurityAdministrationComponent) },
   { path: 'consulta-parametros', loadChildren: () => import('./features/tokens/tokens.routes').then(m => m.CONSULTA_PARAMETROS_ROUTES) },
