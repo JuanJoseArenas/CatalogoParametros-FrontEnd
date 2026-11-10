@@ -139,6 +139,10 @@ La ruta `/seguridad`, accesible desde la barra lateral, monta la API pública ES
 
 Configure `src/assets/security-config.json`: `pdpUrl`, `securityUiUrl`,
 `applicationName` y, opcionalmente, `applicationId` (preferido si conoce su UUID).
+En Docker, `applicationName` se genera al arrancar a partir de
+`SECURITY_APPLICATION_NAME`; por eso debe coincidir exactamente con el registro
+de Security y con la variable del backend. Este JSON es publico y no contiene
+tokens ni secretos.
 El nombre debe coincidir exactamente con el registro en Seguridad y con
 `SECURITY_APPLICATION_NAME` del backend. Se usa `Catalogo`, nombre registrado en Seguridad. Este JSON es público: no contiene tokens ni secretos.
 Se carga en cada arranque. El destino del BFF debe pertenecer a `TRUSTED_PDP_URLS`
