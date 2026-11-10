@@ -9,6 +9,7 @@ export interface SecurityConfig {
 
 export const SECURITY_CONFIG = new InjectionToken<SecurityConfig>('SecurityConfig');
 
+// La configuracion publica permite cambiar el nombre sin recompilar la logica de seguridad.
 // Los destinos de confianza pertenecen al despliegue, no al JSON descargado.
 const TRUSTED_PDP_URLS = ['http://localhost:18080'] as const;
 
