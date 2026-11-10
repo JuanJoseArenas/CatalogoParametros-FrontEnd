@@ -33,6 +33,9 @@ COPY --from=build /app/dist/catalogo-parametros-front/browser/ /usr/share/nginx/
 COPY --from=build /app/dist/parametros-ui/ /usr/share/nginx/html/parametros-ui/
 COPY --from=security-ui-build /security-ui/dist/ /usr/share/nginx/html/security-ui/
 COPY security-config.docker.json /usr/share/nginx/html/assets/security-config.json
+COPY docker-entrypoint.d/40-security-config.sh /docker-entrypoint.d/40-security-config.sh
+RUN chown nginx:nginx /usr/share/nginx/html/assets/security-config.json \
+    && chmod +x /docker-entrypoint.d/40-security-config.sh
 USER nginx
 EXPOSE 8080
 CMD ["nginx", "-g", "daemon off;"]
