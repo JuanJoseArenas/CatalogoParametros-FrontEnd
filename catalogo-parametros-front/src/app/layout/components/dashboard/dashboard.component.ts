@@ -1,171 +1,42 @@
-import { Component, ChangeDetectionStrategy } from '@angular/core';
-
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 @Component({
-    selector: 'app-dashboard',
-    imports: [RouterLink],
-    template: `
+  selector: 'app-dashboard',
+  imports: [RouterLink],
+  template: `
     <div class="dashboard">
       <div class="header">
         <h1>Dashboard</h1>
-        <p style="color: #64748b; font-weight: 500;">Bienvenido al sistema de gestion de catalogo de parametros</p>
+        <p>Bienvenido al sistema de gestion de catalogo de parametros</p>
       </div>
-
       <div class="stats-grid">
-        <div class="stat-card"><div class="stat-icon" aria-hidden="true">🔎</div><div class="stat-info"><h3>Consulta de parámetros</h3><p>Consulta los parámetros de una aplicación y ambiente mediante un token</p></div><a routerLink="/consulta-parametros" class="btn btn-primary">Consultar</a></div>
-        <div class="stat-card"><div class="stat-icon" aria-hidden="true">🔑</div><div class="stat-info"><h3>Tokens</h3><p>Crea tokens y administra su acceso a parámetros</p></div><a routerLink="/tokens" class="btn btn-primary">Ver</a></div>
-        <div class="stat-card">
-          <div class="stat-icon">🏢</div>
-          <div class="stat-info">
-            <h3>Organizaciones</h3>
-            <p>Gestiona las organizaciones del sistema</p>
-          </div>
-          <a routerLink="/organizaciones" class="btn btn-primary">Ver</a>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-icon">📱</div>
-          <div class="stat-info">
-            <h3>Aplicaciones</h3>
-            <p>Administra las aplicaciones</p>
-          </div>
-          <a routerLink="/aplicaciones" class="btn btn-primary">Ver</a>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-icon">📦</div>
-          <div class="stat-info">
-            <h3>Modulos</h3>
-            <p>Gestiona los modulos de las aplicaciones</p>
-          </div>
-          <a routerLink="/modulos" class="btn btn-primary">Ver</a>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-icon">⚙️</div>
-          <div class="stat-info">
-            <h3>Funcionalidades</h3>
-            <p>Administra las funcionalidades</p>
-          </div>
-          <a routerLink="/funcionalidades" class="btn btn-primary">Ver</a>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-icon">🔧</div>
-          <div class="stat-info">
-            <h3>Parametros</h3>
-            <p>Gestiona los parametros del sistema</p>
-          </div>
-          <a routerLink="/parametros" class="btn btn-primary">Ver</a>
-        
-        </div>
-                <div class="stat-card">
-          <div class="stat-icon">💿</div>
-          <div class="stat-info">
-            <h3>Metadatos</h3>
-            <p>Administra los Metadatos</p>
-          </div>
-          <a routerLink="/metadatos" class="btn btn-primary">Ver</a>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon" aria-hidden="true">🌐</div>
-          <div class="stat-info">
-            <h3>Ambientes</h3>
-            <p>Administra los ambientes del catálogo</p>
-          </div>
-          <a routerLink="/ambientes" class="btn btn-primary">Ver</a>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon" aria-hidden="true">🚦</div>
-          <div class="stat-info">
-            <h3>Estados de ambiente</h3>
-            <p>Administra el catálogo de estados de ambiente</p>
-          </div>
-          <a routerLink="/estados-ambiente" class="btn btn-primary">Ver</a>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon" aria-hidden="true">✅</div>
-          <div class="stat-info">
-            <h3>Estados de metadatos por ambiente</h3>
-            <p>Administra los estados disponibles para las relaciones</p>
-          </div>
-          <a routerLink="/estados-metadato-ambiente" class="btn btn-primary">Ver</a>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon" aria-hidden="true">🔗</div>
-          <div class="stat-info">
-            <h3>Metadatos por ambiente</h3>
-            <p>Relaciona parámetros, ambientes y estados de metadato</p>
-          </div>
-          <a routerLink="/metadatos-ambiente" class="btn btn-primary">Ver</a>
-        </div>
+        <div class="stat-card"><div class="stat-icon" aria-hidden="true">🔎</div><div class="stat-info"><h3>Consulta de parametros</h3><p>Consulta parametros de una aplicacion y ambiente mediante un token.</p></div><a routerLink="/consulta-parametros" class="btn btn-primary">Consultar</a></div>
+        <div class="stat-card"><div class="stat-icon" aria-hidden="true">🔑</div><div class="stat-info"><h3>Tokens</h3><p>Crea tokens y administra su acceso a parametros.</p></div><a routerLink="/tokens" class="btn btn-primary">Ver</a></div>
+        <div class="stat-card"><div class="stat-icon" aria-hidden="true">🏢</div><div class="stat-info"><h3>Organizaciones</h3><p>Gestiona las organizaciones del sistema.</p></div><a routerLink="/organizaciones" class="btn btn-primary">Ver</a></div>
+        <div class="stat-card"><div class="stat-icon" aria-hidden="true">📱</div><div class="stat-info"><h3>Aplicaciones</h3><p>Administra las aplicaciones.</p></div><a routerLink="/aplicaciones" class="btn btn-primary">Ver</a></div>
+        <div class="stat-card"><div class="stat-icon" aria-hidden="true">📦</div><div class="stat-info"><h3>Modulos</h3><p>Gestiona los modulos de las aplicaciones.</p></div><a routerLink="/modulos" class="btn btn-primary">Ver</a></div>
+        <div class="stat-card"><div class="stat-icon" aria-hidden="true">⚙️</div><div class="stat-info"><h3>Funcionalidades</h3><p>Administra las funcionalidades.</p></div><a routerLink="/funcionalidades" class="btn btn-primary">Ver</a></div>
+        <div class="stat-card"><div class="stat-icon" aria-hidden="true">🔧</div><div class="stat-info"><h3>Parametros</h3><p>Gestiona los parametros del sistema.</p></div><a routerLink="/parametros" class="btn btn-primary">Ver</a></div>
+        <div class="stat-card"><div class="stat-icon" aria-hidden="true">💿</div><div class="stat-info"><h3>Metadatos</h3><p>Administra los metadatos.</p></div><a routerLink="/metadatos" class="btn btn-primary">Ver</a></div>
+        <div class="stat-card"><div class="stat-icon" aria-hidden="true">🌐</div><div class="stat-info"><h3>Ambientes</h3><p>Administra los ambientes y su estado.</p></div><a routerLink="/ambientes" class="btn btn-primary">Ver</a></div>
+        <div class="stat-card"><div class="stat-icon" aria-hidden="true">✅</div><div class="stat-info"><h3>Estados de metadatos por ambiente</h3><p>Administra los estados disponibles para las relaciones.</p></div><a routerLink="/estados-metadato-ambiente" class="btn btn-primary">Ver</a></div>
+        <div class="stat-card"><div class="stat-icon" aria-hidden="true">🔗</div><div class="stat-info"><h3>Metadatos por ambiente</h3><p>Relaciona parametros, ambientes y estados de metadato.</p></div><a routerLink="/metadatos-ambiente" class="btn btn-primary">Ver</a></div>
       </div>
     </div>
   `,
-    changeDetection: ChangeDetectionStrategy.Eager,
-    styles: [`
-    .dashboard {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .header {
-      margin-bottom: 32px;
-    }
-
-    .header h1 {
-      font-size: 2rem;
-      font-weight: 700;
-      color: #0f172a;
-    }
-
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 20px;
-    }
-
-    .stat-card {
-      background: white;
-      border-radius: 14px;
-      padding: 24px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-      border: 1px solid #f1f5f9;
-    }
-
-    .stat-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08), 0 2px 6px rgba(0, 0, 0, 0.04);
-    }
-
-    .stat-icon {
-      font-size: 2.2rem;
-      width: 56px;
-      height: 56px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
-      border-radius: 14px;
-    }
-
-    .stat-info h3 {
-      font-size: 1.05rem;
-      font-weight: 700;
-      color: #0f172a;
-      margin-bottom: 4px;
-    }
-
-    .stat-info p {
-      font-size: 0.85rem;
-      color: #64748b;
-      font-weight: 500;
-    }
+  changeDetection: ChangeDetectionStrategy.Eager,
+  styles: [`
+    .dashboard { max-width: 1200px; margin: 0 auto; }
+    .header { margin-bottom: 32px; }
+    .header h1 { font-size: 2rem; font-weight: 700; color: #0f172a; }
+    .header p { color: #64748b; font-weight: 500; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+    .stat-card { background: white; border-radius: 14px; padding: 24px; box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 1px 2px rgba(0, 0, 0, .06); display: flex; flex-direction: column; gap: 14px; border: 1px solid #f1f5f9; transition: transform .2s ease, box-shadow .2s ease; }
+    .stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0, 0, 0, .08), 0 2px 6px rgba(0, 0, 0, .04); }
+    .stat-icon { font-size: 2.2rem; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%); border-radius: 14px; }
+    .stat-info h3 { font-size: 1.05rem; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
+    .stat-info p { font-size: .85rem; color: #64748b; font-weight: 500; }
   `]
 })
 export class DashboardComponent {}

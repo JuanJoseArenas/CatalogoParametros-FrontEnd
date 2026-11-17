@@ -13,7 +13,7 @@ export interface RegistroEditable {
 export interface CatalogoAplicacion {
   aplicacion: Aplicacion; modulos: Modulo[]; funcionalidades: Funcionalidad[]; parametros: Parametro[];
   metadatos: Array<{ id: string; idParametro: string; idTipoMetadato: string; idAmbiente?: string | null; valor: unknown }>;
-  metadatosAmbiente: MetadatoAmbiente[]; ambientes: Array<{ id: string; nombre: string }>;
+  metadatosAmbiente: MetadatoAmbiente[]; ambientes: Array<{ id: string; nombre: string; activo: boolean }>;
   tiposParametro: TipoParametro[]; tiposMetadato: TipoMetadato[];
   estadosMetadatoAmbiente: Array<{ id: string; nombre: string }>;
 }

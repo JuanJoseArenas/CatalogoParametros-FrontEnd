@@ -37,7 +37,8 @@ export class AmbientesComponent implements OnInit, OnDestroy {
   successMessage = '';
   isConnected = false;
   readonly ambienteForm = new FormGroup({
-    nombre: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.pattern(/\S/)] })
+    nombre: new FormControl('', { nonNullable: true, validators: [Validators.required, Validators.pattern(/\S/)] }),
+    activo: new FormControl(true, { nonNullable: true })
   });
   private readonly subscriptions = new Subscription();
   private pageRequest?: Subscription;
@@ -94,7 +95,7 @@ export class AmbientesComponent implements OnInit, OnDestroy {
 
   openModal(ambiente?: Ambiente): void {
     this.editingId = ambiente?.id ?? null;
-    this.ambienteForm.reset({ nombre: ambiente?.nombre ?? '' });
+    this.ambienteForm.reset({ nombre: ambiente?.nombre ?? '', activo: ambiente?.activo ?? true });
     this.formError = '';
     this.showModal = true;
   }
@@ -112,7 +113,10 @@ export class AmbientesComponent implements OnInit, OnDestroy {
     this.saving = true;
     this.formError = '';
     this.successMessage = '';
-    const input = { nombre: this.ambienteForm.controls.nombre.value.trim() };
+    const input = {
+      nombre: this.ambienteForm.controls.nombre.value.trim(),
+      activo: this.ambienteForm.controls.activo.value
+    };
     const request = this.editingId
       ? this.repository.update(this.editingId, input)
       : this.repository.create(input);
@@ -160,5 +164,6 @@ export class AmbientesComponent implements OnInit, OnDestroy {
       }
     }));
   }
+
 }
 

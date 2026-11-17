@@ -22,11 +22,12 @@
     @if (filteredAmbientes.length) {
       <div class="table-container">
         <table>
-          <thead><tr><th>Nombre</th><th>Acciones</th></tr></thead>
+          <thead><tr><th>Nombre</th><th>Estado</th><th>Acciones</th></tr></thead>
           <tbody>
             @for (ambiente of filteredAmbientes; track ambiente.id) {
               <tr>
                 <td>{{ ambiente.nombre }}</td>
+                <td>{{ ambiente.activo ? 'Activo' : 'Inactivo' }}</td>
                 <td class="actions">
                   <button class="btn btn-secondary btn-sm" [disabled]="consulting" (click)="consultarAmbiente(ambiente.id)">Ver detalle</button>
                   <button class="btn btn-warning btn-sm" (click)="openModal(ambiente)">Editar</button>
@@ -41,8 +42,8 @@
       </div>
     } @else if (!errorMessage) {
       <div class="empty-state">
-        <h3>{{ searchTerm.trim() ? 'No hay coincidencias en esta pÃ¡gina' : 'No hay ambientes' }}</h3>
-        <p>{{ searchTerm.trim() ? 'Pruebe con otro nombre.' : 'Cree un ambiente para comenzar.' }}</p>
+        <h3>{{ searchTerm.trim() ? 'No hay coincidencias en esta página' : 'No hay ambientes' }}</h3>
+        <p>{{ searchTerm.trim() ? 'Pruebe con otro nombre.' : 'El backend no tiene ambientes disponibles.' }}</p>
       </div>
     }
     <app-pagination [page]="page" [hasNext]="ambientes.length >= pageSize" (pageChange)="changePage($event)" />
@@ -63,9 +64,10 @@
             <label class="form-label" for="ambiente-nombre">Nombre</label>
             <input id="ambiente-nombre" class="form-control" formControlName="nombre" autocomplete="off" aria-describedby="nombre-error">
             @if (ambienteForm.controls.nombre.touched && ambienteForm.controls.nombre.invalid) {
-              <p id="nombre-error" role="alert">Ingrese un nombre que no estÃ© vacÃ­o.</p>
+              <p id="nombre-error" role="alert">Ingrese un nombre que no esté vacío.</p>
             }
           </div>
+          <label class="form-label"><input type="checkbox" formControlName="activo"> Ambiente activo</label>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" [disabled]="saving" (click)="closeModal()">Cancelar</button>
@@ -86,12 +88,9 @@
         <button class="modal-close" aria-label="Cerrar detalle" (click)="detalle = null">&times;</button>
       </div>
       <div class="modal-body">
-        <dl><dt>Nombre</dt><dd>{{ ambiente.nombre }}</dd><dt>ID</dt><dd class="identifier">{{ ambiente.id }}</dd></dl>
+        <dl><dt>Nombre</dt><dd>{{ ambiente.nombre }}</dd><dt>Estado</dt><dd>{{ ambiente.activo ? 'Activo' : 'Inactivo' }}</dd><dt>ID</dt><dd class="identifier">{{ ambiente.id }}</dd></dl>
       </div>
       <div class="modal-footer"><button class="btn btn-secondary" (click)="detalle = null">Cerrar</button></div>
     </section>
   </div>
 }
-
-
-

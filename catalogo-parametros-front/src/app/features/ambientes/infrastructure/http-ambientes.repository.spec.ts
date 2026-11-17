@@ -8,7 +8,7 @@ describe('HttpAmbientesRepository', () => {
   let repository: HttpAmbientesRepository;
   let http: HttpTestingController;
   const url = `${environment.apiUrl}/ambientes`;
-  const ambiente = { id: 'a1', nombre: 'Producción' };
+  const ambiente = { id: 'a1', nombre: 'Produccion', activo: true };
 
   beforeEach(() => {
     TestBed.configureTestingModule({ providers: [
@@ -17,42 +17,53 @@ describe('HttpAmbientesRepository', () => {
     repository = TestBed.inject(HttpAmbientesRepository);
     http = TestBed.inject(HttpTestingController);
   });
+
   afterEach(() => http.verify());
 
-  it('consulta la página y el detalle con los contratos del backend', () => {
+  it('consulta la pagina y el detalle desde el endpoint del backend', () => {
     repository.findPage(2, 10).subscribe(value => expect(value).toEqual([ambiente]));
-    const page = http.expectOne(req => req.url === url && req.params.get('page') === '2' && req.params.get('pageSize') === '10');
+    const page = http.expectOne(request => request.url === url
+      && request.params.get('page') === '2'
+      && request.params.get('pageSize') === '10');
     expect(page.request.method).toBe('GET');
     page.flush({ ambientes: [ambiente], mensajes: [] });
+
     repository.findById('a1').subscribe(value => expect(value).toEqual(ambiente));
     http.expectOne(`${url}/a1`).flush({ ambientes: [ambiente], mensajes: [] });
     expect(repository.eventsUrl).toBe(`${url}/events`);
   });
 
-  it('envía únicamente el nombre al crear y actualizar y elimina por ID', () => {
-    const input = { nombre: 'Pruebas' };
-    repository.create(input).subscribe();
-    let req = http.expectOne(url);
-    expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual(input);
-    req.flush({ mensajes: ['Creado'], ambientes: [ambiente] });
-    repository.update('a1', input).subscribe();
-    req = http.expectOne(`${url}/a1`);
-    expect(req.request.method).toBe('PUT');
-    expect(req.request.body).toEqual(input);
-    req.flush({ mensajes: ['Actualizado'], ambientes: [ambiente] });
-    repository.delete('a1').subscribe();
-    req = http.expectOne(`${url}/a1`);
-    expect(req.request.method).toBe('DELETE');
-    req.flush({ mensajes: ['Eliminado'], ambientes: [] });
+  it('propaga el mensaje de error del backend', () => {
+    repository.findPage(1, 10).subscribe({
+      next: () => fail('Se esperaba un error'),
+      error: (error: Error) => expect(error.message).toBe('Error interno del servidor')
+    });
+    http.expectOne(request => request.url === url
+      && request.params.get('page') === '1'
+      && request.params.get('pageSize') === '10').flush({ mensajes: ['No se pudo consultar ambientes.'] }, {
+      status: 500,
+      statusText: 'Server Error'
+    });
   });
 
-  it('propaga el mensaje de conflicto del backend', () => {
-    repository.create({ nombre: 'Producción' }).subscribe({
-      next: () => fail('Se esperaba un conflicto'),
-      error: (error: Error) => expect(error.message).toContain('Ya existe')
-    });
-    http.expectOne(url).flush({ mensajes: ['Ya existe ambiente con el nombre indicado.'] }, { status: 409, statusText: 'Conflict' });
+  it('envia el nombre y el estado al crear y actualizar un ambiente', () => {
+    repository.create({ nombre: 'Produccion', activo: false }).subscribe();
+    const create = http.expectOne(url);
+    expect(create.request.method).toBe('POST');
+    expect(create.request.body).toEqual({ nombre: 'Produccion', activo: 'false' });
+    create.flush({ mensajes: ['Ambiente creado exitosamente.'] });
+
+    repository.update('a1', { nombre: 'Produccion', activo: true }).subscribe();
+    const update = http.expectOne(`${url}/a1`);
+    expect(update.request.method).toBe('PUT');
+    expect(update.request.body).toEqual({ nombre: 'Produccion', activo: 'true' });
+    update.flush({ mensajes: ['Ambiente actualizado exitosamente.'] });
+  });
+
+  it('elimina un ambiente desde el endpoint correspondiente', () => {
+    repository.delete('a1').subscribe();
+    const request = http.expectOne(`${url}/a1`);
+    expect(request.request.method).toBe('DELETE');
+    request.flush({ mensajes: ['Ambiente eliminado exitosamente.'] });
   });
 });
-

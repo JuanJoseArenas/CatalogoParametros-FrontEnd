@@ -33,15 +33,20 @@ export class HttpAmbientesRepository implements AmbientesRepository {
   }
 
   create(input: AmbienteInput): Observable<OperationResult> {
-    return this.http.post<OperationResult>(this.url, input).pipe(catchError(handleApiError));
+    return this.http.post<OperationResult>(this.url, this.toRequest(input)).pipe(catchError(handleApiError));
   }
 
   update(id: string, input: AmbienteInput): Observable<OperationResult> {
-    return this.http.put<OperationResult>(`${this.url}/${id}`, input).pipe(catchError(handleApiError));
+    return this.http.put<OperationResult>(`${this.url}/${id}`, this.toRequest(input)).pipe(catchError(handleApiError));
   }
 
   delete(id: string): Observable<OperationResult> {
     return this.http.delete<OperationResult>(`${this.url}/${id}`).pipe(catchError(handleApiError));
   }
+
+  private toRequest(input: AmbienteInput): { nombre: string; activo: string } {
+    return { nombre: input.nombre, activo: String(input.activo) };
+  }
+
 }
 

@@ -8,7 +8,7 @@ export function catalogoFixture(): CatalogoAplicacion {
     parametros: [{ id: 'parametro', nombre: 'SMMLV', idFuncionalidad: 'funcion', idTipoParametro: 'tipo', activo: true }],
     metadatos: [{ id: 'metadato', idParametro: 'parametro', idTipoMetadato: 'tipo-meta', idAmbiente: 'ambiente', valor: 100 }],
     metadatosAmbiente: [{ id: 'asociacion', idParametro: 'parametro', idAmbiente: 'ambiente', idEstadoMetadatoAmbiente: 'activo' }],
-    ambientes: [{ id: 'ambiente', nombre: 'Desarrollo' }],
+    ambientes: [{ id: 'ambiente', nombre: 'Desarrollo', activo: true }],
     tiposParametro: [{ id: 'tipo', nombre: 'General' }],
     tiposMetadato: [{ id: 'tipo-meta', tipo: 'numero', detalle: '' }],
     estadosMetadatoAmbiente: [{ id: 'activo', nombre: 'activo' }]

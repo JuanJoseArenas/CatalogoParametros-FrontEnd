@@ -5,7 +5,6 @@ export const appRoutes: Routes = [
   { path: 'seguridad', loadComponent: () => import('./features/seguridad/security-administration.component').then(m => m.SecurityAdministrationComponent) },
   { path: 'consulta-parametros', loadChildren: () => import('./features/tokens/tokens.routes').then(m => m.CONSULTA_PARAMETROS_ROUTES) },
   { path: 'tokens', loadChildren: () => import('./features/tokens/tokens.routes').then(m => m.TOKENS_ROUTES) },
-  { path: 'estados-ambiente', loadChildren: () => import('./features/estados-ambiente/estados-ambiente.routes').then(m => m.ESTADOS_AMBIENTE_ROUTES) },
   { path: 'estados-metadato-ambiente', loadChildren: () => import('./features/estados-metadato-ambiente/estados-metadato-ambiente.routes').then(m => m.ESTADOS_METADATO_AMBIENTE_ROUTES) },
   { path: 'metadatos-ambiente', loadChildren: () => import('./features/metadatos-ambiente/metadatos-ambiente.routes').then(m => m.METADATOS_AMBIENTE_ROUTES) },
   { path: 'ambientes', loadChildren: () => import('./features/ambientes/ambientes.routes').then(m => m.AMBIENTES_ROUTES) },
