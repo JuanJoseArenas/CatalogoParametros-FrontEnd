@@ -10,13 +10,13 @@ describe('MetadatosComponent', () => {
   let component: MetadatosComponent; let repository: jasmine.SpyObj<MetadatosRepository>; let parameters: jasmine.SpyObj<ParametrosRepository>; let events: Subject<unknown>;
   const types = [{ id: 'text', tipo: 'text', detalle: 'Texto' }, { id: 'json', tipo: 'json', detalle: 'JSON' }, { id: 'date', tipo: 'date', detalle: 'Fecha' }];
   beforeEach(() => {
-    repository = jasmine.createSpyObj('metadata', ['findAll', 'findTypes', 'create', 'update', 'delete'], { eventsUrl: '/events' }); parameters = jasmine.createSpyObj('parameters', ['findAll']);
+    repository = jasmine.createSpyObj('metadata', ['findAll', 'findTypes', 'create', 'createForAllEnvironments', 'update', 'delete'], { eventsUrl: '/events' }); parameters = jasmine.createSpyObj('parameters', ['findAll']);
     events = new Subject(); const stream = jasmine.createSpyObj<EventStreamService>('events', ['connect']); stream.connect.and.returnValue(events);
     const ambientes = jasmine.createSpyObj<AmbientesRepository>('ambientes', ['findPage']); ambientes.findPage.and.returnValue(of([]));
     repository.findAll.and.returnValue(of([])); repository.findTypes.and.returnValue(of(types)); parameters.findAll.and.returnValue(of([{ id: 'p1', nombre: 'Color', idFuncionalidad: 'f1', idTipoParametro: 't1', activo: true }])); component = new MetadatosComponent(repository, parameters, stream, new FormBuilder(), ambientes);
   });
   afterEach(() => component.ngOnDestroy());
-  it('sincroniza ambientes y parametros auxiliares por eventos sin recargar el formulario', () => {
+  it('sincroniza ambientes y parámetros auxiliares por eventos sin recargar el formulario', () => {
     component.connectSse();
     const ambiente = { id: 'dev', nombre: 'Desarrollo' }; const otro = { id: 'prod', nombre: 'Produccion' };
     events.next({ event: 'CREATED', ambiente }); events.next({ event: 'CREATED', ambiente }); events.next({ event: 'CREATED', ambiente: otro });
@@ -43,13 +43,13 @@ describe('MetadatosComponent', () => {
   });
   it('crea valores de texto y actualiza metadatos', () => {
     repository.create.and.returnValue(of({ mensajes: ['creado'] })); repository.findAll.and.returnValue(of([])); component.tiposMetadato = types;
-    component.metadatoForm.setValue({ idParametro: 'p1', idTipoMetadato: 'text', idAmbiente: 'ambiente', valor: ' valor ' }); component.saveMetadato(); expect(repository.create).toHaveBeenCalledWith({ idParametro: 'p1', idTipoMetadato: 'text', idAmbiente: 'ambiente', valor: 'valor' });
+    component.metadatoForm.setValue({ idParametro: 'p1', idTipoMetadato: 'text', alcanceAmbiente: 'uno', idAmbiente: 'ambiente', valor: ' valor ' }); component.saveMetadato(); expect(repository.create).toHaveBeenCalledWith({ idParametro: 'p1', idTipoMetadato: 'text', idAmbiente: 'ambiente', valor: 'valor' });
     repository.update.and.returnValue(of({ mensajes: ['editado'] })); component.editMetadato({ id: 'm1', idParametro: 'p1', idTipoMetadato: 'json', idAmbiente: 'ambiente', valor: { x: 1 } }); component.saveMetadato(); expect(repository.update).toHaveBeenCalledWith('m1', jasmine.objectContaining({ valor: { x: 1 } }));
   });
   it('rechaza JSON y fechas inválidas', () => {
-    component.tiposMetadato = types; component.metadatoForm.setValue({ idParametro: 'p1', idTipoMetadato: 'json', idAmbiente: 'ambiente', valor: 'no-json' }); component.saveMetadato(); expect(component.errorMessage).toContain('JSON válido');
-    component.metadatoForm.setValue({ idParametro: 'p1', idTipoMetadato: 'json', idAmbiente: 'ambiente', valor: '123' }); component.saveMetadato(); expect(component.errorMessage).toContain('objeto o arreglo');
-    component.metadatoForm.setValue({ idParametro: 'p1', idTipoMetadato: 'date', idAmbiente: 'ambiente', valor: '2026-02-30' }); component.saveMetadato(); expect(component.errorMessage).toContain('fecha válida');
+    component.tiposMetadato = types; component.metadatoForm.setValue({ idParametro: 'p1', idTipoMetadato: 'json', alcanceAmbiente: 'uno', idAmbiente: 'ambiente', valor: 'no-json' }); component.saveMetadato(); expect(component.errorMessage).toContain('JSON válido');
+    component.metadatoForm.setValue({ idParametro: 'p1', idTipoMetadato: 'json', alcanceAmbiente: 'uno', idAmbiente: 'ambiente', valor: '123' }); component.saveMetadato(); expect(component.errorMessage).toContain('objeto o arreglo');
+    component.metadatoForm.setValue({ idParametro: 'p1', idTipoMetadato: 'date', alcanceAmbiente: 'uno', idAmbiente: 'ambiente', valor: '2026-02-30' }); component.saveMetadato(); expect(component.errorMessage).toContain('fecha válida');
   });
   it('sincroniza eventos y elimina', () => {
     component.connectSse(); const item = { id: 'm1', idParametro: 'p1', idTipoMetadato: 'text', idAmbiente: 'ambiente', valor: 'a' }; events.next({ event: 'CREATED', metadato: item }); events.next({ event: 'UPDATED', metadato: { ...item, valor: 'b' } }); expect(component.metadatos[0].valor).toBe('b'); events.next({ event: 'DELETED', metadato: item }); expect(component.metadatos).toEqual([]);
@@ -57,7 +57,7 @@ describe('MetadatosComponent', () => {
   });
   it('maneja errores de carga y guardado', () => {
     repository.findAll.and.returnValue(throwError(() => new Error('carga'))); component.loadMetadatos(); expect(component.errorMessage).toBe('carga');
-    component.tiposMetadato = types; repository.create.and.returnValue(throwError(() => new Error('guardar'))); component.metadatoForm.setValue({ idParametro: 'p1', idTipoMetadato: 'text', idAmbiente: 'ambiente', valor: 'x' }); component.saveMetadato(); expect(component.errorMessage).toBe('guardar');
+    component.tiposMetadato = types; repository.create.and.returnValue(throwError(() => new Error('guardar'))); component.metadatoForm.setValue({ idParametro: 'p1', idTipoMetadato: 'text', alcanceAmbiente: 'uno', idAmbiente: 'ambiente', valor: 'x' }); component.saveMetadato(); expect(component.errorMessage).toBe('guardar');
   });
   it('cubre formulario inválido, cambio de tipo, modal y valores ausentes', () => {
     component.saveMetadato(); expect(component.errorMessage).toContain('requeridos');
@@ -68,8 +68,13 @@ describe('MetadatosComponent', () => {
   });
   it('acepta JSON arreglo y una fecha real', () => {
     component.tiposMetadato = types; repository.create.and.returnValue(of({ mensajes: [] })); repository.findAll.and.returnValue(of([]));
-    component.metadatoForm.setValue({ idParametro: 'p1', idTipoMetadato: 'json', idAmbiente: 'ambiente', valor: '[1,2]' }); component.saveMetadato(); expect(repository.create).toHaveBeenCalledWith(jasmine.objectContaining({ valor: [1, 2] }));
-    component.metadatoForm.setValue({ idParametro: 'p1', idTipoMetadato: 'date', idAmbiente: 'ambiente', valor: '2026-02-28' }); component.saveMetadato(); expect(repository.create).toHaveBeenCalledWith(jasmine.objectContaining({ valor: '2026-02-28' }));
+    component.metadatoForm.setValue({ idParametro: 'p1', idTipoMetadato: 'json', alcanceAmbiente: 'uno', idAmbiente: 'ambiente', valor: '[1,2]' }); component.saveMetadato(); expect(repository.create).toHaveBeenCalledWith(jasmine.objectContaining({ valor: [1, 2] }));
+    component.metadatoForm.setValue({ idParametro: 'p1', idTipoMetadato: 'date', alcanceAmbiente: 'uno', idAmbiente: 'ambiente', valor: '2026-02-28' }); component.saveMetadato(); expect(repository.create).toHaveBeenCalledWith(jasmine.objectContaining({ valor: '2026-02-28' }));
+  });
+  it('aplica el metadato a todos los ambientes', () => {
+    component.tiposMetadato = types; repository.createForAllEnvironments.and.returnValue(of({ mensajes: [] })); repository.findAll.and.returnValue(of([]));
+    component.openModal(); component.metadatoForm.setValue({ idParametro: 'p1', idTipoMetadato: 'text', alcanceAmbiente: 'todos', idAmbiente: '', valor: ' valor ' }); component.onAlcanceChange(); component.saveMetadato();
+    expect(repository.createForAllEnvironments).toHaveBeenCalledWith({ idParametro: 'p1', idTipoMetadato: 'text', valor: 'valor' });
   });
   it('cubre eventos vacíos, duplicados, error SSE y cancelación', () => {
     const item = { id: 'm1', idParametro: 'p1', idTipoMetadato: 'text', idAmbiente: 'ambiente', valor: 'a' }; component.metadatos = [item]; component.connectSse(); events.next({ event: 'CREATED' }); events.next({ event: 'CREATED', metadato: item }); expect(component.metadatos.length).toBe(1); events.error(new Error()); expect(component.isConnected).toBeFalse();

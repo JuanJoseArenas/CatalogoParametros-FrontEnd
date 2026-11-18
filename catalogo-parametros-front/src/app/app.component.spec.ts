@@ -10,13 +10,13 @@ describe('AppComponent', () => {
     }).compileComponents();
   });
 
-  it('crea la aplicacion', () => {
+  it('crea la aplicación', () => {
     const fixture = TestBed.createComponent(AppComponent);
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('define el nombre del catalogo', () => {
+  it('define el nombre del catálogo', () => {
     const fixture = TestBed.createComponent(AppComponent);
-    expect(fixture.componentInstance.title).toBe('Catalogo de Parametros');
+    expect(fixture.componentInstance.title).toBe('Catálogo de Parámetros');
   });
 });

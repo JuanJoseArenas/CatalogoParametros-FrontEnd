@@ -16,5 +16,5 @@ import { SidebarComponent } from './layout/components/sidebar/sidebar.component'
   `
 })
 export class AppComponent {
-  title = 'Catalogo de Parametros';
+  title = 'Catálogo de Parámetros';
 }

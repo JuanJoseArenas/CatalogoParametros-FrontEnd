@@ -15,6 +15,7 @@ import { HttpAplicacionesRepository } from '../../../aplicaciones/infrastructure
 import { HttpAmbientesRepository } from '../../../ambientes/infrastructure/http-ambientes.repository';
 import { loadAllPages } from '../../../../shared/utils/load-all-pages';
 import { PageMessagesComponent } from '../../../../shared/ui/page-messages/page-messages.component';
+import { ordenarPorNombre, ordenarPorTexto } from '../../../../shared/utils/ordenar-por-texto';
 @Component({ selector: 'app-tokens', imports: [RouterLink, DatePipe, FormsModule, ReactiveFormsModule, PageMessagesComponent], templateUrl: './tokens.component.html', changeDetection: ChangeDetectionStrategy.Eager,
 styles: [`:host { display:block; max-width:1200px; margin:auto; } .actions { display:flex; gap:8px; flex-wrap:wrap; } td, dd { overflow-wrap:anywhere; } .card { margin-bottom:20px; }`] })
 export class TokensComponent implements OnInit, OnDestroy {
@@ -58,7 +59,7 @@ export class TokensComponent implements OnInit, OnDestroy {
   load() {
     if (this.loading) return;
     this.loading = true; this.errorMessage = '';
-    this.subscriptions.add(forkJoin({ tokens:this.repository.findAll(), estados:this.repository.findStates(), aplicaciones:loadAllPages((p,s) => this.apps.findPage(p,s)), ambientes:loadAllPages((p,s) => this.environments.findPage(p,s)) }).pipe(finalize(() => this.loading = false)).subscribe({ next: data => { Object.assign(this, data); this.ready = true; }, error: (e:Error) => this.errorMessage = e.message }));
+    this.subscriptions.add(forkJoin({ tokens:this.repository.findAll(), estados:this.repository.findStates(), aplicaciones:loadAllPages((p,s) => this.apps.findPage(p,s)), ambientes:loadAllPages((p,s) => this.environments.findPage(p,s)) }).pipe(finalize(() => this.loading = false)).subscribe({ next: data => { this.tokens = ordenarPorTexto(data.tokens, item => item.id); this.estados = ordenarPorTexto(data.estados, item => item.estado); this.aplicaciones = ordenarPorNombre(data.aplicaciones); this.ambientes = ordenarPorNombre(data.ambientes); this.ready = true; }, error: (e:Error) => this.errorMessage = e.message }));
   }
   run<T>(request: Observable<T>, done:(value:T) => void) {
     if (this.busy) return;

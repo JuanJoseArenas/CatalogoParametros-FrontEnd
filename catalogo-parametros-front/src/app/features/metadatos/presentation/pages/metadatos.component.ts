@@ -14,6 +14,7 @@ import { Ambiente } from '../../../ambientes/domain/ambiente';
 import { AmbientesRepository } from '../../../ambientes/domain/ambientes.repository';
 import { loadAllPages } from '../../../../shared/utils/load-all-pages';
 import { MetadatoFormComponent } from '../components/metadato-form.component';
+import { ordenarPorNombre, ordenarPorTexto } from '../../../../shared/utils/ordenar-por-texto';
 
 @Component({
     selector: 'app-metadatos',
@@ -42,7 +43,7 @@ import { MetadatoFormComponent } from '../components/metadato-form.component';
         @if (filteredMetadatos.length > 0) {
           <div class="table-container">
             <table>
-              <thead><tr><th>Parámetro</th><th>Tipo de Metadato</th><th>Ambiente</th><th>Valor</th><th>Acciones</th></tr></thead>
+              <thead><tr><th>Parámetro</th><th>Tipo de metadato</th><th>Ambiente</th><th>Valor</th><th>Acciones</th></tr></thead>
               <tbody>
                 @for (metadato of filteredMetadatos; track metadato) {
                   <tr>
@@ -62,7 +63,7 @@ import { MetadatoFormComponent } from '../components/metadato-form.component';
         }
         @if (filteredMetadatos.length === 0 && !loading) {
           <div class="empty-state">
-            <div class="empty-state-icon">🧩</div><h3>No hay metadatos</h3><p>Comienza creando un nuevo metadato</p>
+            <div class="empty-state-icon">🧩</div><h3>No hay metadatos</h3><p>Comienza creando un nuevo metadato.</p>
           </div>
         }
         @if (loading) {
@@ -75,7 +76,7 @@ import { MetadatoFormComponent } from '../components/metadato-form.component';
       <app-metadato-form
         [form]="metadatoForm" [parametros]="parametros" [tipos]="tiposMetadato" [ambientes]="ambientes"
         [selectedType]="selectedTipo" [editing]="isEditing" [saving]="saving"
-        (typeChange)="onTipoChange()" (save)="saveMetadato()" (cancel)="closeModal()"
+        (typeChange)="onTipoChange()" (scopeChange)="onAlcanceChange()" (save)="saveMetadato()" (cancel)="closeModal()"
       />
     }
     `,
@@ -106,14 +107,14 @@ export class MetadatosComponent implements OnInit, OnDestroy {
   private subscriptions: Subscription[] = [];
 
   constructor(private repository: MetadatosRepository, private parametrosRepository: ParametrosRepository, private eventStream: EventStreamService, fb: FormBuilder, private ambientesRepository: AmbientesRepository) {
-    this.metadatoForm = fb.group({ idParametro: ['', Validators.required], idTipoMetadato: ['', Validators.required], idAmbiente: ['', Validators.required], valor: ['', Validators.required] });
+    this.metadatoForm = fb.group({ idParametro: ['', Validators.required], idTipoMetadato: ['', Validators.required], alcanceAmbiente: ['uno', Validators.required], idAmbiente: ['', Validators.required], valor: ['', Validators.required] });
   }
 
   ngOnInit(): void {
     this.loadMetadatos();
     this.subscriptions.push(forkJoin({ parametros: this.parametrosRepository.findAll(), tipos: this.repository.findTypes(), ambientes: loadAllPages((p, s) => this.ambientesRepository.findPage(p, s)) }).subscribe({
-      next: data => { this.parametros = data.parametros; this.tiposMetadato = data.tipos; this.ambientes = data.ambientes; },
-      error: err => { this.errorMessage = err.message || 'Error al cargar los datos del formulario'; }
+      next: data => { this.parametros = ordenarPorNombre(data.parametros); this.tiposMetadato = ordenarPorTexto(data.tipos, item => item.tipo); this.ambientes = ordenarPorNombre(data.ambientes); },
+       error: err => { this.errorMessage = err.message || 'Error al cargar los datos del formulario.'; }
     }));
     this.connectSse();
   }
@@ -122,8 +123,9 @@ export class MetadatosComponent implements OnInit, OnDestroy {
 
   get filteredMetadatos(): Metadato[] {
     const term = this.searchTerm.trim().toLowerCase();
-    if (!term) return this.metadatos;
-    return this.metadatos.filter(item => this.formatValor(item.valor).toLowerCase().includes(term) || this.getParametroNombre(item.idParametro).toLowerCase().includes(term) || this.getTipoNombre(item.idTipoMetadato).toLowerCase().includes(term) || this.getAmbienteNombre(item.idAmbiente).toLowerCase().includes(term));
+    const ordered = ordenarPorTexto(this.metadatos, item => `${this.getParametroNombre(item.idParametro)} ${this.getTipoNombre(item.idTipoMetadato)} ${this.getAmbienteNombre(item.idAmbiente)}`);
+    if (!term) return ordered;
+    return ordered.filter(item => this.formatValor(item.valor).toLowerCase().includes(term) || this.getParametroNombre(item.idParametro).toLowerCase().includes(term) || this.getTipoNombre(item.idTipoMetadato).toLowerCase().includes(term) || this.getAmbienteNombre(item.idAmbiente).toLowerCase().includes(term));
   }
 
   get selectedTipo(): string {
@@ -135,25 +137,17 @@ export class MetadatosComponent implements OnInit, OnDestroy {
     this.loading = true; this.errorMessage = '';
     this.repository.findAll().subscribe({
       next: data => { this.metadatos = data; this.loading = false; },
-      error: err => { this.errorMessage = err.message || 'Error al cargar los metadatos'; this.loading = false; }
+       error: err => { this.errorMessage = err.message || 'Error al cargar los metadatos.'; this.loading = false; }
     });
   }
 
   getParametroNombre(id: string): string { return this.parametros.find(item => item.id === id)?.nombre || 'N/A'; }
-  getAmbienteNombre(id: string | null): string { return this.ambientes.find(a => a.id === id)?.nombre ?? 'Sin ambiente: requiere asignacion'; }
+  getAmbienteNombre(id: string | null): string { return this.ambientes.find(a => a.id === id)?.nombre ?? 'Sin ambiente: requiere asignación'; }
   getTipoNombre(id: string): string { return this.tiposMetadato.find(item => item.id === id)?.tipo || 'N/A'; }
   formatValor(valor: Metadato['valor']): string {
     return typeof valor === 'string' ? valor : JSON.stringify(valor);
   }
   connectSse(): void {
-    this.subscriptions.push(this.eventStream.connect<{ event: string; ambiente?: Ambiente }>(this.ambientesRepository.eventsUrl, 'ambiente').subscribe({
-      next: data => {
-        const entity = data.ambiente; if (!entity) return;
-        if (data.event === 'CREATED' && !this.ambientes.some(item => item.id === entity.id)) this.ambientes = [...this.ambientes, entity];
-        if (data.event === 'UPDATED') this.ambientes = this.ambientes.map(item => item.id === entity.id ? entity : item);
-        if (data.event === 'DELETED') this.ambientes = this.ambientes.filter(item => item.id !== entity.id);
-      }, error: () => { /* El servicio SSE reintenta la conexion. */ }
-    }));
     this.subscriptions.push(this.eventStream.connect<{ event: string; parametro?: Parametro }>(this.parametrosRepository.eventsUrl, 'parametro').subscribe({
       next: data => {
         const entity = data.parametro; if (!entity) return;
@@ -180,7 +174,8 @@ export class MetadatosComponent implements OnInit, OnDestroy {
     this.showModal = true;
     this.isEditing = false;
     this.editingId = null;
-    this.metadatoForm.reset({ idParametro: '', idTipoMetadato: '', idAmbiente: '', valor: '' });
+    this.metadatoForm.reset({ idParametro: '', idTipoMetadato: '', alcanceAmbiente: 'uno', idAmbiente: '', valor: '' });
+    this.onAlcanceChange();
   }
 
   onTipoChange(): void {
@@ -195,6 +190,7 @@ export class MetadatosComponent implements OnInit, OnDestroy {
     this.metadatoForm.reset({
       idParametro: metadato.idParametro,
       idTipoMetadato: metadato.idTipoMetadato,
+      alcanceAmbiente: 'uno',
       idAmbiente: metadato.idAmbiente ?? '',
       valor: typeof metadato.valor === 'string' ? metadato.valor : JSON.stringify(metadato.valor, null, 2)
     });
@@ -204,12 +200,23 @@ export class MetadatosComponent implements OnInit, OnDestroy {
     this.showModal = false;
     this.isEditing = false;
     this.editingId = null;
-    this.metadatoForm.reset({ idParametro: '', idTipoMetadato: '', idAmbiente: '', valor: '' });
+    this.metadatoForm.reset({ idParametro: '', idTipoMetadato: '', alcanceAmbiente: 'uno', idAmbiente: '', valor: '' });
+    this.onAlcanceChange();
   }
   closeModalOnOverlay(event: Event): void { if (event.target === event.currentTarget) this.closeModal(); }
 
+  onAlcanceChange(): void {
+    const ambiente = this.metadatoForm.get('idAmbiente');
+    if (this.metadatoForm.get('alcanceAmbiente')?.value === 'todos') {
+      ambiente?.clearValidators(); ambiente?.setValue('');
+    } else {
+      ambiente?.setValidators(Validators.required);
+    }
+    ambiente?.updateValueAndValidity();
+  }
+
   saveMetadato(): void {
-    if (this.metadatoForm.invalid) { this.metadatoForm.markAllAsTouched(); this.errorMessage = 'Todos los campos son requeridos'; return; }
+    if (this.metadatoForm.invalid) { this.metadatoForm.markAllAsTouched(); this.errorMessage = 'Todos los campos son obligatorios.'; return; }
     const valor = this.buildValor();
     if (valor === undefined) return;
 
@@ -218,13 +225,15 @@ export class MetadatosComponent implements OnInit, OnDestroy {
     const data = { idParametro: formValue.idParametro, idTipoMetadato: formValue.idTipoMetadato, idAmbiente: formValue.idAmbiente, valor };
     const request = this.isEditing && this.editingId
       ? this.repository.update(this.editingId, data)
-      : this.repository.create(data);
+      : formValue.alcanceAmbiente === 'todos'
+        ? this.repository.createForAllEnvironments({ idParametro: formValue.idParametro, idTipoMetadato: formValue.idTipoMetadato, valor })
+        : this.repository.create(data);
     request.subscribe({
       next: response => {
-        this.successMessage = response.mensajes?.[0] || (this.isEditing ? 'Metadato actualizado exitosamente' : 'Metadato creado exitosamente');
+        this.successMessage = response.mensajes?.[0] || (this.isEditing ? 'Metadato actualizado correctamente.' : formValue.alcanceAmbiente === 'todos' ? 'Metadato aplicado correctamente a todos los ambientes.' : 'Metadato creado correctamente.');
         this.saving = false; this.closeModal(); this.loadMetadatos();
       },
-      error: err => { this.errorMessage = err.message || (this.isEditing ? 'Error al actualizar el metadato' : 'Error al crear el metadato'); this.saving = false; }
+      error: err => { this.errorMessage = err.message || (this.isEditing ? 'Error al actualizar el metadato.' : 'Error al crear el metadato.'); this.saving = false; }
     });
   }
 
@@ -235,18 +244,18 @@ export class MetadatosComponent implements OnInit, OnDestroy {
       try {
         const parsed: unknown = JSON.parse(rawValue);
         if (typeof parsed !== 'object' || parsed === null) {
-          this.errorMessage = 'El valor debe ser un objeto o arreglo JSON';
+          this.errorMessage = 'El valor debe ser un objeto o un arreglo JSON.';
           return undefined;
         }
         return parsed as Record<string, unknown> | unknown[];
       } catch {
-        this.errorMessage = 'El valor ingresado no es un JSON válido';
+        this.errorMessage = 'El valor ingresado no es un JSON válido.';
         return undefined;
       }
     }
 
     if (this.selectedTipo === 'date' && !this.isValidDate(rawValue)) {
-      this.errorMessage = 'El valor debe ser una fecha válida en formato yyyy-MM-dd';
+      this.errorMessage = 'El valor debe ser una fecha válida en formato yyyy-MM-dd.';
       return undefined;
     }
 
@@ -267,8 +276,8 @@ export class MetadatosComponent implements OnInit, OnDestroy {
     if (!confirm('¿Está seguro de eliminar este metadato?')) return;
     this.errorMessage = ''; this.successMessage = '';
     this.repository.delete(id).subscribe({
-      next: response => { this.successMessage = response.mensajes?.[0] || 'Metadato eliminado exitosamente'; this.loadMetadatos(); },
-      error: err => { this.errorMessage = err.message || 'Error al eliminar el metadato'; }
+      next: response => { this.successMessage = response.mensajes?.[0] || 'Metadato eliminado correctamente.'; this.loadMetadatos(); },
+      error: err => { this.errorMessage = err.message || 'Error al eliminar el metadato.'; }
     });
   }
 }

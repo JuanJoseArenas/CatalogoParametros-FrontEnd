@@ -14,6 +14,7 @@ import { PaginationComponent } from '../../../../shared/ui/pagination/pagination
 import { RelatedEntityFormComponent, SelectOption } from '../../../../shared/ui/related-entity-form/related-entity-form.component';
 import { Subscription } from 'rxjs';
 import { disponibleParaUso } from '../../../../shared/utils/disponibilidad';
+import { ordenarPorNombre } from '../../../../shared/utils/ordenar-por-texto';
 
 @Component({
     selector: 'app-funcionalidades',
@@ -38,7 +39,7 @@ import { disponibleParaUso } from '../../../../shared/utils/disponibilidad';
         <div class="card-header">
           <h2 class="card-title">Lista de Funcionalidades</h2>
           <span style="font-size: 0.85rem; color: #64748b; font-weight: 500;">
-            {{ filteredFuncionalidades.length }} registro(s) en pagina {{ page }}
+            {{ filteredFuncionalidades.length }} registro(s) en la página {{ page }}
           </span>
         </div>
 
@@ -48,9 +49,9 @@ import { disponibleParaUso } from '../../../../shared/utils/disponibilidad';
               <thead>
                 <tr>
                   <th>Nombre</th>
-                  <th>Modulo</th>
-                  <th>Fecha Inicio</th>
-                  <th>Fecha Fin</th>
+                  <th>Módulo</th>
+                  <th>Fecha de inicio</th>
+                  <th>Fecha de fin</th>
                   <th>Estado</th>
                   <th>Acciones</th>
                 </tr>
@@ -85,7 +86,7 @@ import { disponibleParaUso } from '../../../../shared/utils/disponibilidad';
           <div class="empty-state">
             <div class="empty-state-icon">⚙️</div>
             <h3>No hay funcionalidades</h3>
-            <p>Comienza creando una nueva funcionalidad</p>
+            <p>Comienza creando una nueva funcionalidad.</p>
           </div>
         }
 
@@ -104,7 +105,7 @@ import { disponibleParaUso } from '../../../../shared/utils/disponibilidad';
     @if (showModal) {
       <app-related-entity-form
         [form]="funcionalidadForm" [options]="moduloOptions"
-        entityLabel="Funcionalidad" relationLabel="Modulo"
+        entityLabel="Funcionalidad" relationLabel="Módulo"
         relationControl="idModulo" activeControl="activo"
         relationArticle="un" activeLabel="Activa" inactiveLabel="Inactiva"
         [editing]="isEditing" [saving]="saving"
@@ -177,11 +178,11 @@ export class FuncionalidadesComponent implements OnInit, OnDestroy {
 
     this.repository.findPage(this.page, this.pageSize).subscribe({
       next: (data) => {
-        this.funcionalidades = data;
+        this.funcionalidades = ordenarPorNombre(data);
         this.loading = false;
       },
       error: (err) => {
-        this.errorMessage = err.message || 'Error al cargar las funcionalidades';
+        this.errorMessage = err.message || 'Error al cargar las funcionalidades.';
         this.loading = false;
       }
     });
@@ -196,10 +197,10 @@ export class FuncionalidadesComponent implements OnInit, OnDestroy {
   loadModulos(): void {
     this.modulosRepository.findAll().subscribe({
       next: (data) => {
-        this.modulos = data;
+        this.modulos = ordenarPorNombre(data);
       },
       error: (err) => {
-        console.error('Error al cargar modulos:', err);
+        console.error('Error al cargar módulos:', err);
       }
     });
   }
@@ -217,13 +218,11 @@ export class FuncionalidadesComponent implements OnInit, OnDestroy {
         switch (eventType) {
           case 'CREATED':
             if (!this.funcionalidades.find(f => f.id === entity.id)) {
-              this.funcionalidades = [...this.funcionalidades, entity];
+              this.funcionalidades = ordenarPorNombre([...this.funcionalidades, entity]);
             }
             break;
           case 'UPDATED':
-            this.funcionalidades = this.funcionalidades.map(f =>
-              f.id === entity.id ? entity : f
-            );
+            this.funcionalidades = ordenarPorNombre(this.funcionalidades.map(f => f.id === entity.id ? entity : f));
             break;
           case 'DELETED':
             this.funcionalidades = this.funcionalidades.filter(f => f.id !== entity.id);
@@ -280,13 +279,13 @@ export class FuncionalidadesComponent implements OnInit, OnDestroy {
 
   saveFuncionalidad(): void {
     if (this.funcionalidadForm.invalid) {
-      this.errorMessage = 'El nombre, modulo, fecha inicio y fecha fin son requeridos';
+      this.errorMessage = 'El nombre, el módulo, la fecha de inicio y la fecha de fin son obligatorios.';
       return;
     }
 
     if (![this.funcionalidadForm.value.fechaInicio, this.funcionalidadForm.value.fechaFinal]
       .every(fecha => fechaLocalValida(fecha || ''))) {
-      this.errorMessage = 'Ingrese fechas y horas v?lidas para su zona horaria.';
+      this.errorMessage = 'Ingrese fechas y horas válidas para su zona horaria.';
       return;
     }
 
@@ -310,24 +309,24 @@ export class FuncionalidadesComponent implements OnInit, OnDestroy {
     if (this.isEditing && this.editingId) {
       this.repository.update(this.editingId, data).subscribe({
         next: (response) => {
-          this.successMessage = response.mensajes[0] || 'Funcionalidad actualizada exitosamente';
+          this.successMessage = response.mensajes[0] || 'Funcionalidad actualizada correctamente.';
           this.saving = false;
           this.closeModal();
         },
         error: (err) => {
-          this.errorMessage = err.message || 'Error al actualizar la funcionalidad';
+          this.errorMessage = err.message || 'Error al actualizar la funcionalidad.';
           this.saving = false;
         }
       });
     } else {
       this.repository.create(data).subscribe({
         next: (response) => {
-          this.successMessage = response.mensajes[0] || 'Funcionalidad creada exitosamente';
+          this.successMessage = response.mensajes[0] || 'Funcionalidad creada correctamente.';
           this.saving = false;
           this.closeModal();
         },
         error: (err) => {
-          this.errorMessage = err.message || 'Error al crear la funcionalidad';
+          this.errorMessage = err.message || 'Error al crear la funcionalidad.';
           this.saving = false;
         }
       });
@@ -335,7 +334,7 @@ export class FuncionalidadesComponent implements OnInit, OnDestroy {
   }
 
   deleteFuncionalidad(id: string): void {
-    if (!confirm('¿Esta seguro de eliminar esta funcionalidad?')) {
+    if (!confirm('¿Está seguro de eliminar esta funcionalidad?')) {
       return;
     }
 
@@ -344,11 +343,11 @@ export class FuncionalidadesComponent implements OnInit, OnDestroy {
 
     this.repository.delete(id).subscribe({
       next: (response) => {
-        this.successMessage = response.mensajes[0] || 'Funcionalidad eliminada exitosamente';
+        this.successMessage = response.mensajes[0] || 'Funcionalidad eliminada correctamente.';
         this.errorMessage = '';
       },
       error: (err) => {
-        this.errorMessage = err.message || 'Error al eliminar la funcionalidad';
+        this.errorMessage = err.message || 'Error al eliminar la funcionalidad.';
       }
     });
   }
@@ -363,10 +362,10 @@ export class FuncionalidadesComponent implements OnInit, OnDestroy {
         this.funcionalidades = this.funcionalidades.map(func =>
           func.id === funcionalidad.id ? { ...func, activo } : func
         );
-        this.successMessage = response.mensajes[0] || `Funcionalidad ${activo ? 'activada' : 'desactivada'} exitosamente`;
+        this.successMessage = response.mensajes[0] || `Funcionalidad ${activo ? 'activada' : 'desactivada'} correctamente.`;
       },
       error: (err) => {
-        this.errorMessage = err.message || 'Error al cambiar el estado de la funcionalidad';
+        this.errorMessage = err.message || 'Error al cambiar el estado de la funcionalidad.';
       }
     });
   }

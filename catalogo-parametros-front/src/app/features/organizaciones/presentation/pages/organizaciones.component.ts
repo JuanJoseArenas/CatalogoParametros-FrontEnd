@@ -9,6 +9,7 @@ import { PageMessagesComponent } from '../../../../shared/ui/page-messages/page-
 import { OrganizacionFormComponent } from '../components/organizacion-form.component';
 import { OrganizacionesTableComponent } from '../components/organizaciones-table.component';
 import { Subscription } from 'rxjs';
+import { ordenarPorNombre } from '../../../../shared/utils/ordenar-por-texto';
 
 @Component({
     selector: 'app-organizaciones',
@@ -21,7 +22,7 @@ import { Subscription } from 'rxjs';
           <app-connection-status [connected]="isConnected" />
           <div class="search-bar">
             <span class="search-icon">🔍</span>
-            <input type="text" placeholder="Buscar organizacion..." [(ngModel)]="searchTerm">
+            <input type="text" placeholder="Buscar organización..." [(ngModel)]="searchTerm">
           </div>
           <button class="btn btn-primary" (click)="openModal()">+ Nueva</button>
         </div>
@@ -108,11 +109,11 @@ export class OrganizacionesComponent implements OnInit, OnDestroy {
 
     this.repository.findPage(this.page, this.pageSize).subscribe({
       next: (data) => {
-        this.organizaciones = data;
+        this.organizaciones = ordenarPorNombre(data);
         this.loading = false;
       },
       error: (err) => {
-        this.errorMessage = err.message || 'Error al cargar las organizaciones';
+        this.errorMessage = err.message || 'Error al cargar las organizaciones.';
         this.loading = false;
       }
     });
@@ -137,13 +138,11 @@ export class OrganizacionesComponent implements OnInit, OnDestroy {
         switch (eventType) {
           case 'CREATED':
             if (!this.organizaciones.find(o => o.id === entity.id)) {
-              this.organizaciones = [...this.organizaciones, entity];
+              this.organizaciones = ordenarPorNombre([...this.organizaciones, entity]);
             }
             break;
           case 'UPDATED':
-            this.organizaciones = this.organizaciones.map(o =>
-              o.id === entity.id ? entity : o
-            );
+            this.organizaciones = ordenarPorNombre(this.organizaciones.map(o => o.id === entity.id ? entity : o));
             break;
           case 'DELETED':
             this.organizaciones = this.organizaciones.filter(o => o.id !== entity.id);
@@ -199,7 +198,7 @@ export class OrganizacionesComponent implements OnInit, OnDestroy {
 
     if (![this.organizacionForm.value.fechaInicio, this.organizacionForm.value.fechaFinal]
       .every(fecha => fechaLocalValida(fecha || ''))) {
-      this.errorMessage = 'Ingrese fechas y horas v?lidas para su zona horaria.';
+      this.errorMessage = 'Ingrese fechas y horas válidas para su zona horaria.';
       return;
     }
 
@@ -221,24 +220,24 @@ export class OrganizacionesComponent implements OnInit, OnDestroy {
     if (this.isEditing && this.editingId) {
       this.repository.update(this.editingId, data).subscribe({
         next: (response) => {
-          this.successMessage = response.mensajes[0] || 'Organizacion actualizada exitosamente';
+          this.successMessage = response.mensajes[0] || 'Organización actualizada correctamente.';
           this.saving = false;
           this.closeModal();
         },
         error: (err) => {
-          this.errorMessage = err.message || 'Error al actualizar la organizacion';
+          this.errorMessage = err.message || 'Error al actualizar la organización.';
           this.saving = false;
         }
       });
     } else {
       this.repository.create(data).subscribe({
         next: (response) => {
-          this.successMessage = response.mensajes[0] || 'Organizacion creada exitosamente';
+          this.successMessage = response.mensajes[0] || 'Organización creada correctamente.';
           this.saving = false;
           this.closeModal();
         },
         error: (err) => {
-          this.errorMessage = err.message || 'Error al crear la organizacion';
+          this.errorMessage = err.message || 'Error al crear la organización.';
           this.saving = false;
         }
       });
@@ -246,7 +245,7 @@ export class OrganizacionesComponent implements OnInit, OnDestroy {
   }
 
   deleteOrganizacion(id: string): void {
-    if (!confirm('¿Esta seguro de eliminar esta organizacion?')) {
+    if (!confirm('¿Está seguro de eliminar esta organización?')) {
       return;
     }
 
@@ -255,11 +254,11 @@ export class OrganizacionesComponent implements OnInit, OnDestroy {
 
     this.repository.delete(id).subscribe({
       next: (response) => {
-        this.successMessage = response.mensajes[0] || 'Organizacion eliminada exitosamente';
+        this.successMessage = response.mensajes[0] || 'Organización eliminada correctamente.';
         this.errorMessage = '';
       },
       error: (err) => {
-        this.errorMessage = err.message || 'Error al eliminar la organizacion';
+        this.errorMessage = err.message || 'Error al eliminar la organización.';
       }
     });
   }

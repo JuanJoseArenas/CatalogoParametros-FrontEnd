@@ -7,8 +7,8 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
   template: `
     <aside class="sidebar">
       <div class="sidebar-header">
-        <h2>Catalogo Parametros</h2>
-        <p>Sistema de Gestion v1.0</p>
+        <h2>Catálogo de Parámetros</h2>
+        <p>Sistema de Gestión v1.0</p>
       </div>
       <nav>
         <ul class="nav-menu">
@@ -17,15 +17,13 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
           <li class="nav-item"><a routerLink="/dashboard" routerLinkActive="active" class="nav-link"><span class="nav-icon" aria-hidden="true">📊</span>Dashboard</a></li>
           <li class="nav-item"><a routerLink="/organizaciones" routerLinkActive="active" class="nav-link"><span class="nav-icon" aria-hidden="true">🏢</span>Organizaciones</a></li>
           <li class="nav-item"><a routerLink="/aplicaciones" routerLinkActive="active" class="nav-link"><span class="nav-icon" aria-hidden="true">📱</span>Aplicaciones</a></li>
-          <li class="nav-item"><a routerLink="/modulos" routerLinkActive="active" class="nav-link"><span class="nav-icon" aria-hidden="true">📦</span>Modulos</a></li>
+          <li class="nav-item"><a routerLink="/modulos" routerLinkActive="active" class="nav-link"><span class="nav-icon" aria-hidden="true">📦</span>Módulos</a></li>
           <li class="nav-item"><a routerLink="/funcionalidades" routerLinkActive="active" class="nav-link"><span class="nav-icon" aria-hidden="true">⚙️</span>Funcionalidades</a></li>
-          <li class="nav-item"><a routerLink="/parametros" routerLinkActive="active" class="nav-link"><span class="nav-icon" aria-hidden="true">🔧</span>Parametros</a></li>
+          <li class="nav-item"><a routerLink="/parametros" routerLinkActive="active" class="nav-link"><span class="nav-icon" aria-hidden="true">🔧</span>Parámetros</a></li>
           <li class="nav-item"><a routerLink="/metadatos" routerLinkActive="active" class="nav-link"><span class="nav-icon" aria-hidden="true">🧩</span>Metadatos</a></li>
-          <li class="nav-item"><a routerLink="/ambientes" routerLinkActive="active" class="nav-link"><span class="nav-icon" aria-hidden="true">🌐</span>Ambientes</a></li>
-          <li class="nav-item"><a routerLink="/estados-metadato-ambiente" routerLinkActive="active" class="nav-link"><span class="nav-icon" aria-hidden="true">✅</span>Estados de metadatos por ambiente</a></li>
           <li class="nav-item"><a routerLink="/metadatos-ambiente" routerLinkActive="active" class="nav-link"><span class="nav-icon" aria-hidden="true">🔗</span>Metadatos por ambiente</a></li>
           <li class="nav-item"><a routerLink="/tokens" routerLinkActive="active" class="nav-link"><span class="nav-icon" aria-hidden="true">🔑</span>Tokens</a></li>
-          <li class="nav-item"><a routerLink="/consulta-parametros" routerLinkActive="active" class="nav-link"><span class="nav-icon" aria-hidden="true">🔎</span>Consulta de parametros</a></li>
+          <li class="nav-item"><a routerLink="/consulta-parametros" routerLinkActive="active" class="nav-link"><span class="nav-icon" aria-hidden="true">🔎</span>Consulta de parámetros</a></li>
         </ul>
       </nav>
       <div class="sidebar-footer"><p>2026 UCOLab</p></div>

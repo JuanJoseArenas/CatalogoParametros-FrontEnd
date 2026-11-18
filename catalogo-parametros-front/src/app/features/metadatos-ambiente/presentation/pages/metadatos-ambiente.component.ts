@@ -16,6 +16,7 @@ import { disponibleParaUso } from '../../../../shared/utils/disponibilidad';
 import { ParametrosRepository } from '../../../parametros/domain/parametros.repository';
 import { MetadatoAmbiente, MetadatoAmbienteEvent } from '../../domain/metadato-ambiente';
 import { MetadatosAmbienteRepository } from '../../domain/metadatos-ambiente.repository';
+import { ordenarPorNombre, ordenarPorTexto } from '../../../../shared/utils/ordenar-por-texto';
 
 @Component({
   selector: 'app-metadatos-ambiente',
@@ -83,8 +84,6 @@ export class MetadatosAmbienteComponent implements OnInit, OnDestroy {
       this.loadCatalogos();
     }));
     for (const [url, name] of [
-      [this.ambientesRepository.eventsUrl, 'ambiente'],
-      [this.estadosRepository.eventsUrl, 'estadometadatoambiente'],
       [this.parametrosRepository.eventsUrl, 'parametro']
     ]) {
       this.subscriptions.add(this.eventStream.connect<unknown>(url, name).pipe(
@@ -101,7 +100,11 @@ export class MetadatosAmbienteComponent implements OnInit, OnDestroy {
 
   get filteredMetadatos(): MetadatoAmbiente[] {
     const term = this.searchTerm.trim().toLocaleLowerCase();
-    return this.metadatos.filter(item => [
+    return ordenarPorTexto(this.metadatos, item => [
+      this.nombre(this.parametros, item.idParametro),
+      this.nombre(this.ambientes, item.idAmbiente),
+      this.nombre(this.estados, item.idEstadoMetadatoAmbiente)
+    ].join(' ')).filter(item => [
       this.nombre(this.parametros, item.idParametro),
       this.nombre(this.ambientes, item.idAmbiente),
       this.nombre(this.estados, item.idEstadoMetadatoAmbiente)
@@ -119,9 +122,9 @@ export class MetadatosAmbienteComponent implements OnInit, OnDestroy {
       parametros: loadAllPages((page, size) => this.parametrosRepository.findPage(page, size))
     }).subscribe({
       next: data => {
-        this.ambientes = data.ambientes;
-        this.estados = data.estados;
-        this.parametros = data.parametros;
+        this.ambientes = ordenarPorNombre(data.ambientes);
+        this.estados = ordenarPorNombre(data.estados);
+        this.parametros = ordenarPorNombre(data.parametros);
         this.loadingCatalogos = false;
         this.catalogosDisponibles = true;
       },

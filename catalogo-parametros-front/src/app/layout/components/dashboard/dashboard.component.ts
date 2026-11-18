@@ -8,20 +8,18 @@ import { RouterLink } from '@angular/router';
     <div class="dashboard">
       <div class="header">
         <h1>Dashboard</h1>
-        <p>Bienvenido al sistema de gestion de catalogo de parametros</p>
+        <p>Bienvenido al sistema de gestión del catálogo de parámetros</p>
       </div>
       <div class="stats-grid">
-        <div class="stat-card"><div class="stat-icon" aria-hidden="true">🔎</div><div class="stat-info"><h3>Consulta de parametros</h3><p>Consulta parametros de una aplicacion y ambiente mediante un token.</p></div><a routerLink="/consulta-parametros" class="btn btn-primary">Consultar</a></div>
-        <div class="stat-card"><div class="stat-icon" aria-hidden="true">🔑</div><div class="stat-info"><h3>Tokens</h3><p>Crea tokens y administra su acceso a parametros.</p></div><a routerLink="/tokens" class="btn btn-primary">Ver</a></div>
+        <div class="stat-card"><div class="stat-icon" aria-hidden="true">🔎</div><div class="stat-info"><h3>Consulta de parámetros</h3><p>Consulta parámetros de una aplicación y ambiente mediante un token.</p></div><a routerLink="/consulta-parametros" class="btn btn-primary">Consultar</a></div>
+        <div class="stat-card"><div class="stat-icon" aria-hidden="true">🔑</div><div class="stat-info"><h3>Tokens</h3><p>Crea tokens y administra su acceso a parámetros.</p></div><a routerLink="/tokens" class="btn btn-primary">Ver</a></div>
         <div class="stat-card"><div class="stat-icon" aria-hidden="true">🏢</div><div class="stat-info"><h3>Organizaciones</h3><p>Gestiona las organizaciones del sistema.</p></div><a routerLink="/organizaciones" class="btn btn-primary">Ver</a></div>
         <div class="stat-card"><div class="stat-icon" aria-hidden="true">📱</div><div class="stat-info"><h3>Aplicaciones</h3><p>Administra las aplicaciones.</p></div><a routerLink="/aplicaciones" class="btn btn-primary">Ver</a></div>
-        <div class="stat-card"><div class="stat-icon" aria-hidden="true">📦</div><div class="stat-info"><h3>Modulos</h3><p>Gestiona los modulos de las aplicaciones.</p></div><a routerLink="/modulos" class="btn btn-primary">Ver</a></div>
+        <div class="stat-card"><div class="stat-icon" aria-hidden="true">📦</div><div class="stat-info"><h3>Módulos</h3><p>Gestiona los módulos de las aplicaciones.</p></div><a routerLink="/modulos" class="btn btn-primary">Ver</a></div>
         <div class="stat-card"><div class="stat-icon" aria-hidden="true">⚙️</div><div class="stat-info"><h3>Funcionalidades</h3><p>Administra las funcionalidades.</p></div><a routerLink="/funcionalidades" class="btn btn-primary">Ver</a></div>
-        <div class="stat-card"><div class="stat-icon" aria-hidden="true">🔧</div><div class="stat-info"><h3>Parametros</h3><p>Gestiona los parametros del sistema.</p></div><a routerLink="/parametros" class="btn btn-primary">Ver</a></div>
+        <div class="stat-card"><div class="stat-icon" aria-hidden="true">🔧</div><div class="stat-info"><h3>Parámetros</h3><p>Gestiona los parámetros del sistema.</p></div><a routerLink="/parametros" class="btn btn-primary">Ver</a></div>
         <div class="stat-card"><div class="stat-icon" aria-hidden="true">💿</div><div class="stat-info"><h3>Metadatos</h3><p>Administra los metadatos.</p></div><a routerLink="/metadatos" class="btn btn-primary">Ver</a></div>
-        <div class="stat-card"><div class="stat-icon" aria-hidden="true">🌐</div><div class="stat-info"><h3>Ambientes</h3><p>Administra los ambientes y su estado.</p></div><a routerLink="/ambientes" class="btn btn-primary">Ver</a></div>
-        <div class="stat-card"><div class="stat-icon" aria-hidden="true">✅</div><div class="stat-info"><h3>Estados de metadatos por ambiente</h3><p>Administra los estados disponibles para las relaciones.</p></div><a routerLink="/estados-metadato-ambiente" class="btn btn-primary">Ver</a></div>
-        <div class="stat-card"><div class="stat-icon" aria-hidden="true">🔗</div><div class="stat-info"><h3>Metadatos por ambiente</h3><p>Relaciona parametros, ambientes y estados de metadato.</p></div><a routerLink="/metadatos-ambiente" class="btn btn-primary">Ver</a></div>
+        <div class="stat-card"><div class="stat-icon" aria-hidden="true">🔗</div><div class="stat-info"><h3>Metadatos por ambiente</h3><p>Relaciona parámetros, ambientes y estados de metadato.</p></div><a routerLink="/metadatos-ambiente" class="btn btn-primary">Ver</a></div>
       </div>
     </div>
   `,

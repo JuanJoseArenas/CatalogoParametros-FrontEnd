@@ -13,6 +13,7 @@ import { ParametrosTokenResponse } from '../../domain/parametros-token';
 import { TokenEntityDetailsComponent } from './token-entity-details.component';
 import { PageMessagesComponent } from '../../../../shared/ui/page-messages/page-messages.component';
 import { loadAllPages } from '../../../../shared/utils/load-all-pages';
+import { ordenarPorNombre, ordenarPorTexto } from '../../../../shared/utils/ordenar-por-texto';
 @Component({ selector:'app-consulta-parametros', imports:[FormsModule, DatePipe, JsonPipe, TokenEntityDetailsComponent, PageMessagesComponent], templateUrl:'./consulta-parametros.component.html', changeDetection:ChangeDetectionStrategy.Eager,
 styles:[`:host { display:block; max-width:1200px; margin:auto; } .card { margin-bottom:20px; } .query-form { padding:24px; } .metadata-value { white-space:pre-wrap; overflow-wrap:anywhere; margin:8px 0; font-family:inherit; } summary { cursor:pointer; font-weight:600; padding:16px 0; }`] })
 export class ConsultaParametrosComponent implements OnInit, OnDestroy {
@@ -31,7 +32,7 @@ export class ConsultaParametrosComponent implements OnInit, OnDestroy {
   load() {
     if (this.loading || this.busy) return;
     this.loading = true; this.errorMessage = '';
-    this.subscriptions.add(forkJoin({ tokens:this.repository.findAll(), aplicaciones:loadAllPages((p,s) => this.apps.findPage(p,s)), ambientes:loadAllPages((p,s) => this.environments.findPage(p,s)) }).pipe(finalize(() => this.loading = false)).subscribe({ next:data => { Object.assign(this,data); if (!this.tokens.some(t => t.id === this.tokenId)) this.tokenId = ''; }, error:(e:Error) => this.errorMessage = e.message }));
+    this.subscriptions.add(forkJoin({ tokens:this.repository.findAll(), aplicaciones:loadAllPages((p,s) => this.apps.findPage(p,s)), ambientes:loadAllPages((p,s) => this.environments.findPage(p,s)) }).pipe(finalize(() => this.loading = false)).subscribe({ next:data => { this.tokens = ordenarPorTexto(data.tokens, item => item.id); this.aplicaciones = ordenarPorNombre(data.aplicaciones); this.ambientes = ordenarPorNombre(data.ambientes); if (!this.tokens.some(t => t.id === this.tokenId)) this.tokenId = ''; }, error:(e:Error) => this.errorMessage = e.message }));
   }
   clearResult() { this.parametros = null; this.secreto = ''; this.errorMessage = ''; }
   parameters() {

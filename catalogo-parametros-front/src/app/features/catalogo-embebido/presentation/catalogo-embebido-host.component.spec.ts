@@ -18,14 +18,14 @@ describe('Host del microfrontend', () => {
       { provide: SECURITY_CONFIG, useValue: {} }
     ] });
   });
-  it('monta con el ID del catalogo y desmonta al salir', async () => {
+  it('monta con el ID del catálogo y desmonta al salir', async () => {
     const fixture = TestBed.createComponent(CatalogoEmbebidoHostComponent);
     fixture.detectChanges(); await fixture.whenStable();
     expect(mount.calls.mostRecent().args[1].applicationId).toBe(APP_ID);
     expect(fixture.componentInstance.loading()).toBeFalse();
     fixture.destroy(); expect(unmount).toHaveBeenCalled();
   });
-  it('permite reintentar cuando falla la descarga del modulo', async () => {
+  it('permite reintentar cuando falla la descarga del módulo', async () => {
     load.and.rejectWith(new Error('network'));
     const fixture = TestBed.createComponent(CatalogoEmbebidoHostComponent);
     fixture.detectChanges(); await fixture.whenStable();

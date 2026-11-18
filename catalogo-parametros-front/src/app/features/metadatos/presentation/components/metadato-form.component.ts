@@ -11,11 +11,16 @@ import { TipoMetadato } from '../../domain/metadato';
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="modal-overlay" (click)="onOverlayClick($event)"><div class="modal">
-      <div class="modal-header"><h3 class="modal-title">{{ editing() ? 'Editar' : 'Nuevo' }} Metadato</h3><button class="modal-close" (click)="cancel.emit()">&times;</button></div>
+      <div class="modal-header"><h3 class="modal-title">{{ editing() ? 'Editar' : 'Nuevo' }} metadato</h3><button class="modal-close" (click)="cancel.emit()">&times;</button></div>
       <div class="modal-body"><form [formGroup]="form()" (ngSubmit)="save.emit()">
         <div class="form-group"><label class="form-label">Parámetro</label><select class="form-control" formControlName="idParametro"><option value="">Seleccione un parámetro</option>@for (item of parametros(); track item.id) { <option [value]="item.id" [disabled]="!disponibleParaUso(item)">{{ item.nombre }}{{ !disponibleParaUso(item) ? ' (No disponible)' : '' }}</option> }</select></div>
-        <div class="form-group"><label class="form-label">Tipo de Metadato</label><select class="form-control" formControlName="idTipoMetadato" (change)="typeChange.emit()"><option value="">Seleccione un tipo</option>@for (item of tipos(); track item.id) { <option [value]="item.id">{{ item.tipo }}{{ item.detalle ? ' - ' + item.detalle : '' }}</option> }</select></div>
-        <div class="form-group"><label class="form-label">Ambiente</label><select class="form-control" formControlName="idAmbiente" required><option value="">Seleccione un ambiente</option>@for (item of ambientes(); track item.id) { <option [value]="item.id">{{ item.nombre }}</option> }</select><small>Este valor solo se entrega a tokens del ambiente seleccionado.</small></div>
+        <div class="form-group"><label class="form-label">Tipo de metadato</label><select class="form-control" formControlName="idTipoMetadato" (change)="typeChange.emit()"><option value="">Seleccione un tipo</option>@for (item of tipos(); track item.id) { <option [value]="item.id">{{ item.tipo }}{{ item.detalle ? ' - ' + item.detalle : '' }}</option> }</select></div>
+        <div class="form-group"><label class="form-label">Alcance del ambiente</label><select class="form-control" formControlName="alcanceAmbiente" (change)="scopeChange.emit()"><option value="uno">Un ambiente</option><option value="todos" [disabled]="editing()">Todos los ambientes</option></select></div>
+        @if (form().get('alcanceAmbiente')?.value === 'uno') {
+          <div class="form-group"><label class="form-label">Ambiente</label><select class="form-control" formControlName="idAmbiente" required><option value="">Seleccione un ambiente</option>@for (item of ambientes(); track item.id) { <option [value]="item.id">{{ item.nombre }}</option> }</select><small>Este valor solo se entrega a los tokens del ambiente seleccionado.</small></div>
+        } @else {
+          <p class="field-help">El mismo valor se creará o actualizará en Producción, Desarrollo y Pruebas.</p>
+        }
         <div class="form-group"><label class="form-label">Valor</label>
           @if (selectedType() === 'json') { <textarea class="form-control value-input" formControlName="valor" placeholder='Ejemplo: {"propiedad":"valor"} o ["valor1","valor2"]'></textarea> }
           @if (selectedType() === 'date') { <input type="date" class="form-control" formControlName="valor"> }
@@ -42,5 +47,6 @@ export class MetadatoFormComponent {
   readonly save = output<void>();
   readonly cancel = output<void>();
   readonly typeChange = output<void>();
+  readonly scopeChange = output<void>();
   onOverlayClick(event: Event): void { if (event.target === event.currentTarget) this.cancel.emit(); }
 }

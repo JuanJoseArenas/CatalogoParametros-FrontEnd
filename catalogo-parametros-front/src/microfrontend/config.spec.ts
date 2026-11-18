@@ -24,7 +24,7 @@ describe('Contrato de integración del microfrontend', () => {
       expect(() => normalizarOpciones({ ...options, apiBaseUrl })).toThrowError(TypeError);
     }
   });
-  it('exige URL y callbacks validos y rechaza intervalos fuera de limites', () => {
+  it('exige URL y callbacks válidos y rechaza intervalos fuera de límites', () => {
     for (const refreshIntervalMs of [-1, 86400001, 1.5]) {
       expect(() => normalizarOpciones({ ...options, refreshIntervalMs })).toThrowError(TypeError);
     }

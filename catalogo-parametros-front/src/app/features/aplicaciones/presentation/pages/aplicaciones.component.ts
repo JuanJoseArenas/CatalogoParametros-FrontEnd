@@ -13,6 +13,7 @@ import { PageMessagesComponent } from '../../../../shared/ui/page-messages/page-
 import { PaginationComponent } from '../../../../shared/ui/pagination/pagination.component';
 import { RelatedEntityFormComponent, SelectOption } from '../../../../shared/ui/related-entity-form/related-entity-form.component';
 import { Subscription } from 'rxjs';
+import { ordenarPorNombre } from '../../../../shared/utils/ordenar-por-texto';
 
 @Component({
     selector: 'app-aplicaciones',
@@ -25,7 +26,7 @@ import { Subscription } from 'rxjs';
           <app-connection-status [connected]="isConnected" />
           <div class="search-bar">
             <span class="search-icon">🔍</span>
-            <input type="text" placeholder="Buscar aplicacion..." [(ngModel)]="searchTerm">
+            <input type="text" placeholder="Buscar aplicación..." [(ngModel)]="searchTerm">
           </div>
           <button class="btn btn-primary" (click)="openModal()">+ Nueva</button>
         </div>
@@ -37,7 +38,7 @@ import { Subscription } from 'rxjs';
         <div class="card-header">
           <h2 class="card-title">Lista de Aplicaciones</h2>
           <span style="font-size: 0.85rem; color: #64748b; font-weight: 500;">
-            {{ filteredAplicaciones.length }} registro(s) en pagina {{ page }}
+            {{ filteredAplicaciones.length }} registro(s) en la página {{ page }}
           </span>
         </div>
 
@@ -47,9 +48,9 @@ import { Subscription } from 'rxjs';
               <thead>
                 <tr>
                   <th>Nombre</th>
-                  <th>Organizacion</th>
-                  <th>Fecha Inicio</th>
-                  <th>Fecha Fin</th>
+                  <th>Organización</th>
+                  <th>Fecha de inicio</th>
+                  <th>Fecha de fin</th>
                   <th>Estado</th>
                   <th>Acciones</th>
                 </tr>
@@ -86,7 +87,7 @@ import { Subscription } from 'rxjs';
           <div class="empty-state">
             <div class="empty-state-icon">📱</div>
             <h3>No hay aplicaciones</h3>
-            <p>Comienza creando una nueva aplicacion</p>
+            <p>Comienza creando una nueva aplicación.</p>
           </div>
         }
 
@@ -105,7 +106,7 @@ import { Subscription } from 'rxjs';
     @if (showModal) {
       <app-related-entity-form
         [form]="aplicacionForm" [options]="organizacionOptions"
-        entityLabel="Aplicacion" relationLabel="Organizacion"
+        entityLabel="Aplicación" relationLabel="Organización"
         relationControl="idOrganizacion" activeControl="activa"
         [editing]="isEditing" [saving]="saving"
         (save)="saveAplicacion()" (cancel)="closeModal()"
@@ -177,7 +178,7 @@ export class AplicacionesComponent implements OnInit, OnDestroy {
 
     this.repository.findPage(this.page, this.pageSize).subscribe({
       next: (data) => {
-        this.aplicaciones = data;
+        this.aplicaciones = ordenarPorNombre(data);
         this.loading = false;
       },
       error: (err) => {
@@ -196,7 +197,7 @@ export class AplicacionesComponent implements OnInit, OnDestroy {
   loadOrganizaciones(): void {
     this.organizacionesRepository.findAll().subscribe({
       next: (data) => {
-        this.organizaciones = data;
+        this.organizaciones = ordenarPorNombre(data);
       },
       error: (err) => {
         console.error('Error al cargar organizaciones:', err);
@@ -217,13 +218,11 @@ export class AplicacionesComponent implements OnInit, OnDestroy {
         switch (eventType) {
           case 'CREATED':
             if (!this.aplicaciones.find(a => a.id === entity.id)) {
-              this.aplicaciones = [...this.aplicaciones, entity];
+              this.aplicaciones = ordenarPorNombre([...this.aplicaciones, entity]);
             }
             break;
           case 'UPDATED':
-            this.aplicaciones = this.aplicaciones.map(a =>
-              a.id === entity.id ? entity : a
-            );
+            this.aplicaciones = ordenarPorNombre(this.aplicaciones.map(a => a.id === entity.id ? entity : a));
             break;
           case 'DELETED':
             this.aplicaciones = this.aplicaciones.filter(a => a.id !== entity.id);
@@ -281,13 +280,13 @@ export class AplicacionesComponent implements OnInit, OnDestroy {
 
   saveAplicacion(): void {
     if (this.aplicacionForm.invalid) {
-      this.errorMessage = 'El nombre y la organizacion son requeridos';
+      this.errorMessage = 'El nombre y la organización son obligatorios.';
       return;
     }
 
     if (![this.aplicacionForm.value.fechaInicio, this.aplicacionForm.value.fechaFinal]
       .every(fecha => fechaLocalValida(fecha || ''))) {
-      this.errorMessage = 'Ingrese fechas y horas v?lidas para su zona horaria.';
+      this.errorMessage = 'Ingrese fechas y horas válidas para su zona horaria.';
       return;
     }
 
@@ -311,24 +310,24 @@ export class AplicacionesComponent implements OnInit, OnDestroy {
     if (this.isEditing && this.editingId) {
       this.repository.update(this.editingId, data).subscribe({
         next: (response) => {
-          this.successMessage = response.mensajes[0] || 'Aplicacion actualizada exitosamente';
+          this.successMessage = response.mensajes[0] || 'Aplicación actualizada correctamente.';
           this.saving = false;
           this.closeModal();
         },
         error: (err) => {
-          this.errorMessage = err.message || 'Error al actualizar la aplicacion';
+          this.errorMessage = err.message || 'Error al actualizar la aplicación.';
           this.saving = false;
         }
       });
     } else {
       this.repository.create(data).subscribe({
         next: (response) => {
-          this.successMessage = response.mensajes[0] || 'Aplicacion creada exitosamente';
+          this.successMessage = response.mensajes[0] || 'Aplicación creada correctamente.';
           this.saving = false;
           this.closeModal();
         },
         error: (err) => {
-          this.errorMessage = err.message || 'Error al crear la aplicacion';
+          this.errorMessage = err.message || 'Error al crear la aplicación.';
           this.saving = false;
         }
       });
@@ -336,17 +335,17 @@ export class AplicacionesComponent implements OnInit, OnDestroy {
   }
 
   deleteAplicacion(id: string): void {
-    if (!confirm('¿Esta seguro de que desea eliminar esta aplicacion?')) {
+    if (!confirm('¿Está seguro de que desea eliminar esta aplicación?')) {
       return;
     }
 
     this.repository.delete(id).subscribe({
       next: (response) => {
-        this.successMessage = response.mensajes[0] || 'Aplicacion eliminada exitosamente';
+        this.successMessage = response.mensajes[0] || 'Aplicación eliminada correctamente.';
         this.errorMessage = '';
       },
       error: (err) => {
-        this.errorMessage = err.message || 'Error al eliminar la aplicacion';
+        this.errorMessage = err.message || 'Error al eliminar la aplicación.';
         this.successMessage = '';
       }
     });
@@ -362,10 +361,10 @@ export class AplicacionesComponent implements OnInit, OnDestroy {
         this.aplicaciones = this.aplicaciones.map(app =>
           app.id === aplicacion.id ? { ...app, activa } : app
         );
-        this.successMessage = response.mensajes[0] || `Aplicacion ${activa ? 'activada' : 'desactivada'} exitosamente`;
+        this.successMessage = response.mensajes[0] || `Aplicación ${activa ? 'activada' : 'desactivada'} correctamente.`;
       },
       error: (err) => {
-        this.errorMessage = err.message || 'Error al cambiar el estado de la aplicacion';
+        this.errorMessage = err.message || 'Error al cambiar el estado de la aplicación.';
       }
     });
   }

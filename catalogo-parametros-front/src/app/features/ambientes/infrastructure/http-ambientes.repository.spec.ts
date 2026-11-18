@@ -8,7 +8,7 @@ describe('HttpAmbientesRepository', () => {
   let repository: HttpAmbientesRepository;
   let http: HttpTestingController;
   const url = `${environment.apiUrl}/ambientes`;
-  const ambiente = { id: 'a1', nombre: 'Produccion', activo: true };
+  const ambiente = { id: 'a1', nombre: 'Produccion' };
 
   beforeEach(() => {
     TestBed.configureTestingModule({ providers: [
@@ -20,7 +20,7 @@ describe('HttpAmbientesRepository', () => {
 
   afterEach(() => http.verify());
 
-  it('consulta la pagina y el detalle desde el endpoint del backend', () => {
+  it('consulta la página y el detalle desde el endpoint del backend', () => {
     repository.findPage(2, 10).subscribe(value => expect(value).toEqual([ambiente]));
     const page = http.expectOne(request => request.url === url
       && request.params.get('page') === '2'
@@ -30,7 +30,6 @@ describe('HttpAmbientesRepository', () => {
 
     repository.findById('a1').subscribe(value => expect(value).toEqual(ambiente));
     http.expectOne(`${url}/a1`).flush({ ambientes: [ambiente], mensajes: [] });
-    expect(repository.eventsUrl).toBe(`${url}/events`);
   });
 
   it('propaga el mensaje de error del backend', () => {
@@ -46,24 +45,4 @@ describe('HttpAmbientesRepository', () => {
     });
   });
 
-  it('envia el nombre y el estado al crear y actualizar un ambiente', () => {
-    repository.create({ nombre: 'Produccion', activo: false }).subscribe();
-    const create = http.expectOne(url);
-    expect(create.request.method).toBe('POST');
-    expect(create.request.body).toEqual({ nombre: 'Produccion', activo: 'false' });
-    create.flush({ mensajes: ['Ambiente creado exitosamente.'] });
-
-    repository.update('a1', { nombre: 'Produccion', activo: true }).subscribe();
-    const update = http.expectOne(`${url}/a1`);
-    expect(update.request.method).toBe('PUT');
-    expect(update.request.body).toEqual({ nombre: 'Produccion', activo: 'true' });
-    update.flush({ mensajes: ['Ambiente actualizado exitosamente.'] });
-  });
-
-  it('elimina un ambiente desde el endpoint correspondiente', () => {
-    repository.delete('a1').subscribe();
-    const request = http.expectOne(`${url}/a1`);
-    expect(request.request.method).toBe('DELETE');
-    request.flush({ mensajes: ['Ambiente eliminado exitosamente.'] });
-  });
 });

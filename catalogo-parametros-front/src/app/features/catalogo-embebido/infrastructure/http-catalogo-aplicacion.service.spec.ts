@@ -14,7 +14,7 @@ describe('API embebida por aplicación', () => {
     api = TestBed.inject(HttpCatalogoAplicacionService); http = TestBed.inject(HttpTestingController);
   });
   afterEach(() => http.verify());
-  it('escucha el SSE de su aplicacion con credenciales y libera la conexion', () => {
+  it('escucha el SSE de su aplicación con credenciales y libera la conexión', () => {
     const listeners = new Map<string, EventListener>();
     const source = { onopen: null as ((event: Event) => void) | null, onerror: null as ((event: Event) => void) | null,
       addEventListener: (name: string, listener: EventListener) => listeners.set(name, listener), close: jasmine.createSpy('close') };

@@ -25,12 +25,12 @@ describe('Fechas en la zona del navegador', () => {
     expect(mostrarFechaLocal(utc)).toBe(new Intl.DateTimeFormat(undefined, { dateStyle: 'short', timeStyle: 'medium' }).format(new Date(utc)));
   });
 
-  it('no pierde precisi?n ni cambia el instante cuando no se edita la fecha', () => {
+  it('no pierde precisión ni cambia el instante cuando no se edita la fecha', () => {
     const original = '2026-11-01T01:30:25.123456-05:00';
     expect(fechaConZona(fechaParaFormulario(original), original)).toBe('2026-11-01T06:30:25.123456Z');
   });
 
-  it('valida vac?os, valores inv?lidos y fechas inexistentes', () => {
+  it('valida vacíos, valores inválidos y fechas inexistentes', () => {
     expect(fechaParaFormulario(null)).toBe('');
     expect(fechaParaFormulario('incorrecta')).toBe('');
     expect(mostrarFechaLocal(undefined)).toBe('-');

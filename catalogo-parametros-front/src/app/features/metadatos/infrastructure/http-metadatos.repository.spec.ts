@@ -17,6 +17,7 @@ describe('HttpMetadatosRepository', () => {
     repository.findTypes().subscribe(v => expect(v[0].tipo).toBe('json')); let req = http.expectOne(`${environment.apiUrl}/tipos-metadato`); req.flush({ mensajes: [], tiposMetadato: [{ id: 't1', tipo: 'json', detalle: 'JSON' }] });
     const input = { idParametro: 'p1', idTipoMetadato: 't1', idAmbiente: 'ambiente', valor: '{}' };
     repository.create(input).subscribe(); req = http.expectOne(url); expect(req.request.method).toBe('POST'); req.flush({ mensajes: [] });
+    repository.createForAllEnvironments({ idParametro: 'p1', idTipoMetadato: 't1', valor: '{}' }).subscribe(); req = http.expectOne(`${url}/todos-los-ambientes`); expect(req.request.method).toBe('POST'); req.flush({ mensajes: [], metadatos: [] });
     repository.update('md1', input).subscribe(); req = http.expectOne(`${url}/md1`); expect(req.request.method).toBe('PUT'); req.flush({ mensajes: [] });
     repository.delete('md1').subscribe(); req = http.expectOne(`${url}/md1`); expect(req.request.method).toBe('DELETE'); req.flush({ mensajes: [] });
   });

@@ -23,7 +23,7 @@ describe('HttpTokensRepository', () => {
     repository.findById(token.id).subscribe(value => expect(value).toEqual(token));
     http.expectOne(`${url}/id%2Fcon%20espacio`).flush({ tokens: [token], mensajes: [] });
   });
-  it('conserva el error de permiso cuando se prohibe consultar parametros', () => {
+  it('conserva el error de permiso cuando se prohíbe consultar parámetros', () => {
     let error: Error | undefined;
     repository.findParameters('id', 'secret').subscribe({ error: value => error = value });
     http.expectOne(`${url}/id/parametros`).flush({}, { status: 403, statusText: 'Forbidden' });

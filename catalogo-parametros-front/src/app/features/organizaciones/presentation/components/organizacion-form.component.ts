@@ -9,7 +9,7 @@ import { FormGroup, ReactiveFormsModule } from '@angular/forms';
     <div class="modal-overlay" (click)="onOverlayClick($event)">
       <div class="modal">
         <div class="modal-header">
-          <h3 class="modal-title">{{ editing() ? 'Editar' : 'Nueva' }} Organizacion</h3>
+          <h3 class="modal-title">{{ editing() ? 'Editar' : 'Nueva' }} organización</h3>
           <button class="modal-close" (click)="cancel.emit()">&times;</button>
         </div>
         <div class="modal-body">
@@ -17,7 +17,7 @@ import { FormGroup, ReactiveFormsModule } from '@angular/forms';
           <form [formGroup]="form()" (ngSubmit)="save.emit()">
             <div class="form-group">
               <label class="form-label">Nombre</label>
-              <input class="form-control" formControlName="nombre" placeholder="Nombre de la organizacion">
+              <input class="form-control" formControlName="nombre" placeholder="Nombre de la organización">
             </div>
             <div class="form-group">
               <label class="form-label">Fecha y hora de inicio</label>
