@@ -3,9 +3,9 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, catchError, map } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { handleApiError } from '../../../core/http/api-error';
-import { OperationResult } from '../../../shared/contracts/operation-result';
-import { Ambiente, AmbienteInput } from '../domain/ambiente';
+import { Ambiente } from '../domain/ambiente';
 import { AmbientesRepository } from '../domain/ambientes.repository';
+import { OperationResult } from '../../../shared/contracts/operation-result';
 
 interface AmbienteResponse extends OperationResult { ambientes: Ambiente[]; }
 
@@ -32,16 +32,5 @@ export class HttpAmbientesRepository implements AmbientesRepository {
     );
   }
 
-  create(input: AmbienteInput): Observable<OperationResult> {
-    return this.http.post<OperationResult>(this.url, input).pipe(catchError(handleApiError));
-  }
-
-  update(id: string, input: AmbienteInput): Observable<OperationResult> {
-    return this.http.put<OperationResult>(`${this.url}/${id}`, input).pipe(catchError(handleApiError));
-  }
-
-  delete(id: string): Observable<OperationResult> {
-    return this.http.delete<OperationResult>(`${this.url}/${id}`).pipe(catchError(handleApiError));
-  }
 }
 

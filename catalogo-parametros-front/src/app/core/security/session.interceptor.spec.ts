@@ -18,7 +18,7 @@ describe('Cookies de la API protegida', () => {
   });
   afterEach(() => requests.verify());
 
-  it('no envia credenciales a otra ruta del mismo servidor', () => {
+  it('no envía credenciales a otra ruta del mismo servidor', () => {
     const url = `${environment.apiUrl}-otro/parametros`;
     http.get(url).subscribe();
     const request = requests.expectOne(url);

@@ -17,7 +17,7 @@ describe('HttpOrganizacionesRepository', () => {
   });
   afterEach(() => http.verify());
 
-  it('consulta una pagina y expone la URL de eventos', () => {
+  it('consulta una página y expone la URL de eventos', () => {
     repository.findPage(2, 5).subscribe(data => expect(data).toEqual([entity]));
     const request = http.expectOne(r => r.url === url && r.params.get('page') === '2' && r.params.get('pageSize') === '5');
     expect(request.request.method).toBe('GET');

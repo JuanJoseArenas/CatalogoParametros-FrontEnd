@@ -32,7 +32,7 @@ describe('Sesión central', () => {
     expect(() => loginUrl(config, '//otro.example/')).toThrowError(/retorno/);
   });
 
-  it('no envia la sesion a un servidor indicado por una configuracion manipulada', async () => {
+  it('no envía la sesión a un servidor indicado por una configuración manipulada', async () => {
     const fetchSpy = spyOn(window, 'fetch');
     await expectAsync(requireSession({ ...config, pdpUrl: 'https://otro.example' }))
       .toBeRejectedWithError(/confianza/);

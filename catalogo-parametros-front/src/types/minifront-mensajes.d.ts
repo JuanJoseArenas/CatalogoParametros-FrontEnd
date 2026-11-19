@@ -18,7 +18,4 @@ declare module 'minifront-mensajes' {
 
   export function mount(element: HTMLElement, options?: MessageUcoLabMountOptions): MessageUcoLabWidget;
   export function unmount(element: HTMLElement): void;
-  export function createMessageClient(options?: Record<string, unknown>): {
-    get(code: string, variables?: Record<string, string>): Promise<unknown>;
-  };
 }

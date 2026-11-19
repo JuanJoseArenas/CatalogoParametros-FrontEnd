@@ -32,7 +32,7 @@ describe('CargaMasivaParametrosService', () => {
     request.flush(new Blob(['reporte']));
   });
 
-  it('envia archivo como archivo al validar y cargar', () => {
+  it('envía el archivo al validar y cargar', () => {
     const result = { ready: true, totalFilas: 1, filasValidas: 1, filasInvalidas: 0, errores: [] };
     service.validar(file).subscribe(value => expect(value).toEqual(result));
     let request = http.expectOne(`${url}/validar`);

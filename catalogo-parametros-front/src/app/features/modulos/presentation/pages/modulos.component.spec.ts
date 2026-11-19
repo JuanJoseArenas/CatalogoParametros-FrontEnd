@@ -43,13 +43,13 @@ describe('ModulosComponent', () => {
     spyOn(window, 'confirm').and.returnValue(true); repository.delete.and.returnValue(throwError(() => ({}))); component.deleteModulo('m1'); expect(component.errorMessage).toContain('eliminar');
   });
   it('cubre formulario inválido, fechas y mensajes alternativos', () => {
-    component.saveModulo(); expect(component.errorMessage).toContain('requeridos');
+    component.saveModulo(); expect(component.errorMessage).toContain('obligatorios');
     repository.create.and.returnValue(of({ mensajes: [] })); repository.findPage.and.returnValue(of([])); component.moduloForm.setValue({ nombre: 'M', idAplicacion: 'a1', activo: true, fechaInicio: '2026-01-01', fechaFinal: '2026-12-31' }); component.saveModulo(); expect(component.successMessage).toContain('creado');
     repository.update.and.returnValue(of({ mensajes: [] })); component.editModulo({ id: 'm1', nombre: 'M', idAplicacion: 'a1', activo: false, fechaInicio: undefined, fechaFinal: undefined }); component.saveModulo(); expect(component.successMessage).toContain('actualizado');
     repository.changeStatus.and.returnValue(of({ mensajes: [] })); component.modulos = [{ id: 'm1', nombre: 'M', idAplicacion: 'a1', activo: false }]; component.changeStatus(component.modulos[0]); expect(component.successMessage).toContain('activado');
   });
 
-  it('conserva el instante y la precisi?n al editar solo el nombre desde otra zona', () => {
+  it('conserva el instante y la precisión al editar solo el nombre desde otra zona', () => {
     const fechaInicio = '2026-11-01T01:30:25.123456-05:00';
     const fechaFinal = '2026-12-31T23:59:59+05:30';
     repository.update.and.returnValue(of({ mensajes: ['ok'] }));
@@ -60,7 +60,7 @@ describe('ModulosComponent', () => {
     expect(repository.update).toHaveBeenCalledWith('1', jasmine.objectContaining({ nombre: 'Nuevo', fechaInicio: '2026-11-01T06:30:25.123456Z', fechaFinal: '2026-12-31T18:29:59.000Z' }));
   });
 
-  it('env?a la hora elegida en UTC y rechaza fechas inv?lidas', () => {
+  it('envía la hora elegida en UTC y rechaza fechas inválidas', () => {
     repository.create.and.returnValue(of({ mensajes: ['ok'] }));
     component.moduloForm.patchValue({ nombre: 'Nueva', idAplicacion: 'a1', activo: true, fechaInicio: '2026-07-15T14:35:42', fechaFinal: '2026-12-31T18:20:00' });
     component.saveModulo();

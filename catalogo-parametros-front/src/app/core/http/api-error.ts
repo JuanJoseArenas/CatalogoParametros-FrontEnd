@@ -2,7 +2,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 
 export function handleApiError(error: HttpErrorResponse): Observable<never> {
-  let message = 'Error en la comunicacion con el servidor';
+  let message = 'Error en la comunicación con el servidor';
 
   if (error.status === 0) {
     message = 'No se pudo conectar con el servidor';

@@ -24,7 +24,7 @@ describe('MetadatosAmbienteComponent', () => {
   beforeEach(() => {
     repository = jasmine.createSpyObj('metadatos', ['findPage', 'findById', 'create', 'update', 'delete'], { eventsUrl: '/metadatos-ambiente/events' });
     ambientes = jasmine.createSpyObj('ambientes', ['findPage'], { eventsUrl: '/ambientes/events' });
-    estados = jasmine.createSpyObj('estados', ['findPage'], { eventsUrl: '/estados-metadato-ambiente/events' });
+    estados = jasmine.createSpyObj('estados', ['findPage']);
     parametros = jasmine.createSpyObj('parametros', ['findPage'], { eventsUrl: '/parametros/events' });
     repository.findPage.and.returnValue(of([entity]));
     repository.findById.and.returnValue(of(entity));
@@ -179,7 +179,7 @@ describe('MetadatosAmbienteComponent', () => {
     expect(component.showModal).toBeFalse();
   });
 
-  it('pagina y evita consultas repetidas de detalle mientras espera la respuesta', () => {
+  it('página y evita consultas repetidas de detalle mientras espera la respuesta', () => {
     component.changePage(2);
     expect(repository.findPage).toHaveBeenCalledWith(2, 10);
     component.loading = true;

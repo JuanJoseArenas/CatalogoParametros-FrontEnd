@@ -12,6 +12,7 @@ import { PaginationComponent } from '../../../../shared/ui/pagination/pagination
 import { ParametroFormComponent } from '../components/parametro-form.component';
 import { Subscription } from 'rxjs';
 import { CargaMasivaParametrosComponent } from '../components/carga-masiva-parametros.component';
+import { ordenarPorNombre } from '../../../../shared/utils/ordenar-por-texto';
 
 @Component({
     selector: 'app-parametros',
@@ -19,12 +20,12 @@ import { CargaMasivaParametrosComponent } from '../components/carga-masiva-param
     template: `
     <div class="parametros">
       <div class="page-header">
-        <h1>Parametros</h1>
+        <h1>Parámetros</h1>
         <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
           <app-connection-status [connected]="isConnected" />
           <div class="search-bar">
             <span class="search-icon">🔍</span>
-            <input type="text" placeholder="Buscar parametro..." [(ngModel)]="searchTerm">
+            <input type="text" placeholder="Buscar parámetro..." [(ngModel)]="searchTerm">
           </div>
           <button class="btn btn-secondary" (click)="bulkOpen = true">Carga masiva</button>
           <button class="btn btn-primary" (click)="openModal()">+ Nuevo</button>
@@ -35,9 +36,9 @@ import { CargaMasivaParametrosComponent } from '../components/carga-masiva-param
 
       <div class="card">
         <div class="card-header">
-          <h2 class="card-title">Lista de Parametros</h2>
+          <h2 class="card-title">Lista de parámetros</h2>
           <span style="font-size: 0.85rem; color: #64748b; font-weight: 500;">
-            {{ filteredParametros.length }} registro(s) en pagina {{ page }}
+            {{ filteredParametros.length }} registro(s) en la página {{ page }}
           </span>
         </div>
 
@@ -48,7 +49,7 @@ import { CargaMasivaParametrosComponent } from '../components/carga-masiva-param
                 <tr>
                   <th>Nombre</th>
                   <th>Funcionalidad</th>
-                  <th>Tipo Parametro</th>
+                  <th>Tipo de parámetro</th>
                   <th>Estado</th>
                   <th>Acciones</th>
                 </tr>
@@ -81,8 +82,8 @@ import { CargaMasivaParametrosComponent } from '../components/carga-masiva-param
         @if (filteredParametros.length === 0 && !loading) {
           <div class="empty-state">
             <div class="empty-state-icon">🔧</div>
-            <h3>No hay parametros</h3>
-            <p>Comienza creando un nuevo parametro</p>
+            <h3>No hay parámetros</h3>
+            <p>Comienza creando un nuevo parámetro.</p>
           </div>
         }
 
@@ -170,11 +171,11 @@ export class ParametrosComponent implements OnInit, OnDestroy {
 
     this.repository.findPage(this.page, this.pageSize).subscribe({
       next: (data) => {
-        this.parametros = data;
+        this.parametros = ordenarPorNombre(data);
         this.loading = false;
       },
       error: (err) => {
-        this.errorMessage = err.message || 'Error al cargar los parametros';
+        this.errorMessage = err.message || 'Error al cargar los parámetros.';
         this.loading = false;
       }
     });
@@ -189,7 +190,7 @@ export class ParametrosComponent implements OnInit, OnDestroy {
   loadFuncionalidades(): void {
     this.funcionalidadesRepository.findAll().subscribe({
       next: (data) => {
-        this.funcionalidades = data;
+        this.funcionalidades = ordenarPorNombre(data);
       },
       error: (err) => {
         console.error('Error al cargar funcionalidades:', err);
@@ -210,13 +211,11 @@ export class ParametrosComponent implements OnInit, OnDestroy {
         switch (eventType) {
           case 'CREATED':
             if (!this.parametros.find(p => p.id === entity.id)) {
-              this.parametros = [...this.parametros, entity];
+              this.parametros = ordenarPorNombre([...this.parametros, entity]);
             }
             break;
           case 'UPDATED':
-            this.parametros = this.parametros.map(p =>
-              p.id === entity.id ? entity : p
-            );
+            this.parametros = ordenarPorNombre(this.parametros.map(p => p.id === entity.id ? entity : p));
             break;
           case 'DELETED':
             this.parametros = this.parametros.filter(p => p.id !== entity.id);
@@ -243,10 +242,10 @@ export class ParametrosComponent implements OnInit, OnDestroy {
   loadTiposParametro(): void {
     this.repository.findTypes().subscribe({
       next: (data) => {
-        this.tiposParametro = data;
+        this.tiposParametro = ordenarPorNombre(data);
       },
       error: (err) => {
-        console.error('Error al cargar tipos de parametro:', err);
+        console.error('Error al cargar tipos de parámetro:', err);
       }
     });
   }
@@ -285,7 +284,7 @@ export class ParametrosComponent implements OnInit, OnDestroy {
 
   saveParametro(): void {
     if (this.parametroForm.invalid) {
-      this.errorMessage = 'Todos los campos son requeridos';
+      this.errorMessage = 'Todos los campos son obligatorios.';
       return;
     }
 
@@ -303,24 +302,24 @@ export class ParametrosComponent implements OnInit, OnDestroy {
     if (this.isEditing && this.editingId) {
       this.repository.update(this.editingId, data).subscribe({
         next: (response) => {
-          this.successMessage = response.mensajes[0] || 'Parametro actualizado exitosamente';
+          this.successMessage = response.mensajes[0] || 'Parámetro actualizado correctamente.';
           this.saving = false;
           this.closeModal();
         },
         error: (err) => {
-          this.errorMessage = err.message || 'Error al actualizar el parametro';
+          this.errorMessage = err.message || 'Error al actualizar el parámetro.';
           this.saving = false;
         }
       });
     } else {
       this.repository.create(data).subscribe({
         next: (response) => {
-          this.successMessage = response.mensajes[0] || 'Parametro creado exitosamente';
+          this.successMessage = response.mensajes[0] || 'Parámetro creado correctamente.';
           this.saving = false;
           this.closeModal();
         },
         error: (err) => {
-          this.errorMessage = err.message || 'Error al crear el parametro';
+          this.errorMessage = err.message || 'Error al crear el parámetro.';
           this.saving = false;
         }
       });
@@ -328,7 +327,7 @@ export class ParametrosComponent implements OnInit, OnDestroy {
   }
 
   deleteParametro(id: string): void {
-    if (!confirm('¿Esta seguro de eliminar este parametro?')) {
+    if (!confirm('¿Está seguro de eliminar este parámetro?')) {
       return;
     }
 
@@ -337,11 +336,11 @@ export class ParametrosComponent implements OnInit, OnDestroy {
 
     this.repository.delete(id).subscribe({
       next: (response) => {
-        this.successMessage = response.mensajes[0] || 'Parametro eliminado exitosamente';
+        this.successMessage = response.mensajes[0] || 'Parámetro eliminado correctamente.';
         this.errorMessage = '';
       },
       error: (err) => {
-        this.errorMessage = err.message || 'Error al eliminar el parametro';
+        this.errorMessage = err.message || 'Error al eliminar el parámetro.';
       }
     });
   }
@@ -356,10 +355,10 @@ export class ParametrosComponent implements OnInit, OnDestroy {
         this.parametros = this.parametros.map(param =>
           param.id === parametro.id ? { ...param, activo } : param
         );
-        this.successMessage = response.mensajes[0] || `Parametro ${activo ? 'activado' : 'desactivado'} exitosamente`;
+        this.successMessage = response.mensajes[0] || `Parámetro ${activo ? 'activado' : 'desactivado'} correctamente.`;
       },
       error: (err) => {
-        this.errorMessage = err.message || 'Error al cambiar el estado del parametro';
+        this.errorMessage = err.message || 'Error al cambiar el estado del parámetro.';
       }
     });
   }

@@ -11,12 +11,12 @@ import { disponibleParaUso } from '../../../../shared/utils/disponibilidad';
   template: `
     <div class="modal-overlay" (click)="onOverlayClick($event)">
       <div class="modal">
-        <div class="modal-header"><h3 class="modal-title">{{ editing() ? 'Editar' : 'Nuevo' }} Parametro</h3><button class="modal-close" (click)="cancel.emit()">&times;</button></div>
+        <div class="modal-header"><h3 class="modal-title">{{ editing() ? 'Editar' : 'Nuevo' }} parámetro</h3><button class="modal-close" (click)="cancel.emit()">&times;</button></div>
         <div class="modal-body">
           <form [formGroup]="form()" (ngSubmit)="save.emit()">
-            <div class="form-group"><label class="form-label">Nombre</label><input class="form-control" formControlName="nombre" placeholder="Nombre del parametro"></div>
+            <div class="form-group"><label class="form-label">Nombre</label><input class="form-control" formControlName="nombre" placeholder="Nombre del parámetro"></div>
             <div class="form-group"><label class="form-label">Funcionalidad</label><select class="form-control" formControlName="idFuncionalidad"><option value="">Seleccione una funcionalidad</option>@for (item of funcionalidades(); track item.id) { <option [value]="item.id" [disabled]="!disponibleParaUso(item)">{{ item.nombre }}{{ !disponibleParaUso(item) ? ' (No disponible)' : '' }}</option> }</select></div>
-            <div class="form-group"><label class="form-label">Tipo Parametro</label><select class="form-control" formControlName="idTipoParametro"><option value="">Seleccione un tipo</option>@for (item of tipos(); track item.id) { <option [value]="item.id">{{ item.nombre }}</option> }</select></div>
+            <div class="form-group"><label class="form-label">Tipo de parámetro</label><select class="form-control" formControlName="idTipoParametro"><option value="">Seleccione un tipo</option>@for (item of tipos(); track item.id) { <option [value]="item.id">{{ item.nombre }}</option> }</select></div>
             <div class="form-group"><label class="form-label">Estado</label><select class="form-control" formControlName="activo"><option [value]="true">Activo</option><option [value]="false">Inactivo</option></select></div>
           </form>
         </div>

@@ -7,11 +7,11 @@ export interface ParametrosUiChange {
   id?: string;
 }
 export interface ParametrosUiOptions {
-  /** ID de la aplicacion del catalogo, no el ID de la aplicacion de seguridad ni del token. */
+  /** ID de la aplicación del catálogo, no el ID de la aplicación de seguridad ni del token. */
   applicationId: string;
   /** URL del API, incluida la ruta /catalogo-parametros/api/v1. */
   apiBaseUrl: string;
-  /** Cero deshabilita la actualizacion periodica. Minimo 30000; por defecto 60000. */
+  /** Cero deshabilita la actualización periódica. Mínimo 30000; por defecto 60000. */
   refreshIntervalMs?: number;
   theme?: ParametrosUiTheme;
   onAuthenticationRequired?: () => void;

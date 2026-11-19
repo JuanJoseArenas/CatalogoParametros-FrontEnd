@@ -14,6 +14,7 @@ import { PaginationComponent } from '../../../../shared/ui/pagination/pagination
 import { RelatedEntityFormComponent, SelectOption } from '../../../../shared/ui/related-entity-form/related-entity-form.component';
 import { Subscription } from 'rxjs';
 import { disponibleParaUso } from '../../../../shared/utils/disponibilidad';
+import { ordenarPorNombre } from '../../../../shared/utils/ordenar-por-texto';
 
 @Component({
     selector: 'app-modulos',
@@ -26,7 +27,7 @@ import { disponibleParaUso } from '../../../../shared/utils/disponibilidad';
           <app-connection-status [connected]="isConnected" />
           <div class="search-bar">
             <span class="search-icon">🔍</span>
-            <input type="text" placeholder="Buscar modulo..." [(ngModel)]="searchTerm">
+            <input type="text" placeholder="Buscar módulo..." [(ngModel)]="searchTerm">
           </div>
           <button class="btn btn-primary" (click)="openModal()">+ Nuevo</button>
         </div>
@@ -38,7 +39,7 @@ import { disponibleParaUso } from '../../../../shared/utils/disponibilidad';
         <div class="card-header">
           <h2 class="card-title">Lista de Modulos</h2>
           <span style="font-size: 0.85rem; color: #64748b; font-weight: 500;">
-            {{ filteredModulos.length }} registro(s) en pagina {{ page }}
+            {{ filteredModulos.length }} registro(s) en la página {{ page }}
           </span>
         </div>
 
@@ -48,9 +49,9 @@ import { disponibleParaUso } from '../../../../shared/utils/disponibilidad';
               <thead>
                 <tr>
                   <th>Nombre</th>
-                  <th>Aplicacion</th>
-                  <th>Fecha Inicio</th>
-                  <th>Fecha Fin</th>
+                  <th>Aplicación</th>
+                  <th>Fecha de inicio</th>
+                  <th>Fecha de fin</th>
                   <th>Estado</th>
                   <th>Acciones</th>
                 </tr>
@@ -85,7 +86,7 @@ import { disponibleParaUso } from '../../../../shared/utils/disponibilidad';
           <div class="empty-state">
             <div class="empty-state-icon">📦</div>
             <h3>No hay modulos</h3>
-            <p>Comienza creando un nuevo modulo</p>
+            <p>Comienza creando un nuevo módulo.</p>
           </div>
         }
 
@@ -104,7 +105,7 @@ import { disponibleParaUso } from '../../../../shared/utils/disponibilidad';
     @if (showModal) {
       <app-related-entity-form
         [form]="moduloForm" [options]="aplicacionOptions"
-        entityLabel="Modulo" relationLabel="Aplicacion"
+        entityLabel="Módulo" relationLabel="Aplicación"
         relationControl="idAplicacion" activeControl="activo"
         createLabel="Nuevo" relationArticle="una"
         activeLabel="Activo" inactiveLabel="Inactivo"
@@ -177,11 +178,11 @@ export class ModulosComponent implements OnInit, OnDestroy {
 
     this.repository.findPage(this.page, this.pageSize).subscribe({
       next: (data) => {
-        this.modulos = data;
+        this.modulos = ordenarPorNombre(data);
         this.loading = false;
       },
       error: (err) => {
-        this.errorMessage = err.message || 'Error al cargar los modulos';
+        this.errorMessage = err.message || 'Error al cargar los módulos.';
         this.loading = false;
       }
     });
@@ -196,7 +197,7 @@ export class ModulosComponent implements OnInit, OnDestroy {
   loadAplicaciones(): void {
     this.aplicacionesRepository.findAll().subscribe({
       next: (data) => {
-        this.aplicaciones = data;
+        this.aplicaciones = ordenarPorNombre(data);
       },
       error: (err) => {
         console.error('Error al cargar aplicaciones:', err);
@@ -217,13 +218,11 @@ export class ModulosComponent implements OnInit, OnDestroy {
         switch (eventType) {
           case 'CREATED':
             if (!this.modulos.find(m => m.id === entity.id)) {
-              this.modulos = [...this.modulos, entity];
+              this.modulos = ordenarPorNombre([...this.modulos, entity]);
             }
             break;
           case 'UPDATED':
-            this.modulos = this.modulos.map(m =>
-              m.id === entity.id ? entity : m
-            );
+            this.modulos = ordenarPorNombre(this.modulos.map(m => m.id === entity.id ? entity : m));
             break;
           case 'DELETED':
             this.modulos = this.modulos.filter(m => m.id !== entity.id);
@@ -280,13 +279,13 @@ export class ModulosComponent implements OnInit, OnDestroy {
 
   saveModulo(): void {
     if (this.moduloForm.invalid) {
-      this.errorMessage = 'El nombre y la aplicacion son requeridos';
+      this.errorMessage = 'El nombre y la aplicación son obligatorios.';
       return;
     }
 
     if (![this.moduloForm.value.fechaInicio, this.moduloForm.value.fechaFinal]
       .every(fecha => fechaLocalValida(fecha || ''))) {
-      this.errorMessage = 'Ingrese fechas y horas v?lidas para su zona horaria.';
+      this.errorMessage = 'Ingrese fechas y horas válidas para su zona horaria.';
       return;
     }
 
@@ -313,30 +312,30 @@ export class ModulosComponent implements OnInit, OnDestroy {
 
     request.subscribe({
       next: (response) => {
-        this.successMessage = response.mensajes[0] || (this.isEditing ? 'Modulo actualizado exitosamente' : 'Modulo creado exitosamente');
+        this.successMessage = response.mensajes[0] || (this.isEditing ? 'Módulo actualizado correctamente.' : 'Módulo creado correctamente.');
         this.saving = false;
         this.closeModal();
         this.loadModulos();
       },
       error: (err) => {
-        this.errorMessage = err.message || (this.isEditing ? 'Error al actualizar el modulo' : 'Error al crear el modulo');
+        this.errorMessage = err.message || (this.isEditing ? 'Error al actualizar el módulo.' : 'Error al crear el módulo.');
         this.saving = false;
       }
     });
   }
 
   deleteModulo(id: string): void {
-    if (!confirm('¿Está seguro de eliminar este modulo?')) return;
+    if (!confirm('¿Está seguro de eliminar este módulo?')) return;
 
     this.errorMessage = '';
     this.successMessage = '';
     this.repository.delete(id).subscribe({
       next: (response) => {
-        this.successMessage = response.mensajes[0] || 'Modulo eliminado exitosamente';
+        this.successMessage = response.mensajes[0] || 'Módulo eliminado correctamente.';
         this.loadModulos();
       },
       error: (err) => {
-        this.errorMessage = err.message || 'Error al eliminar el modulo';
+        this.errorMessage = err.message || 'Error al eliminar el módulo.';
       }
     });
   }
@@ -351,10 +350,10 @@ export class ModulosComponent implements OnInit, OnDestroy {
         this.modulos = this.modulos.map(mod =>
           mod.id === modulo.id ? { ...mod, activo } : mod
         );
-        this.successMessage = response.mensajes[0] || `Modulo ${activo ? 'activado' : 'desactivado'} exitosamente`;
+        this.successMessage = response.mensajes[0] || `Módulo ${activo ? 'activado' : 'desactivado'} correctamente.`;
       },
       error: (err) => {
-        this.errorMessage = err.message || 'Error al cambiar el estado del modulo';
+        this.errorMessage = err.message || 'Error al cambiar el estado del módulo.';
       }
     });
   }

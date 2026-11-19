@@ -54,7 +54,7 @@ describe('Administración embebida del catálogo', () => {
     component.elegir('metadatos-ambiente');
     expect(component.nombre(component.datos()!.metadatosAmbiente[0])).toContain('Desarrollo');
     expect(component.estado({ id: 'x' })).toBe('Sin estado');
-    expect(component.estado(component.datos()!.metadatosAmbiente[0])).toBe('activo');
+    expect(component.estado(component.datos()!.metadatosAmbiente[0])).toBe('Activo');
   });
   it('valida formularios y fechas antes de enviar y conserva errores al guardar', async () => {
     component.abrir(); await component.guardar(); expect(api.guardar).not.toHaveBeenCalled();
@@ -64,7 +64,7 @@ describe('Administración embebida del catálogo', () => {
     api.guardar.and.returnValue(throwError(() => new Error('No permitido')));
     await component.guardar(); expect(component.error()).toBe('No permitido'); expect(component.editor()).toBeTrue();
   });
-  it('envia el padre de funcionalidades y parametros y bloquea acciones concurrentes', async () => {
+  it('envía el padre de funcionalidades y parámetros y bloquea acciones concurrentes', async () => {
     component.elegir('funcionalidades'); component.abrir(component.datos()!.funcionalidades[0]);
     component.form.patchValue({ fechaInicio: '2027-01-01T10:00:00', fechaFinal: '2028-01-01T10:00:00' });
     await component.guardar(); expect(api.guardar.calls.mostRecent().args[1].idModulo).toBe('modulo');
@@ -110,7 +110,7 @@ describe('Administración embebida del catálogo', () => {
     component.form.patchValue({ valor: '200' }); await component.guardar();
     expect(api.guardar).toHaveBeenCalledWith('metadatos', { idParametro: 'parametro', idTipoMetadato: 'tipo-meta', idAmbiente: 'ambiente', valor: 200 }, 'metadato');
     component.elegir('metadatos-ambiente'); component.abrir(component.datos()!.metadatosAmbiente[0]); await component.guardar();
-    expect(api.guardar).toHaveBeenCalledWith('metadatos-ambiente', { idParametro: 'parametro', idAmbiente: 'ambiente', idEstadoMetadatoAmbiente: 'activo' }, 'asociacion');
+    expect(api.guardar).toHaveBeenCalledWith('metadatos-ambiente', { idParametro: 'parametro', idAmbiente: 'ambiente', idEstadoMetadatoAmbiente: '00000000-0000-0000-0000-000000000020' }, 'asociacion');
   });
   it('elimina mediante confirmación propia y conserva el mensaje de las reglas del servidor', async () => {
     component.borrarId.set('modulo'); await component.eliminar();

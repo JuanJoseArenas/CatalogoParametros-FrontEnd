@@ -1,6 +1,6 @@
 import { loadSecurityConfig, trustedPdpUrl } from './security-config';
 
-describe('Configuracion de seguridad', () => {
+describe('Configuración de seguridad', () => {
   const config = {
     pdpUrl: 'http://localhost:18080',
     securityUiUrl: '/security-ui/security-administration.js',
@@ -11,7 +11,7 @@ describe('Configuracion de seguridad', () => {
     return spyOn(window, 'fetch').and.resolveTo(new Response(JSON.stringify(body), { status }));
   }
 
-  it('carga la configuracion sin cache y acepta el modulo del mismo servidor', async () => {
+  it('carga la configuración sin caché y acepta el módulo del mismo servidor', async () => {
     const fetchSpy = respond(config);
     expect(await loadSecurityConfig()).toEqual(config);
     expect(fetchSpy).toHaveBeenCalledOnceWith(
@@ -19,7 +19,7 @@ describe('Configuracion de seguridad', () => {
     );
   });
 
-  it('rechaza la configuracion cuando el servidor no permite consultarla', async () => {
+  it('rechaza la configuración cuando el servidor no permite consultarla', async () => {
     respond({}, 403);
     await expectAsync(loadSecurityConfig()).toBeRejectedWithError(/cargar/);
   });
@@ -30,7 +30,7 @@ describe('Configuracion de seguridad', () => {
     { ...config, pdpUrl: '' },
     { ...config, securityUiUrl: '' }
   ]) {
-    it(`rechaza una configuracion incompleta: ${JSON.stringify(invalid)}`, async () => {
+    it(`rechaza una configuración incompleta: ${JSON.stringify(invalid)}`, async () => {
       respond(invalid);
       await expectAsync(loadSecurityConfig()).toBeRejectedWithError(/incompleta/);
     });
@@ -43,7 +43,7 @@ describe('Configuracion de seguridad', () => {
     });
   }
 
-  it('propaga errores de red sin aceptar una configuracion inexistente', async () => {
+  it('propaga errores de red sin aceptar una configuración inexistente', async () => {
     spyOn(window, 'fetch').and.rejectWith(new TypeError('network'));
     await expectAsync(loadSecurityConfig()).toBeRejectedWithError(TypeError, 'network');
   });
@@ -61,7 +61,7 @@ describe('Configuracion de seguridad', () => {
     'http://localhost:18080/?destino=otro',
     'http://localhost:18080/#otro'
   ]) {
-    it(`rechaza un destino de sesion no permitido: ${pdpUrl}`, () => {
+    it(`rechaza un destino de sesión no permitido: ${pdpUrl}`, () => {
       expect(() => trustedPdpUrl({ ...config, pdpUrl })).toThrowError(/confianza/);
     });
   }

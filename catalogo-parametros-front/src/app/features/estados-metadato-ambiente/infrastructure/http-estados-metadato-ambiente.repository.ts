@@ -4,7 +4,7 @@ import { Observable, catchError, map } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { handleApiError } from '../../../core/http/api-error';
 import { OperationResult } from '../../../shared/contracts/operation-result';
-import { EstadoMetadatoAmbiente, EstadoMetadatoAmbienteInput } from '../domain/estado-metadato-ambiente';
+import { EstadoMetadatoAmbiente } from '../domain/estado-metadato-ambiente';
 import { EstadosMetadatoAmbienteRepository } from '../domain/estados-metadato-ambiente.repository';
 
 interface EstadoMetadatoAmbienteResponse extends OperationResult { estadosMetadatoAmbiente: EstadoMetadatoAmbiente[]; }
@@ -12,7 +12,6 @@ interface EstadoMetadatoAmbienteResponse extends OperationResult { estadosMetada
 @Injectable()
 export class HttpEstadosMetadatoAmbienteRepository implements EstadosMetadatoAmbienteRepository {
   private readonly url = `${environment.apiUrl}/estados-metadato-ambiente`;
-  readonly eventsUrl = `${this.url}/events`;
 
   constructor(private readonly http: HttpClient) {}
 
@@ -32,16 +31,5 @@ export class HttpEstadosMetadatoAmbienteRepository implements EstadosMetadatoAmb
     );
   }
 
-  create(input: EstadoMetadatoAmbienteInput): Observable<OperationResult> {
-    return this.http.post<OperationResult>(this.url, input).pipe(catchError(handleApiError));
-  }
-
-  update(id: string, input: EstadoMetadatoAmbienteInput): Observable<OperationResult> {
-    return this.http.put<OperationResult>(`${this.url}/${id}`, input).pipe(catchError(handleApiError));
-  }
-
-  delete(id: string): Observable<OperationResult> {
-    return this.http.delete<OperationResult>(`${this.url}/${id}`).pipe(catchError(handleApiError));
-  }
 }
 

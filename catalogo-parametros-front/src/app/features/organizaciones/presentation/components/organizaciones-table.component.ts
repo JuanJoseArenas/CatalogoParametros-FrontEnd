@@ -12,7 +12,7 @@ import { PaginationComponent } from '../../../../shared/ui/pagination/pagination
       <div class="card-header">
         <h2 class="card-title">Lista de Organizaciones</h2>
         <span style="font-size: 0.85rem; color: #64748b; font-weight: 500;">
-          {{ organizaciones().length }} registro(s) en pagina {{ page() }}
+          {{ organizaciones().length }} registro(s) en la página {{ page() }}
         </span>
       </div>
 
@@ -20,7 +20,7 @@ import { PaginationComponent } from '../../../../shared/ui/pagination/pagination
         <div class="table-container">
           <table>
             <thead>
-              <tr><th>Nombre</th><th>Fecha Inicio</th><th>Fecha Fin</th><th>Acciones</th></tr>
+              <tr><th>Nombre</th><th>Fecha de inicio</th><th>Fecha de fin</th><th>Acciones</th></tr>
             </thead>
             <tbody>
               @for (organizacion of organizaciones(); track organizacion.id) {
@@ -41,7 +41,7 @@ import { PaginationComponent } from '../../../../shared/ui/pagination/pagination
         <div class="empty-state">
           <div class="empty-state-icon">🏢</div>
           <h3>No hay organizaciones</h3>
-          <p>Comienza creando una nueva organizacion</p>
+          <p>Comienza creando una nueva organización.</p>
         </div>
       }
 
