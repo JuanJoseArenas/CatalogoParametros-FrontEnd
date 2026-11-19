@@ -17,7 +17,7 @@ describe('FuncionalidadesComponent', () => {
     repository.findPage.and.returnValue(of([{ id: 'f1', nombre: 'Crear', idModulo: 'm1', activo: true }])); component.ngOnInit(); component.searchTerm = 'crear'; expect(component.filteredFuncionalidades.length).toBe(1); expect(component.getModuloNombre('m1')).toBe('Ventas'); expect(component.getModuloNombre('x')).toBe('N/A');
   });
   it('valida y persiste funcionalidades', () => {
-    component.saveFuncionalidad(); expect(component.errorMessage).toContain('requeridos');
+    component.saveFuncionalidad(); expect(component.errorMessage).toContain('obligatorios');
     const value = { nombre: 'Crear', idModulo: 'm1', activo: true, fechaInicio: '2026-01-01', fechaFinal: '2026-12-31' }; repository.create.and.returnValue(of({ mensajes: ['creada'] })); component.funcionalidadForm.setValue(value); component.saveFuncionalidad(); expect(repository.create).toHaveBeenCalled();
     repository.update.and.returnValue(of({ mensajes: ['editada'] })); component.editFuncionalidad({ id: 'f1', ...value }); component.saveFuncionalidad(); expect(repository.update).toHaveBeenCalled();
   });
@@ -48,19 +48,19 @@ describe('FuncionalidadesComponent', () => {
     repository.create.and.returnValue(of({ mensajes: [] }));
     component.funcionalidadForm.setValue(value);
     component.saveFuncionalidad();
-    expect(component.successMessage).toBe('Funcionalidad creada exitosamente');
+    expect(component.successMessage).toBe('Funcionalidad creada correctamente.');
     expect(component.saving).toBeFalse();
     expect(component.showModal).toBeFalse();
 
     repository.update.and.returnValue(of({ mensajes: [] }));
     component.editFuncionalidad({ id: 'f1', ...value });
     component.saveFuncionalidad();
-    expect(component.successMessage).toBe('Funcionalidad actualizada exitosamente');
+    expect(component.successMessage).toBe('Funcionalidad actualizada correctamente.');
 
     spyOn(window, 'confirm').and.returnValue(true);
     repository.delete.and.returnValue(of({ mensajes: [] }));
     component.deleteFuncionalidad('f1');
-    expect(component.successMessage).toBe('Funcionalidad eliminada exitosamente');
+    expect(component.successMessage).toBe('Funcionalidad eliminada correctamente.');
   });
 
   it('activa y desactiva solo la funcionalidad seleccionada sin mensajes del servidor', () => {
@@ -72,11 +72,11 @@ describe('FuncionalidadesComponent', () => {
     expect(repository.changeStatus).toHaveBeenCalledWith('f1', true);
     expect(component.funcionalidades[0].activo).toBeTrue();
     expect(component.funcionalidades[1]).toBe(other);
-    expect(component.successMessage).toBe('Funcionalidad activada exitosamente');
+    expect(component.successMessage).toBe('Funcionalidad activada correctamente.');
     component.changeStatus(component.funcionalidades[0]);
     expect(repository.changeStatus).toHaveBeenCalledWith('f1', false);
     expect(component.funcionalidades[0].activo).toBeFalse();
-    expect(component.successMessage).toBe('Funcionalidad desactivada exitosamente');
+    expect(component.successMessage).toBe('Funcionalidad desactivada correctamente.');
   });
 
   for (const message of ['Error del servidor', '']) {
@@ -84,7 +84,7 @@ describe('FuncionalidadesComponent', () => {
       component.editFuncionalidad({ id: 'f1', nombre: 'Crear', idModulo: 'm1', activo: true, fechaInicio: '2026-01-01', fechaFinal: '2026-12-31' });
       repository.update.and.returnValue(throwError(() => new Error(message)));
       component.saveFuncionalidad();
-      expect(component.errorMessage).toBe(message || 'Error al actualizar la funcionalidad');
+      expect(component.errorMessage).toBe(message || 'Error al actualizar la funcionalidad.');
       expect(component.saving).toBeFalse();
       expect(component.showModal).toBeTrue();
       expect(component.editingId).toBe('f1');

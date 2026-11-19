@@ -148,6 +148,14 @@ export class MetadatosComponent implements OnInit, OnDestroy {
     return typeof valor === 'string' ? valor : JSON.stringify(valor);
   }
   connectSse(): void {
+    this.subscriptions.push(this.eventStream.connect<{ event: string; ambiente?: Ambiente }>(this.ambientesRepository.eventsUrl, 'ambiente').subscribe({
+      next: data => {
+        const entity = data.ambiente; if (!entity) return;
+        if (data.event === 'CREATED' && !this.ambientes.some(item => item.id === entity.id)) this.ambientes = ordenarPorNombre([...this.ambientes, entity]);
+        if (data.event === 'UPDATED') this.ambientes = ordenarPorNombre(this.ambientes.map(item => item.id === entity.id ? entity : item));
+        if (data.event === 'DELETED') this.ambientes = this.ambientes.filter(item => item.id !== entity.id);
+      }, error: () => { /* El servicio SSE reintenta la conexión. */ }
+    }));
     this.subscriptions.push(this.eventStream.connect<{ event: string; parametro?: Parametro }>(this.parametrosRepository.eventsUrl, 'parametro').subscribe({
       next: data => {
         const entity = data.parametro; if (!entity) return;

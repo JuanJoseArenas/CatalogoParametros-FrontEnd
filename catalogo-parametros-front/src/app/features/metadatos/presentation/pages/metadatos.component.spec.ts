@@ -48,7 +48,7 @@ describe('MetadatosComponent', () => {
   });
   it('rechaza JSON y fechas inválidas', () => {
     component.tiposMetadato = types; component.metadatoForm.setValue({ idParametro: 'p1', idTipoMetadato: 'json', alcanceAmbiente: 'uno', idAmbiente: 'ambiente', valor: 'no-json' }); component.saveMetadato(); expect(component.errorMessage).toContain('JSON válido');
-    component.metadatoForm.setValue({ idParametro: 'p1', idTipoMetadato: 'json', alcanceAmbiente: 'uno', idAmbiente: 'ambiente', valor: '123' }); component.saveMetadato(); expect(component.errorMessage).toContain('objeto o arreglo');
+    component.metadatoForm.setValue({ idParametro: 'p1', idTipoMetadato: 'json', alcanceAmbiente: 'uno', idAmbiente: 'ambiente', valor: '123' }); component.saveMetadato(); expect(component.errorMessage).toContain('objeto o un arreglo');
     component.metadatoForm.setValue({ idParametro: 'p1', idTipoMetadato: 'date', alcanceAmbiente: 'uno', idAmbiente: 'ambiente', valor: '2026-02-30' }); component.saveMetadato(); expect(component.errorMessage).toContain('fecha válida');
   });
   it('sincroniza eventos y elimina', () => {
@@ -60,7 +60,7 @@ describe('MetadatosComponent', () => {
     component.tiposMetadato = types; repository.create.and.returnValue(throwError(() => new Error('guardar'))); component.metadatoForm.setValue({ idParametro: 'p1', idTipoMetadato: 'text', alcanceAmbiente: 'uno', idAmbiente: 'ambiente', valor: 'x' }); component.saveMetadato(); expect(component.errorMessage).toBe('guardar');
   });
   it('cubre formulario inválido, cambio de tipo, modal y valores ausentes', () => {
-    component.saveMetadato(); expect(component.errorMessage).toContain('requeridos');
+    component.saveMetadato(); expect(component.errorMessage).toContain('obligatorios');
     component.errorMessage = 'x'; component.onTipoChange(); expect(component.errorMessage).toBe('');
     component.openModal(); expect(component.showModal).toBeTrue(); expect(component.selectedTipo).toBe('');
     expect(component.getParametroNombre('x')).toBe('N/A'); expect(component.getTipoNombre('x')).toBe('N/A');

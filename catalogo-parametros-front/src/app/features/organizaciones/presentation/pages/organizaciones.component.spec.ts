@@ -24,7 +24,7 @@ describe('OrganizacionesComponent', () => {
     const data: Organizacion[] = [{ id: '1', nombre: 'UCO' }, { id: '2', nombre: 'Otra' }];
     repository.findPage.and.returnValue(of(data));
     component.ngOnInit();
-    expect(component.organizaciones).toEqual(data);
+    expect(component.organizaciones).toEqual([data[1], data[0]]);
     component.searchTerm = 'uco';
     expect(component.filteredOrganizaciones).toEqual([data[0]]);
     expect(repository.findPage).toHaveBeenCalledWith(1, 10);

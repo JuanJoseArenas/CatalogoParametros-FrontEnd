@@ -54,7 +54,7 @@ describe('Administración embebida del catálogo', () => {
     component.elegir('metadatos-ambiente');
     expect(component.nombre(component.datos()!.metadatosAmbiente[0])).toContain('Desarrollo');
     expect(component.estado({ id: 'x' })).toBe('Sin estado');
-    expect(component.estado(component.datos()!.metadatosAmbiente[0])).toBe('activo');
+    expect(component.estado(component.datos()!.metadatosAmbiente[0])).toBe('Activo');
   });
   it('valida formularios y fechas antes de enviar y conserva errores al guardar', async () => {
     component.abrir(); await component.guardar(); expect(api.guardar).not.toHaveBeenCalled();

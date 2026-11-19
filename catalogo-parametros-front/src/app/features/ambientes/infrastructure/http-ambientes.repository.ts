@@ -12,6 +12,7 @@ interface AmbienteResponse extends OperationResult { ambientes: Ambiente[]; }
 @Injectable()
 export class HttpAmbientesRepository implements AmbientesRepository {
   private readonly url = `${environment.apiUrl}/ambientes`;
+  readonly eventsUrl = `${this.url}/events`;
 
   constructor(private readonly http: HttpClient) {}
 

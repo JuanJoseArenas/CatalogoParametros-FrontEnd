@@ -45,7 +45,7 @@ describe('AplicacionesComponent', () => {
     repository.create.and.returnValue(throwError(() => ({}))); component.aplicacionForm.setValue({ nombre: 'X', idOrganizacion: 'o1', activa: true, fechaInicio: '', fechaFinal: '' }); component.saveAplicacion(); expect(component.errorMessage).toContain('crear');
   });
   it('cubre validación, fechas, mensajes alternativos y cancelación', () => {
-    component.saveAplicacion(); expect(component.errorMessage).toContain('requeridos');
+    component.saveAplicacion(); expect(component.errorMessage).toContain('obligatorios');
     repository.create.and.returnValue(of({ mensajes: [] })); component.aplicacionForm.setValue({ nombre: 'X', idOrganizacion: 'o1', activa: true, fechaInicio: '2026-01-01', fechaFinal: '2026-12-31' }); component.saveAplicacion(); expect(component.successMessage).toContain('creada');
     repository.update.and.returnValue(of({ mensajes: [] })); component.editAplicacion({ id: 'a1', nombre: 'X', idOrganizacion: 'o1', activa: true, fechaInicio: undefined, fechaFinal: undefined }); component.saveAplicacion(); expect(component.successMessage).toContain('actualizada');
     spyOn(window, 'confirm').and.returnValue(false); component.deleteAplicacion('a1'); expect(repository.delete).not.toHaveBeenCalled();

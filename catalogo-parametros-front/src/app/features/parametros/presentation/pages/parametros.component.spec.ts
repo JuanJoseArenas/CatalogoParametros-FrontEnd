@@ -17,7 +17,7 @@ describe('ParametrosComponent', () => {
     expect(component.filteredParametros.length).toBe(1); expect(component.getFuncionalidadNombre('f1')).toBe('Crear'); expect(component.getTipoParametroNombre('t1')).toBe('Texto'); expect(component.getFuncionalidadNombre('x')).toBe('N/A');
   });
   it('valida, crea y actualiza parámetros', () => {
-    component.saveParametro(); expect(component.errorMessage).toBe('Todos los campos son requeridos');
+    component.saveParametro(); expect(component.errorMessage).toBe('Todos los campos son obligatorios.');
     const value = { nombre: 'Color', idFuncionalidad: 'f1', idTipoParametro: 't1', activo: true }; repository.create.and.returnValue(of({ mensajes: ['creado'] })); component.parametroForm.setValue(value); component.saveParametro(); expect(repository.create).toHaveBeenCalledWith(value);
     repository.update.and.returnValue(of({ mensajes: ['editado'] })); component.editParametro({ id: 'p1', ...value }); component.saveParametro(); expect(repository.update).toHaveBeenCalledWith('p1', value);
   });

@@ -43,7 +43,7 @@ describe('ModulosComponent', () => {
     spyOn(window, 'confirm').and.returnValue(true); repository.delete.and.returnValue(throwError(() => ({}))); component.deleteModulo('m1'); expect(component.errorMessage).toContain('eliminar');
   });
   it('cubre formulario inválido, fechas y mensajes alternativos', () => {
-    component.saveModulo(); expect(component.errorMessage).toContain('requeridos');
+    component.saveModulo(); expect(component.errorMessage).toContain('obligatorios');
     repository.create.and.returnValue(of({ mensajes: [] })); repository.findPage.and.returnValue(of([])); component.moduloForm.setValue({ nombre: 'M', idAplicacion: 'a1', activo: true, fechaInicio: '2026-01-01', fechaFinal: '2026-12-31' }); component.saveModulo(); expect(component.successMessage).toContain('creado');
     repository.update.and.returnValue(of({ mensajes: [] })); component.editModulo({ id: 'm1', nombre: 'M', idAplicacion: 'a1', activo: false, fechaInicio: undefined, fechaFinal: undefined }); component.saveModulo(); expect(component.successMessage).toContain('actualizado');
     repository.changeStatus.and.returnValue(of({ mensajes: [] })); component.modulos = [{ id: 'm1', nombre: 'M', idAplicacion: 'a1', activo: false }]; component.changeStatus(component.modulos[0]); expect(component.successMessage).toContain('activado');
