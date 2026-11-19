@@ -1,5 +1,7 @@
 # Catalogo de Parametros - Frontend
 
+<!-- Cambio documental sin impacto funcional. -->
+
 <!-- Nota de mantenimiento: este microfrontend conserva la configuración visual centralizada. -->
 <!-- Seguimiento técnico: la interfaz se valida mediante el pipeline del frontend. -->
 
