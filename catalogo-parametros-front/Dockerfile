@@ -22,6 +22,7 @@ COPY --chown=node:node . .
 RUN npm run build -- --configuration production && npm run build:microfrontend
 
 # Servir los archivos compilados y redirigir la API al backend.
+# La imagen final se mantiene sin privilegios para el proceso de Nginx.
 FROM nginxinc/nginx-unprivileged:stable-alpine
 # Actualizar los paquetes del runtime antes de volver al usuario sin privilegios.
 # Los modulos incluidos por la imagen base fijan una version antigua de nginx;
