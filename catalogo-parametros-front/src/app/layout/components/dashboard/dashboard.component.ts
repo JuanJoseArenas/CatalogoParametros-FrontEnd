@@ -6,35 +6,29 @@ import { RouterLink } from '@angular/router';
   imports: [RouterLink],
   template: `
     <div class="dashboard">
-      <div class="header">
-        <h1>Dashboard</h1>
-        <p>Bienvenido al sistema de gestión del catálogo de parámetros</p>
-      </div>
+      <section class="header">
+        <div class="eyebrow">Universidad Católica de Oriente · UCO</div>
+        <h1>Catálogo de Parámetros</h1>
+        <p>Administra la información que articula las aplicaciones, funcionalidades y ambientes de la Universidad.</p>
+        <div class="hero-actions">
+          <a routerLink="/parametros" class="btn btn-warning">Gestionar parámetros</a>
+          <a routerLink="/consulta-parametros" class="btn btn-secondary">Consultar configuración</a>
+        </div>
+      </section>
+
       <div class="stats-grid">
-        <div class="stat-card"><div class="stat-icon" aria-hidden="true">🔎</div><div class="stat-info"><h3>Consulta de parámetros</h3><p>Consulta parámetros de una aplicación y ambiente mediante un token.</p></div><a routerLink="/consulta-parametros" class="btn btn-primary">Consultar</a></div>
-        <div class="stat-card"><div class="stat-icon" aria-hidden="true">🔑</div><div class="stat-info"><h3>Tokens</h3><p>Crea tokens y administra su acceso a parámetros.</p></div><a routerLink="/tokens" class="btn btn-primary">Ver</a></div>
-        <div class="stat-card"><div class="stat-icon" aria-hidden="true">🏢</div><div class="stat-info"><h3>Organizaciones</h3><p>Gestiona las organizaciones del sistema.</p></div><a routerLink="/organizaciones" class="btn btn-primary">Ver</a></div>
-        <div class="stat-card"><div class="stat-icon" aria-hidden="true">📱</div><div class="stat-info"><h3>Aplicaciones</h3><p>Administra las aplicaciones.</p></div><a routerLink="/aplicaciones" class="btn btn-primary">Ver</a></div>
-        <div class="stat-card"><div class="stat-icon" aria-hidden="true">📦</div><div class="stat-info"><h3>Módulos</h3><p>Gestiona los módulos de las aplicaciones.</p></div><a routerLink="/modulos" class="btn btn-primary">Ver</a></div>
-        <div class="stat-card"><div class="stat-icon" aria-hidden="true">⚙️</div><div class="stat-info"><h3>Funcionalidades</h3><p>Administra las funcionalidades.</p></div><a routerLink="/funcionalidades" class="btn btn-primary">Ver</a></div>
-        <div class="stat-card"><div class="stat-icon" aria-hidden="true">🔧</div><div class="stat-info"><h3>Parámetros</h3><p>Gestiona los parámetros del sistema.</p></div><a routerLink="/parametros" class="btn btn-primary">Ver</a></div>
-        <div class="stat-card"><div class="stat-icon" aria-hidden="true">💿</div><div class="stat-info"><h3>Metadatos</h3><p>Administra los metadatos.</p></div><a routerLink="/metadatos" class="btn btn-primary">Ver</a></div>
-        <div class="stat-card"><div class="stat-icon" aria-hidden="true">🔗</div><div class="stat-info"><h3>Metadatos por ambiente</h3><p>Relaciona parámetros, ambientes y estados de metadato.</p></div><a routerLink="/metadatos-ambiente" class="btn btn-primary">Ver</a></div>
+        <div class="stat-card"><span class="stat-kicker">01 · CONSULTA</span><div class="stat-icon">Q</div><div class="stat-info"><h3>Consulta de parámetros</h3><p>Consulta parámetros de una aplicación y ambiente mediante un token.</p></div><a routerLink="/consulta-parametros" class="btn btn-primary">Consultar</a></div>
+        <div class="stat-card"><span class="stat-kicker">02 · ACCESO</span><div class="stat-icon">T</div><div class="stat-info"><h3>Tokens</h3><p>Crea y administra las credenciales de acceso a parámetros.</p></div><a routerLink="/tokens" class="btn btn-primary">Administrar</a></div>
+        <div class="stat-card"><span class="stat-kicker">03 · ESTRUCTURA</span><div class="stat-icon">O</div><div class="stat-info"><h3>Organizaciones</h3><p>Gestiona las organizaciones que hacen parte del catálogo.</p></div><a routerLink="/organizaciones" class="btn btn-primary">Ver organizaciones</a></div>
+        <div class="stat-card"><span class="stat-kicker">04 · ESTRUCTURA</span><div class="stat-icon">A</div><div class="stat-info"><h3>Aplicaciones</h3><p>Administra las aplicaciones consumidoras de la plataforma.</p></div><a routerLink="/aplicaciones" class="btn btn-primary">Ver aplicaciones</a></div>
+        <div class="stat-card"><span class="stat-kicker">05 · ESTRUCTURA</span><div class="stat-icon">M</div><div class="stat-info"><h3>Módulos</h3><p>Organiza los módulos funcionales de cada aplicación.</p></div><a routerLink="/modulos" class="btn btn-primary">Ver módulos</a></div>
+        <div class="stat-card"><span class="stat-kicker">06 · ESTRUCTURA</span><div class="stat-icon">F</div><div class="stat-info"><h3>Funcionalidades</h3><p>Administra las funcionalidades asociadas a los módulos.</p></div><a routerLink="/funcionalidades" class="btn btn-primary">Ver funcionalidades</a></div>
+        <div class="stat-card"><span class="stat-kicker">07 · CONFIGURACIÓN</span><div class="stat-icon">P</div><div class="stat-info"><h3>Parámetros</h3><p>Gestiona los parámetros que consumen las aplicaciones.</p></div><a routerLink="/parametros" class="btn btn-primary">Ver parámetros</a></div>
+        <div class="stat-card"><span class="stat-kicker">08 · CONFIGURACIÓN</span><div class="stat-icon">D</div><div class="stat-info"><h3>Metadatos</h3><p>Administra los valores y descripciones asociados a los parámetros.</p></div><a routerLink="/metadatos" class="btn btn-primary">Ver metadatos</a></div>
+        <div class="stat-card"><span class="stat-kicker">09 · AMBIENTES</span><div class="stat-icon">E</div><div class="stat-info"><h3>Metadatos por ambiente</h3><p>Relaciona parámetros, ambientes y estados de metadato.</p></div><a routerLink="/metadatos-ambiente" class="btn btn-primary">Ver relaciones</a></div>
       </div>
     </div>
   `,
-  changeDetection: ChangeDetectionStrategy.Eager,
-  styles: [`
-    .dashboard { max-width: 1200px; margin: 0 auto; }
-    .header { margin-bottom: 32px; }
-    .header h1 { font-size: 2rem; font-weight: 700; color: #0f172a; }
-    .header p { color: #64748b; font-weight: 500; }
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
-    .stat-card { background: white; border-radius: 14px; padding: 24px; box-shadow: 0 1px 3px rgba(0, 0, 0, .04), 0 1px 2px rgba(0, 0, 0, .06); display: flex; flex-direction: column; gap: 14px; border: 1px solid #f1f5f9; transition: transform .2s ease, box-shadow .2s ease; }
-    .stat-card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0, 0, 0, .08), 0 2px 6px rgba(0, 0, 0, .04); }
-    .stat-icon { font-size: 2.2rem; width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%); border-radius: 14px; }
-    .stat-info h3 { font-size: 1.05rem; font-weight: 700; color: #0f172a; margin-bottom: 4px; }
-    .stat-info p { font-size: .85rem; color: #64748b; font-weight: 500; }
-  `]
+  changeDetection: ChangeDetectionStrategy.Eager
 })
 export class DashboardComponent {}

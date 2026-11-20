@@ -59,6 +59,28 @@ describe('API embebida por aplicación', () => {
     api.eliminar('parametros', 'id').subscribe();
     const eliminar = http.expectOne(root + '/parametros/id'); expect(eliminar.request.method).toBe('DELETE'); eliminar.flush({ mensajes: [] });
   });
+  it('administra tokens, ambientes y consulta parámetros con Bearer', () => {
+    api.tokens().subscribe(value => expect(value.length).toBe(1));
+    http.expectOne('http://localhost:8080/catalogo-parametros/api/v1/tokens').flush({ tokens: [{ id: 't1', aplicacionId: APP_ID }, { id: 't2', aplicacionId: 'otra' }] });
+    api.estadosToken().subscribe(value => expect(value[0].estado).toBe('Activo'));
+    http.expectOne('http://localhost:8080/catalogo-parametros/api/v1/estados-token').flush({ estadosToken: [{ id: 'a', estado: 'Activo' }] });
+    api.ambientes().subscribe(value => expect(value[0].nombre).toBe('Desarrollo'));
+    http.expectOne('http://localhost:8080/catalogo-parametros/api/v1/ambientes?page=1&pageSize=10000').flush({ ambientes: [{ id: 'd', nombre: 'Desarrollo' }] });
+    api.crearToken({ token: 's', estadoToken: 'a', aplicacionId: APP_ID, ambienteId: 'd', fechaExpiracion: null }).subscribe();
+    const crear = http.expectOne('http://localhost:8080/catalogo-parametros/api/v1/tokens'); expect(crear.request.method).toBe('POST'); crear.flush({ mensajes: [], tokens: [] });
+    api.actualizarEstadoToken('t1', 'a').subscribe();
+    const estado = http.expectOne('http://localhost:8080/catalogo-parametros/api/v1/tokens/t1/estado'); expect(estado.request.method).toBe('PATCH'); estado.flush({ mensajes: [], tokens: [] });
+    api.validarToken('t1', 's').subscribe(value => expect(value).toBeTrue());
+    http.expectOne('http://localhost:8080/catalogo-parametros/api/v1/tokens/t1/validar').flush({ valido: true });
+    api.consultarParametrosPorToken('t1', 's').subscribe();
+    const consulta = http.expectOne('http://localhost:8080/catalogo-parametros/api/v1/tokens/t1/parametros'); expect(consulta.request.headers.get('Authorization')).toBe('Bearer s'); consulta.flush({ aplicacion: null, ambiente: null, parametros: [] });
+  });
+  it('trata los 401 de validación y consulta como rechazo del token', () => {
+    api.validarToken('t1', 's').subscribe(value => expect(value).toBeFalse());
+    http.expectOne('http://localhost:8080/catalogo-parametros/api/v1/tokens/t1/validar').flush({}, { status: 401, statusText: 'Unauthorized' });
+    api.consultarParametrosPorToken('t1', 's').subscribe({ error: (error: Error) => expect(error.message).toContain('no es válido') });
+    http.expectOne('http://localhost:8080/catalogo-parametros/api/v1/tokens/t1/parametros').flush({}, { status: 401, statusText: 'Unauthorized' });
+  });
   it('avisa al host cuando falta sesión y conserva el control de permisos del servidor', () => {
     api.consultar().subscribe({ error: (error: Error) => expect(error.message).toContain('sesión') });
     http.expectOne(root).flush({}, { status: 401, statusText: 'Unauthorized' }); expect(login).toHaveBeenCalledTimes(1);

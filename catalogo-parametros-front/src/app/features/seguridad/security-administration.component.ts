@@ -59,7 +59,7 @@ export class SecurityAdministrationComponent implements AfterViewInit, OnDestroy
         ...(this.config.applicationId ? { applicationId: this.config.applicationId } : {}),
         apiBaseUrl: this.config.pdpUrl,
         allowApplicationLifecycleManagement: false,
-        theme: { accent: '#116149', fontFamily: 'Inter, sans-serif', radius: '12px' }
+        theme: { accent: '#008b50', fontFamily: '"Nimbus Sans L", "Helvetica Neue", Arial, sans-serif', radius: '6px' }
       });
     } catch {
       if (!this.destroyed) this.error.set('No fue posible cargar la administración de seguridad. Comprueba la conexión e intenta nuevamente.');

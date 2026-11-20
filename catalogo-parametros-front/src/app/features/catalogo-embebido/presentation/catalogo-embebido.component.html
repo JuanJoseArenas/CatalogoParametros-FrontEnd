@@ -2,12 +2,23 @@
   <p role="status"><small>{{ conectado() ? 'Cambios en tiempo real conectados' : 'Reconectando eventos; actualización periódica disponible' }}</small></p>
   @if (cambiosPendientes() && editor()) { <p class="notice">Hay cambios externos pendientes. Se actualizarán al cerrar el formulario para conservar su edición.</p> }
   <header class="catalogo-header">
-    <div><span class="eyebrow">CATÁLOGO DE PARÁMETROS</span><h2>Gestión de parámetros</h2><p>Gestiona la configuración de tu aplicación.</p></div>
+    <div class="header-copy">
+      <div class="brand-lockup"><span class="brand-logo" role="img" aria-label="Universidad Católica de Oriente"></span></div>
+      <span class="eyebrow">CATÁLOGO DE PARÁMETROS</span>
+      <h2>Gestión de parámetros</h2>
+      <p>Gestiona la configuración de tu aplicación.</p>
+    </div>
     <button type="button" class="secondary" [disabled]="loading() || busy()" (click)="actualizar()">{{ loading() ? 'Actualizando…' : 'Actualizar' }}</button>
   </header>
+  <nav class="workspace-tabs" aria-label="Administración de la aplicación">
+    <button type="button" [class.selected]="vista() === 'catalogo'" [attr.aria-pressed]="vista() === 'catalogo'" (click)="elegirVista('catalogo')">Catálogo</button>
+    <button type="button" [class.selected]="vista() === 'tokens'" [attr.aria-pressed]="vista() === 'tokens'" (click)="elegirVista('tokens')">Tokens</button>
+    <button type="button" [class.selected]="vista() === 'consulta'" [attr.aria-pressed]="vista() === 'consulta'" (click)="elegirVista('consulta')">Consulta por token</button>
+  </nav>
   @if (error()) { <p class="notice error" role="alert">{{ error() }}</p> }
   @if (success()) { <p class="notice success" role="status">{{ success() }}</p> }
   @if (loading() && !datos()) { <p role="status" class="empty">Cargando la configuración…</p> }
+  @if (vista() === 'catalogo') {
   @if (datos(); as catalogo) {
     @if (!appDisponible()) { <p class="notice">La aplicación está inactiva o fuera de vigencia. Puede consultar su configuración; las operaciones se validan en el servidor.</p> }
     <nav class="tabs" aria-label="Secciones de parámetros">
@@ -63,4 +74,8 @@
       </form>
     </section></div>
   }
+  }
+  @if (vista() === 'tokens') { <uco-catalogo-tokens /> }
+  @if (vista() === 'consulta') { <uco-catalogo-consulta /> }
+  <footer class="catalogo-footer"><strong>A la Verdad, por la Fe y la Ciencia</strong><span>UCO · {{ anioVigente }}</span></footer>
 </section>

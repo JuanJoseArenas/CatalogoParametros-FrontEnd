@@ -1,0 +1,18 @@
+<section class="embedded-panel" aria-labelledby="consulta-embedded-title">
+  <div class="embedded-panel-heading"><div><span class="eyebrow">CONSUMO AUTORIZADO</span><h3 id="consulta-embedded-title">Consulta de parámetros</h3><p>Consulta la configuración autorizada para el ambiente asociado al token.</p></div><button type="button" class="secondary" [disabled]="loading() || busy()" (click)="cargar()">Actualizar tokens</button></div>
+  @if (error()) { <p class="notice error" role="alert">{{ error() }}</p> }
+  <form class="query-card" [formGroup]="form" (ngSubmit)="consultar()">
+    <label>Token<select formControlName="tokenId" (change)="limpiar()"><option value="">Seleccione un token</option>@for (token of tokens(); track token.id) { <option [value]="token.id">{{ token.id }}</option> }</select></label>
+    <label>Secreto del token<input type="password" autocomplete="off" formControlName="secreto"></label>
+    <div class="actions"><button type="submit" [disabled]="loading() || busy() || form.invalid">{{ busy() ? 'Consultando…' : 'Consultar parámetros' }}</button><button type="button" class="secondary" [disabled]="busy()" (click)="limpiar()">Limpiar</button></div>
+    @if (loading()) { <p class="empty" role="status">Cargando tokens…</p> } @else if (!tokens().length) { <p class="empty">No hay tokens disponibles para esta aplicación.</p> }
+  </form>
+  @if (resultado(); as result) {
+    <section class="result-summary" aria-label="Resumen de la consulta"><div><span>Aplicación</span><strong>{{ result.aplicacion?.nombre ?? 'Sin información' }}</strong></div><div><span>Ambiente</span><strong>{{ result.ambiente?.nombre ?? 'Sin información' }}</strong></div><div><span>Parámetros</span><strong>{{ result.parametros.length }}</strong></div></section>
+    <div class="table-scroll"><table><thead><tr><th>Parámetro</th><th>Estado</th><th>Tipo</th><th>Valor</th></tr></thead><tbody>
+      @for (detail of result.parametros; track detail.parametro.id) { <tr><td><strong>{{ detail.parametro.nombre }}</strong><small>{{ detail.modulo?.nombre ?? 'Sin módulo' }} · {{ detail.funcionalidad?.nombre ?? 'Sin funcionalidad' }}</small></td><td><span class="badge" [class.inactive]="!detail.parametro.activo">{{ detail.parametro.activo ? 'Activo' : 'Inactivo' }}</span></td><td>{{ detail.tipoParametro?.tipo ?? detail.tipoParametro?.nombre ?? 'Sin tipo' }}</td><td><code>{{ valor(detail.parametro.valor) }}</code></td></tr> }
+      @empty { <tr><td colspan="4" class="empty">El token no tiene parámetros autorizados.</td></tr> }
+    </tbody></table></div>
+    @for (detail of result.parametros; track detail.parametro.id) { <details class="parameter-detail"><summary>{{ detail.parametro.nombre }} · detalles completos</summary><dl><dt>Módulo</dt><dd>{{ detail.modulo?.nombre ?? 'Sin información' }}</dd><dt>Funcionalidad</dt><dd>{{ detail.funcionalidad?.nombre ?? 'Sin información' }}</dd><dt>Metadatos</dt><dd>{{ detail.metadatos?.length ?? 0 }}</dd><dt>Estado del ambiente</dt><dd>{{ detail.configuracionAmbiente?.estado?.nombre ?? 'Sin asociación' }}</dd></dl></details> }
+  }
+</section>

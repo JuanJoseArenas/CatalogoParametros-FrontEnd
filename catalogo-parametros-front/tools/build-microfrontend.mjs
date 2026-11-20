@@ -15,7 +15,10 @@ if (compiled.status !== 0) process.exit(compiled.status ?? 1);
 const aot = resolve(root, '.angular/microfrontend-aot/microfrontend');
 const output = resolve(root, 'dist/parametros-ui');
 await mkdir(output, { recursive: true });
-await copyFile(resolve(root, 'src/microfrontend/styles.css'), resolve(aot, 'styles.css'));
+const logoDataUri = `data:image/png;base64,${(await readFile(resolve(root, 'src/assets/logo-uco.png'))).toString('base64')}`;
+const microfrontendStyles = (await readFile(resolve(root, 'src/microfrontend/styles.css'), 'utf8'))
+  .replace('__UCO_LOGO_DATA_URI__', logoDataUri);
+await writeFile(resolve(aot, 'styles.css'), microfrontendStyles);
 await build({
   absWorkingDir: root, entryPoints: [resolve(aot, 'public-api.js')],
   outfile: resolve(output, 'parametros-administration.js'),
@@ -39,6 +42,8 @@ await build({
 });
 await copyFile(resolve(aot, 'types.d.ts'), resolve(output, 'types.d.ts'));
 await copyFile(resolve(aot, 'public-api.d.ts'), resolve(output, 'parametros-administration.d.ts'));
+await mkdir(resolve(output, 'assets'), { recursive: true });
+await copyFile(resolve(root, 'src/assets/logo-uco.png'), resolve(output, 'assets/logo-uco.png'));
 await writeFile(resolve(output, 'manifest.json'), JSON.stringify({
   name: 'uco-parametros-administration', version: '1.0.0', entry: 'parametros-administration.js', types: 'parametros-administration.d.ts'
 }, null, 2) + '\n');
