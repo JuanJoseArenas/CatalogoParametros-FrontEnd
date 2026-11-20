@@ -17,6 +17,6 @@ describe('AppComponent', () => {
 
   it('define el nombre del catálogo', () => {
     const fixture = TestBed.createComponent(AppComponent);
-    expect(fixture.componentInstance.title).toBe('Catálogo de Parámetros');
+    expect(fixture.componentInstance.title).toBe('Catálogo de Parámetros UCO');
   });
 });

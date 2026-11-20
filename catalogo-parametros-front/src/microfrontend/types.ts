@@ -2,7 +2,7 @@ export interface ParametrosUiTheme { accent?: string; fontFamily?: string; radiu
 export type ParametrosUiResource = 'modulos' | 'funcionalidades' | 'parametros' | 'metadatos' | 'metadatos-ambiente';
 export interface ParametrosUiChange {
   applicationId: string;
-  resource: ParametrosUiResource | 'aplicaciones' | 'ambientes';
+  resource: ParametrosUiResource | 'aplicaciones' | 'ambientes' | 'tokens';
   operation: 'created' | 'updated' | 'deleted';
   id?: string;
 }

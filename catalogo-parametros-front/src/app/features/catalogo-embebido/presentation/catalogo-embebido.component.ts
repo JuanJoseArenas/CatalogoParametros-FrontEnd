@@ -8,10 +8,12 @@ import { disponibleParaUso } from '../../../shared/utils/disponibilidad';
 import { fechaConZona, fechaLocalValida, fechaParaFormulario } from '../../../shared/utils/date.utils';
 import type { CatalogoAplicacion, RegistroEditable, SolicitudCatalogo } from '../domain/catalogo-aplicacion';
 import { CambioCatalogo, HttpCatalogoAplicacionService } from '../infrastructure/http-catalogo-aplicacion.service';
+import { CatalogoConsultaComponent } from './catalogo-consulta.component';
+import { CatalogoTokensComponent } from './catalogo-tokens.component';
 
 @Component({
   selector: 'uco-catalogo-embebido',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, CatalogoTokensComponent, CatalogoConsultaComponent],
   templateUrl: './catalogo-embebido.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -29,6 +31,8 @@ export class CatalogoEmbebidoComponent implements OnInit, OnDestroy {
   readonly editingId = signal<string | undefined>(undefined);
   readonly borrarId = signal<string | null>(null);
   readonly busqueda = signal('');
+  readonly vista = signal<'catalogo' | 'tokens' | 'consulta'>('catalogo');
+  readonly anioVigente = new Date().getFullYear();
   readonly conectado = signal(false);
   readonly cambiosPendientes = signal(false);
   readonly tabs: ReadonlyArray<{ id: ParametrosUiResource; label: string }> = [
@@ -115,6 +119,7 @@ export class CatalogoEmbebidoComponent implements OnInit, OnDestroy {
   }
   actualizar() { void this.refresh().catch(() => undefined); }
   elegir(resource: ParametrosUiResource) { if (!this.busy()) { this.recurso.set(resource); this.cerrar(); this.busqueda.set(''); this.borrarId.set(null); } }
+  elegirVista(vista: 'catalogo' | 'tokens' | 'consulta') { if (!this.busy()) { this.vista.set(vista); this.cerrar(); this.borrarId.set(null); } }
   nombre(item: RegistroEditable): string {
     const data = this.datos();
     if (item.nombre) return item.nombre;
