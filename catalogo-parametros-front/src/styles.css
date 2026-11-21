@@ -46,6 +46,9 @@ a { color: inherit; }
 .topbar-context { color: var(--muted); font-size: 0.82rem; font-weight: 600; }
 .topbar-status { display: inline-flex; align-items: center; gap: 8px; color: var(--uco-green-dark); font-size: 0.82rem; font-weight: 700; }
 .topbar-status::before { width: 8px; height: 8px; display: inline-block; border-radius: 50%; background: var(--uco-green); box-shadow: 0 0 0 4px rgba(0, 139, 80, 0.12); content: ""; }
+.avisos-estado { padding: 8px clamp(20px, 4vw, 58px); color: #a23a35; background: #fff7f5; border-bottom: 1px solid #f1d8d3; font-size: .78rem; font-weight: 700; }
+.avisos-estado.conectado { color: #16734c; background: #f0fbf5; border-bottom-color: #c9ead7; }
+.avisos-tiempo-real { margin: 16px clamp(20px, 4vw, 58px) 0; padding: 12px 16px; color: #175b4a; background: #eefaf5; border: 1px solid #c9ead7; border-radius: 8px; font-size: .84rem; font-weight: 650; }
 
 /* Navegación institucional */
 .sidebar {

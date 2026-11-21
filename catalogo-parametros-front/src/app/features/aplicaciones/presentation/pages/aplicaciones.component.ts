@@ -1,12 +1,17 @@
-import { Component, OnInit, OnDestroy, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, Optional } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { FormsModule } from '@angular/forms';
+import { ReactiveFormsModule } from '@angular/forms';
 import { EventStreamService } from '../../../../core/realtime/event-stream.service';
 import { Aplicacion } from '../../domain/aplicacion';
 import { AplicacionesRepository } from '../../domain/aplicaciones.repository';
 import { Organizacion } from '../../../organizaciones/domain/organizacion';
 import { OrganizacionesRepository } from '../../../organizaciones/domain/organizaciones.repository';
+import { Ambiente } from '../../../ambientes/domain/ambiente';
+import { AmbientesRepository } from '../../../ambientes/domain/ambientes.repository';
+import { IdentidadServicio } from '../../../identidades-servicio/domain/identidad-servicio';
+import { IdentidadesServicioRepository } from '../../../identidades-servicio/domain/identidades-servicio.repository';
 import { fechaConZona, fechaParaFormulario, mostrarFechaLocal, fechaLocalValida } from '../../../../shared/utils/date.utils';
 import { ConnectionStatusComponent } from '../../../../shared/ui/connection-status/connection-status.component';
 import { PageMessagesComponent } from '../../../../shared/ui/page-messages/page-messages.component';
@@ -17,7 +22,7 @@ import { ordenarPorNombre } from '../../../../shared/utils/ordenar-por-texto';
 
 @Component({
     selector: 'app-aplicaciones',
-    imports: [CommonModule, FormsModule, ConnectionStatusComponent, PageMessagesComponent, PaginationComponent, RelatedEntityFormComponent],
+    imports: [CommonModule, FormsModule, ReactiveFormsModule, ConnectionStatusComponent, PageMessagesComponent, PaginationComponent, RelatedEntityFormComponent],
     template: `
     <div class="aplicaciones">
       <div class="page-header">
@@ -73,6 +78,7 @@ import { ordenarPorNombre } from '../../../../shared/utils/ordenar-por-texto';
                         <button class="btn btn-secondary btn-sm" (click)="changeStatus(app)">
                           {{ app.activa ? 'Desactivar' : 'Activar' }}
                         </button>
+                        <button class="btn btn-secondary btn-sm" (click)="openServiceIdentities(app)">Identidad de servicio</button>
                         <button class="btn btn-danger btn-sm" (click)="deleteAplicacion(app.id)">Eliminar</button>
                       </div>
                     </td>
@@ -112,6 +118,69 @@ import { ordenarPorNombre } from '../../../../shared/utils/ordenar-por-texto';
         (save)="saveAplicacion()" (cancel)="closeModal()"
       />
     }
+
+    @if (showServiceIdentityModal && selectedAplicacion) {
+      <div class="modal-overlay" (click)="closeServiceIdentityModalOnOverlay($event)">
+        <div class="modal service-identity-modal" role="dialog" aria-modal="true" aria-labelledby="service-identity-title">
+          <div class="modal-header">
+            <h3 class="modal-title" id="service-identity-title">Identidad de servicio · {{ selectedAplicacion.nombre }}</h3>
+            <button class="modal-close" type="button" (click)="closeServiceIdentityModal()">&times;</button>
+          </div>
+          <div class="modal-body">
+            <app-page-messages [error]="identityErrorMessage" [success]="identitySuccessMessage" />
+            <p class="field-help">Asocie el <code>client_id</code> creado en Seguridad al ambiente que consume esta aplicación. El secreto no se guarda aquí.</p>
+            <form [formGroup]="identityForm" (ngSubmit)="registerServiceIdentity()">
+              <div class="form-group">
+                <label class="form-label" for="identity-environment">Ambiente</label>
+                <select id="identity-environment" class="form-control" formControlName="idAmbiente">
+                  <option value="">Seleccione un ambiente</option>
+                  @for (ambiente of ambientes; track ambiente.id) {
+                    <option [value]="ambiente.id">{{ ambiente.nombre }}</option>
+                  }
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="identity-client-id">Client ID</label>
+                <input id="identity-client-id" class="form-control" formControlName="clientId"
+                       placeholder="svc-..." autocomplete="off">
+                <small class="field-help">Pegue únicamente el Client ID de Seguridad, no el Client Secret.</small>
+              </div>
+            </form>
+
+            <h4 class="service-identity-list-title">Identidades asociadas</h4>
+            @if (identityLoading) {
+              <div class="loading"><div class="spinner"></div></div>
+            } @else if (identidadesServicio.length === 0) {
+              <p class="field-help">Todavía no hay identidades asociadas a esta aplicación.</p>
+            } @else {
+              <div class="table-container">
+                <table>
+                  <thead>
+                    <tr><th>Ambiente</th><th>Client ID</th><th>Acción</th></tr>
+                  </thead>
+                  <tbody>
+                    @for (identity of identidadesServicio; track identity.id) {
+                      <tr>
+                        <td>{{ getAmbienteNombre(identity.idAmbiente) }}</td>
+                        <td><code>{{ identity.clientId }}</code></td>
+                        <td><button class="btn btn-danger btn-sm" type="button" (click)="removeServiceIdentity(identity)">Retirar</button></td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-secondary" type="button" (click)="closeServiceIdentityModal()">Cerrar</button>
+            <button class="btn btn-primary" type="button" (click)="registerServiceIdentity()"
+                    [disabled]="identityForm.invalid || identitySaving">
+              {{ identitySaving ? 'Guardando...' : 'Asociar identidad' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    }
     `,
     changeDetection: ChangeDetectionStrategy.Eager,
     styles: [`
@@ -119,19 +188,30 @@ import { ordenarPorNombre } from '../../../../shared/utils/ordenar-por-texto';
       max-width: 1200px;
       margin: 0 auto;
     }
+    .service-identity-modal { max-width: 760px; }
+    .service-identity-list-title { margin: 24px 0 12px; color: #0f5132; }
   `]
 })
 export class AplicacionesComponent implements OnInit, OnDestroy {
   aplicaciones: Aplicacion[] = [];
   organizaciones: Organizacion[] = [];
+  ambientes: Ambiente[] = [];
+  identidadesServicio: IdentidadServicio[] = [];
   loading = false;
   saving = false;
+  identityLoading = false;
+  identitySaving = false;
   showModal = false;
+  showServiceIdentityModal = false;
   isEditing = false;
   editingId: string | null = null;
+  selectedAplicacion: Aplicacion | null = null;
   errorMessage = '';
   successMessage = '';
+  identityErrorMessage = '';
+  identitySuccessMessage = '';
   aplicacionForm: FormGroup;
+  identityForm: FormGroup;
   searchTerm = '';
   isConnected = false;
   page = 1;
@@ -144,7 +224,10 @@ export class AplicacionesComponent implements OnInit, OnDestroy {
     return this.organizaciones.map(item => ({ id: item.id, name: item.nombre }));
   }
 
-  constructor(private repository: AplicacionesRepository, private organizacionesRepository: OrganizacionesRepository, private fb: FormBuilder, private eventStream: EventStreamService) {
+  constructor(private repository: AplicacionesRepository, private organizacionesRepository: OrganizacionesRepository,
+    private fb: FormBuilder, private eventStream: EventStreamService,
+    @Optional() private readonly ambientesRepository?: AmbientesRepository,
+    @Optional() private readonly identidadesRepository?: IdentidadesServicioRepository) {
     this.aplicacionForm = this.fb.group({
       nombre: ['', Validators.required],
       idOrganizacion: ['', Validators.required],
@@ -152,11 +235,16 @@ export class AplicacionesComponent implements OnInit, OnDestroy {
       fechaInicio: [''],
       fechaFinal: ['']
     });
+    this.identityForm = this.fb.group({
+      idAmbiente: ['', Validators.required],
+      clientId: ['', [Validators.required, Validators.pattern(/^[A-Za-z0-9][A-Za-z0-9._:@-]{0,254}$/)]]
+    });
   }
 
   ngOnInit(): void {
     this.loadAplicaciones();
     this.loadOrganizaciones();
+    this.loadAmbientes();
     this.connectSse();
   }
 
@@ -201,6 +289,98 @@ export class AplicacionesComponent implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Error al cargar organizaciones:', err);
+      }
+    });
+  }
+
+  loadAmbientes(): void {
+    if (!this.ambientesRepository) return;
+    this.ambientesRepository.findPage(1, 100).subscribe({
+      next: data => this.ambientes = ordenarPorNombre(data),
+      error: err => console.error('Error al cargar ambientes:', err)
+    });
+  }
+
+  openServiceIdentities(aplicacion: Aplicacion): void {
+    this.selectedAplicacion = aplicacion;
+    this.showServiceIdentityModal = true;
+    this.identityErrorMessage = '';
+    this.identitySuccessMessage = '';
+    this.identityForm.reset({ idAmbiente: '', clientId: '' });
+    this.loadServiceIdentities(aplicacion.id);
+  }
+
+  closeServiceIdentityModal(): void {
+    this.showServiceIdentityModal = false;
+    this.selectedAplicacion = null;
+    this.identidadesServicio = [];
+    this.identityForm.reset({ idAmbiente: '', clientId: '' });
+  }
+
+  closeServiceIdentityModalOnOverlay(event: Event): void {
+    if (event.target === event.currentTarget) this.closeServiceIdentityModal();
+  }
+
+  loadServiceIdentities(idAplicacion: string): void {
+    if (!this.identidadesRepository) return;
+    this.identityLoading = true;
+    this.identidadesRepository.findByAplicacion(idAplicacion).subscribe({
+      next: data => {
+        this.identidadesServicio = data;
+        this.identityLoading = false;
+      },
+      error: err => {
+        this.identityErrorMessage = err.message || 'Error al consultar las identidades de servicio.';
+        this.identityLoading = false;
+      }
+    });
+  }
+
+  getAmbienteNombre(idAmbiente: string): string {
+    const ambiente = this.ambientes.find(item => item.id === idAmbiente);
+    return ambiente ? ambiente.nombre : idAmbiente;
+  }
+
+  registerServiceIdentity(): void {
+    if (!this.selectedAplicacion || !this.identidadesRepository) return;
+    if (this.identityForm.invalid) {
+      this.identityErrorMessage = 'Seleccione el ambiente e ingrese un Client ID válido.';
+      return;
+    }
+    this.identitySaving = true;
+    this.identityErrorMessage = '';
+    this.identitySuccessMessage = '';
+    this.identidadesRepository.register(this.selectedAplicacion.id, {
+      idAmbiente: this.identityForm.value.idAmbiente,
+      clientId: this.identityForm.value.clientId.trim()
+    }).subscribe({
+      next: response => {
+        this.identitySuccessMessage = response.mensajes?.[0] || 'Identidad de servicio asociada correctamente.';
+        this.identitySaving = false;
+        this.identityForm.reset({ idAmbiente: '', clientId: '' });
+        this.loadServiceIdentities(this.selectedAplicacion!.id);
+      },
+      error: err => {
+        this.identityErrorMessage = err.message || 'Error al asociar la identidad de servicio.';
+        this.identitySaving = false;
+      }
+    });
+  }
+
+  removeServiceIdentity(identity: IdentidadServicio): void {
+    if (!this.selectedAplicacion || !this.identidadesRepository) return;
+    if (!confirm(`¿Retirar la identidad ${identity.clientId} de esta aplicación?`)) return;
+    this.identitySaving = true;
+    this.identityErrorMessage = '';
+    this.identidadesRepository.remove(this.selectedAplicacion.id, identity.clientId).subscribe({
+      next: response => {
+        this.identitySuccessMessage = response.mensajes?.[0] || 'Identidad de servicio retirada correctamente.';
+        this.identitySaving = false;
+        this.loadServiceIdentities(this.selectedAplicacion!.id);
+      },
+      error: err => {
+        this.identityErrorMessage = err.message || 'Error al retirar la identidad de servicio.';
+        this.identitySaving = false;
       }
     });
   }
