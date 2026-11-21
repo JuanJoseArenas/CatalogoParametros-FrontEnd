@@ -28,8 +28,6 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
         </ul>
         <div class="nav-heading">Integraciones</div>
         <ul class="nav-menu">
-          <li class="nav-item"><a routerLink="/tokens" routerLinkActive="active" class="nav-link"><span class="nav-icon" aria-hidden="true">T</span>Tokens</a></li>
-          <li class="nav-item"><a routerLink="/consulta-parametros" routerLinkActive="active" class="nav-link"><span class="nav-icon" aria-hidden="true">C</span>Consulta de parámetros</a></li>
           <li class="nav-item"><a routerLink="/mensajes" routerLinkActive="active" class="nav-link"><span class="nav-icon" aria-hidden="true">G</span>Mensajes</a></li>
           <li class="nav-item"><a routerLink="/seguridad" routerLinkActive="active" class="nav-link"><span class="nav-icon" aria-hidden="true">S</span>Seguridad</a></li>
         </ul>

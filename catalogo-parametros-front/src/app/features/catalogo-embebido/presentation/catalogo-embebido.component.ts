@@ -8,12 +8,10 @@ import { disponibleParaUso } from '../../../shared/utils/disponibilidad';
 import { fechaConZona, fechaLocalValida, fechaParaFormulario } from '../../../shared/utils/date.utils';
 import type { CatalogoAplicacion, RegistroEditable, SolicitudCatalogo } from '../domain/catalogo-aplicacion';
 import { CambioCatalogo, HttpCatalogoAplicacionService } from '../infrastructure/http-catalogo-aplicacion.service';
-import { CatalogoConsultaComponent } from './catalogo-consulta.component';
-import { CatalogoTokensComponent } from './catalogo-tokens.component';
 
 @Component({
   selector: 'uco-catalogo-embebido',
-  imports: [ReactiveFormsModule, CatalogoTokensComponent, CatalogoConsultaComponent],
+  imports: [ReactiveFormsModule],
   templateUrl: './catalogo-embebido.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
@@ -31,14 +29,13 @@ export class CatalogoEmbebidoComponent implements OnInit, OnDestroy {
   readonly editingId = signal<string | undefined>(undefined);
   readonly borrarId = signal<string | null>(null);
   readonly busqueda = signal('');
-  readonly vista = signal<'catalogo' | 'tokens' | 'consulta'>('catalogo');
   readonly anioVigente = new Date().getFullYear();
   readonly conectado = signal(false);
   readonly cambiosPendientes = signal(false);
   readonly tabs: ReadonlyArray<{ id: ParametrosUiResource; label: string }> = [
     { id: 'modulos', label: 'Módulos' }, { id: 'funcionalidades', label: 'Funcionalidades' },
     { id: 'parametros', label: 'Parámetros' }, { id: 'metadatos', label: 'Metadatos' },
-    { id: 'metadatos-ambiente', label: 'Por ambiente' }
+    { id: 'metadatos-ambiente', label: 'Metadatos por ambiente' }
   ];
   readonly form = new FormGroup({
     nombre: new FormControl('', { nonNullable: true }),
@@ -54,6 +51,7 @@ export class CatalogoEmbebidoComponent implements OnInit, OnDestroy {
   readonly tieneEstado = computed(() => ['modulos', 'funcionalidades', 'parametros'].includes(this.recurso()));
   readonly tieneFechas = computed(() => ['modulos', 'funcionalidades'].includes(this.recurso()));
   readonly appDisponible = computed(() => !!this.datos() && disponibleParaUso(this.datos()!.aplicacion));
+  readonly ambienteActual = computed(() => this.datos()?.ambientes[0]?.nombre ?? 'Todos los ambientes');
   readonly titulo = computed(() => this.tabs.find(t => t.id === this.recurso())!.label);
   readonly registros = computed<RegistroEditable[]>(() => {
     const data = this.datos(); if (!data) return [];
@@ -119,7 +117,6 @@ export class CatalogoEmbebidoComponent implements OnInit, OnDestroy {
   }
   actualizar() { void this.refresh().catch(() => undefined); }
   elegir(resource: ParametrosUiResource) { if (!this.busy()) { this.recurso.set(resource); this.cerrar(); this.busqueda.set(''); this.borrarId.set(null); } }
-  elegirVista(vista: 'catalogo' | 'tokens' | 'consulta') { if (!this.busy()) { this.vista.set(vista); this.cerrar(); this.borrarId.set(null); } }
   nombre(item: RegistroEditable): string {
     const data = this.datos();
     if (item.nombre) return item.nombre;
@@ -174,8 +171,8 @@ export class CatalogoEmbebidoComponent implements OnInit, OnDestroy {
       if (this.tieneEstado()) { data.nombre = v.nombre.trim(); data.activo = v.activo; }
       if (tipo === 'funcionalidades') data.idModulo = v.idPadre;
       if (tipo === 'parametros') { data.idFuncionalidad = v.idPadre; data.idTipoParametro = v.idTipo; }
-      if (tipo === 'metadatos') { data.idParametro = v.idPadre; data.idTipoMetadato = v.idTipo; data.idAmbiente = v.idAmbiente; data.valor = JSON.parse(v.valor) as unknown; }
-      if (tipo === 'metadatos-ambiente') { data.idParametro = v.idPadre; data.idAmbiente = v.idAmbiente; data.idEstadoMetadatoAmbiente = v.idEstado; }
+      if (tipo === 'metadatos') { data.idParametro = v.idPadre; data.idTipoMetadato = v.idTipo; data.idAmbiente = this.options.environmentId ?? v.idAmbiente; data.valor = JSON.parse(v.valor) as unknown; }
+      if (tipo === 'metadatos-ambiente') { data.idParametro = v.idPadre; data.idAmbiente = this.options.environmentId ?? v.idAmbiente; data.idEstadoMetadatoAmbiente = v.idEstado; }
       if (this.tieneFechas()) {
         if (!fechaLocalValida(v.fechaInicio) || !fechaLocalValida(v.fechaFinal)) throw new Error('Las fechas no son válidas.');
         data.fechaInicio = fechaConZona(v.fechaInicio, this.fechasOriginales.inicio);

@@ -9,16 +9,14 @@
       <p>Gestiona la configuración de tu aplicación.</p>
     </div>
     <button type="button" class="secondary" [disabled]="loading() || busy()" (click)="actualizar()">{{ loading() ? 'Actualizando…' : 'Actualizar' }}</button>
+      @if (ambienteActual() !== 'Todos los ambientes') { <p>Ambiente autorizado: <strong>{{ ambienteActual() }}</strong></p> }
   </header>
   <nav class="workspace-tabs" aria-label="Administración de la aplicación">
-    <button type="button" [class.selected]="vista() === 'catalogo'" [attr.aria-pressed]="vista() === 'catalogo'" (click)="elegirVista('catalogo')">Catálogo</button>
-    <button type="button" [class.selected]="vista() === 'tokens'" [attr.aria-pressed]="vista() === 'tokens'" (click)="elegirVista('tokens')">Tokens</button>
-    <button type="button" [class.selected]="vista() === 'consulta'" [attr.aria-pressed]="vista() === 'consulta'" (click)="elegirVista('consulta')">Consulta por token</button>
+    <button type="button" class="selected" aria-pressed="true">Catálogo</button>
   </nav>
   @if (error()) { <p class="notice error" role="alert">{{ error() }}</p> }
   @if (success()) { <p class="notice success" role="status">{{ success() }}</p> }
   @if (loading() && !datos()) { <p role="status" class="empty">Cargando la configuración…</p> }
-  @if (vista() === 'catalogo') {
   @if (datos(); as catalogo) {
     @if (!appDisponible()) { <p class="notice">La aplicación está inactiva o fuera de vigencia. Puede consultar su configuración; las operaciones se validan en el servidor.</p> }
     <nav class="tabs" aria-label="Secciones de parámetros">
@@ -29,13 +27,13 @@
       <div class="actions"><input type="search" aria-label="Buscar registros" placeholder="Buscar por nombre o ID" [value]="busqueda()" (input)="busqueda.set($any($event.target).value)"><button type="button" [disabled]="busy() || !appDisponible()" (click)="abrir()">+ Nuevo registro</button></div>
     </div>
     <div class="table-scroll"><table>
-      <thead><tr><th>Registro</th><th>Estado</th>@if (recurso() === 'metadatos') { <th>Valor</th> }<th>Acciones</th></tr></thead>
+      <thead><tr><th>Registro</th>@if (recurso() !== 'metadatos') { <th>Estado</th> }@if (recurso() === 'metadatos') { <th>Valor</th> }<th>Acciones</th></tr></thead>
       <tbody>
       @for (item of registros(); track item.id) {
-        <tr><td><strong>{{ nombre(item) }}</strong><small>{{ item.id }}</small></td><td><span class="badge" [class.inactive]="estado(item).toLowerCase() === 'inactivo'">{{ estado(item) }}</span></td>
+        <tr><td><strong>{{ nombre(item) }}</strong><small>{{ item.id }}</small></td>@if (recurso() !== 'metadatos') { <td><span class="badge" [class.inactive]="estado(item).toLowerCase() === 'inactivo'">{{ estado(item) }}</span></td> }
           @if (recurso() === 'metadatos') { <td><code>{{ resumen(item) }}</code></td> }
           <td><div class="actions"><button type="button" class="secondary compact" [disabled]="busy()" (click)="abrir(item)">Editar</button><button type="button" class="danger compact" [disabled]="busy()" (click)="borrarId.set(item.id)">Eliminar</button></div></td></tr>
-      } @empty { <tr><td colspan="4" class="empty">No hay registros en esta sección.</td></tr> }
+      } @empty { <tr><td [attr.colspan]="recurso() === 'metadatos' ? 3 : 4" class="empty">No hay registros en esta sección.</td></tr> }
       </tbody>
     </table></div>
   }
@@ -74,8 +72,5 @@
       </form>
     </section></div>
   }
-  }
-  @if (vista() === 'tokens') { <uco-catalogo-tokens /> }
-  @if (vista() === 'consulta') { <uco-catalogo-consulta /> }
   <footer class="catalogo-footer"><strong>A la Verdad, por la Fe y la Ciencia</strong><span>UCO · {{ anioVigente }}</span></footer>
 </section>

@@ -13,11 +13,9 @@ export const sessionInterceptor: HttpInterceptorFn = (request, next) => {
   const isApi = target.origin === api.origin &&
     (target.pathname === apiPath || target.pathname.startsWith(`${apiPath}/`));
   if (!isApi) return next(request);
-  const isTokenQuery = request.method === 'GET' &&
-    /^\/tokens\/[^/]+\/parametros$/.test(target.pathname.slice(apiPath.length));
   return next(request.clone({ withCredentials: true })).pipe(
     catchError((error: unknown) => {
-      if (error instanceof HttpErrorResponse && error.status === 401 && !isTokenQuery) redirectToLogin(config);
+      if (error instanceof HttpErrorResponse && error.status === 401) redirectToLogin(config);
       return throwError(() => error);
     })
   );
