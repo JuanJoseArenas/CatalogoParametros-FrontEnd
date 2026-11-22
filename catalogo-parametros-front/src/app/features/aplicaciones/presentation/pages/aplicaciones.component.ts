@@ -79,6 +79,10 @@ import { ordenarPorNombre } from '../../../../shared/utils/ordenar-por-texto';
                           {{ app.activa ? 'Desactivar' : 'Activar' }}
                         </button>
                         <button class="btn btn-secondary btn-sm" (click)="openServiceIdentities(app)">Identidad de servicio</button>
+                        <button class="btn btn-secondary btn-sm" type="button"
+                                (click)="copyApplicationId(app)"
+                                [attr.aria-label]="'Copiar ID de la aplicación ' + app.nombre"
+                                title="Copiar ID de la aplicación">Copiar ID</button>
                         <button class="btn btn-danger btn-sm" (click)="deleteAplicacion(app.id)">Eliminar</button>
                       </div>
                     </td>
@@ -419,6 +423,21 @@ export class AplicacionesComponent implements OnInit, OnDestroy {
   getOrganizacionNombre(id: string): string {
     const org = this.organizaciones.find(o => o.id === id);
     return org ? org.nombre : 'N/A';
+  }
+
+  copyApplicationId(aplicacion: Aplicacion): void {
+    const clipboard = navigator.clipboard;
+    if (!clipboard) {
+      this.errorMessage = 'El navegador no permite copiar el ID de la aplicación.';
+      return;
+    }
+
+    clipboard.writeText(aplicacion.id).then(() => {
+      this.errorMessage = '';
+      this.successMessage = `ID de aplicación copiado: ${aplicacion.id}`;
+    }).catch(() => {
+      this.errorMessage = 'No fue posible copiar el ID de la aplicación.';
+    });
   }
 
   openModal(): void {

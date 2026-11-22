@@ -74,4 +74,15 @@ describe('AplicacionesComponent', () => {
     component.saveAplicacion();
     expect(repository.create).not.toHaveBeenCalled();
   });
+
+  it('copia el ID de la aplicaciÃ³n al portapapeles', async () => {
+    const writeText = spyOn(navigator.clipboard, 'writeText').and.returnValue(Promise.resolve());
+    const aplicacion = { id: 'app-123', nombre: 'App', idOrganizacion: 'o1', activa: true };
+
+    component.copyApplicationId(aplicacion);
+    await Promise.resolve();
+
+    expect(writeText).toHaveBeenCalledWith('app-123');
+    expect(component.successMessage).toBe('ID de aplicaciÃ³n copiado: app-123');
+  });
 });
