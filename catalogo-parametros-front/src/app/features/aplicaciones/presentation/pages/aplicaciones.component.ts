@@ -428,16 +428,40 @@ export class AplicacionesComponent implements OnInit, OnDestroy {
   copyApplicationId(aplicacion: Aplicacion): void {
     const clipboard = navigator.clipboard;
     if (!clipboard) {
-      this.errorMessage = 'El navegador no permite copiar el ID de la aplicación.';
+      this.copyUsingDocumentCommand(aplicacion.id);
       return;
     }
-
     clipboard.writeText(aplicacion.id).then(() => {
       this.errorMessage = '';
       this.successMessage = `ID de aplicación copiado: ${aplicacion.id}`;
     }).catch(() => {
       this.errorMessage = 'No fue posible copiar el ID de la aplicación.';
     });
+  }
+
+  private copyUsingDocumentCommand(id: string): void {
+    const textarea = document.createElement('textarea');
+    textarea.value = id;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+
+    let copied = false;
+    try {
+      copied = document.execCommand('copy');
+    } catch {
+      copied = false;
+    }
+    document.body.removeChild(textarea);
+
+    if (copied) {
+      this.errorMessage = '';
+      this.successMessage = `ID de aplicación copiado: ${id}`;
+    } else {
+      this.errorMessage = 'No fue posible copiar el ID de la aplicación.';
+    }
   }
 
   openModal(): void {

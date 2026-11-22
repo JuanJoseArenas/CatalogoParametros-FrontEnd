@@ -76,13 +76,41 @@ describe('AplicacionesComponent', () => {
   });
 
   it('copia el ID de la aplicaciÃ³n al portapapeles', async () => {
-    const writeText = spyOn(navigator.clipboard, 'writeText').and.returnValue(Promise.resolve());
+    const clipboard = navigator.clipboard;
+    const writeText = jasmine.createSpy('writeText').and.returnValue(Promise.resolve());
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
     const aplicacion = { id: 'app-123', nombre: 'App', idOrganizacion: 'o1', activa: true };
 
     component.copyApplicationId(aplicacion);
     await Promise.resolve();
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: clipboard });
 
     expect(writeText).toHaveBeenCalledWith('app-123');
-    expect(component.successMessage).toBe('ID de aplicaciÃ³n copiado: app-123');
+    expect(component.successMessage).toBe('ID de aplicación copiado: app-123');
+  });
+
+  it('usa el respaldo del documento cuando Clipboard API no está disponible', () => {
+    const clipboard = navigator.clipboard;
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: undefined });
+    spyOn(document, 'execCommand').and.returnValue(true);
+
+    component.copyApplicationId({ id: 'app-456', nombre: 'App', idOrganizacion: 'o1', activa: true });
+
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: clipboard });
+
+    expect(document.execCommand).toHaveBeenCalledWith('copy');
+    expect(component.successMessage).toBe('ID de aplicación copiado: app-456');
+  });
+
+  it('informa error cuando falla el respaldo del documento', () => {
+    const clipboard = navigator.clipboard;
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: undefined });
+    spyOn(document, 'execCommand').and.returnValue(false);
+
+    component.copyApplicationId({ id: 'app-789', nombre: 'App', idOrganizacion: 'o1', activa: true });
+
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: clipboard });
+
+    expect(component.errorMessage).toBe('No fue posible copiar el ID de la aplicación.');
   });
 });
