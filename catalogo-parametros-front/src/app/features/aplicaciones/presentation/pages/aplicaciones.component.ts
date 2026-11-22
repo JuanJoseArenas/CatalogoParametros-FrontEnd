@@ -425,6 +425,7 @@ export class AplicacionesComponent implements OnInit, OnDestroy {
     return org ? org.nombre : 'N/A';
   }
 
+  // Mantener esta acción disponible desde la tabla de aplicaciones.
   copyApplicationId(aplicacion: Aplicacion): void {
     const clipboard = navigator.clipboard;
     if (!clipboard) {
