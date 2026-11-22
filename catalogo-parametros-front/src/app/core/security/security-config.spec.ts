@@ -1,5 +1,17 @@
 import { loadSecurityConfig, trustedPdpUrl } from './security-config';
 
+describe('Politica HTTPS', () => {
+  it('rechaza destinos HTTP cuando la pagina esta en HTTPS', async () => {
+    const config = {
+      pdpUrl: 'http://localhost:18080',
+      securityUiUrl: '/security-ui/security-administration.js',
+      applicationName: 'Catalogo'
+    };
+    spyOn(window, 'fetch').and.resolveTo(new Response(JSON.stringify(config), { status: 200 }));
+    await expectAsync(loadSecurityConfig('https:')).toBeRejectedWithError(/HTTPS/);
+  });
+});
+
 describe('Configuración de seguridad', () => {
   const config = {
     pdpUrl: 'http://localhost:18080',

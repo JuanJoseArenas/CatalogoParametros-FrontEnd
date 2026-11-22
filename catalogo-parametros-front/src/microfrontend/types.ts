@@ -2,13 +2,14 @@ export interface ParametrosUiTheme { accent?: string; fontFamily?: string; radiu
 export type ParametrosUiResource = 'modulos' | 'funcionalidades' | 'parametros' | 'metadatos' | 'metadatos-ambiente';
 export interface ParametrosUiChange {
   applicationId: string;
-  resource: ParametrosUiResource | 'aplicaciones' | 'ambientes' | 'tokens';
+  resource: ParametrosUiResource | 'aplicaciones' | 'ambientes';
   operation: 'created' | 'updated' | 'deleted';
   id?: string;
 }
 export interface ParametrosUiOptions {
-  /** ID de la aplicación del catálogo, no el ID de la aplicación de seguridad ni del token. */
+  /** ID de la aplicación del catálogo; no es un secreto ni un client_id de Seguridad. */
   applicationId: string;
+  environmentId?: string;
   /** URL del API, incluida la ruta /catalogo-parametros/api/v1. */
   apiBaseUrl: string;
   /** Cero deshabilita la actualización periódica. Mínimo 30000; por defecto 60000. */

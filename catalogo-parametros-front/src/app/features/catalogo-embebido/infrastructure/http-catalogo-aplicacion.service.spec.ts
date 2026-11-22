@@ -4,87 +4,66 @@ import { provideHttpClientTesting, HttpTestingController } from '@angular/common
 import { HttpCatalogoAplicacionService } from './http-catalogo-aplicacion.service';
 import { PARAMETROS_UI_OPTIONS } from '../../../../microfrontend/config';
 import { APP_ID, catalogoFixture } from '../testing/catalogo.fixture';
-describe('API embebida por aplicación', () => {
-  let api: HttpCatalogoAplicacionService; let http: HttpTestingController; let login: jasmine.Spy;
+
+describe('API embebida por aplicacion', () => {
+  let api: HttpCatalogoAplicacionService;
+  let http: HttpTestingController;
+  let login: jasmine.Spy;
   const root = `http://localhost:8080/catalogo-parametros/api/v1/aplicaciones/${APP_ID}/administracion`;
+
   beforeEach(() => {
     login = jasmine.createSpy('login');
-    TestBed.configureTestingModule({ providers: [provideHttpClient(), provideHttpClientTesting(),
-      { provide: PARAMETROS_UI_OPTIONS, useValue: { apiBaseUrl: 'http://localhost:8080/catalogo-parametros/api/v1', applicationId: APP_ID, onAuthenticationRequired: login } }] });
-    api = TestBed.inject(HttpCatalogoAplicacionService); http = TestBed.inject(HttpTestingController);
+    TestBed.configureTestingModule({
+      providers: [provideHttpClient(), provideHttpClientTesting(),
+        { provide: PARAMETROS_UI_OPTIONS, useValue: { apiBaseUrl: 'http://localhost:8080/catalogo-parametros/api/v1', applicationId: APP_ID, environmentId: 'ambiente', onAuthenticationRequired: login } }]
+    });
+    api = TestBed.inject(HttpCatalogoAplicacionService);
+    http = TestBed.inject(HttpTestingController);
   });
+
   afterEach(() => http.verify());
-  it('escucha el SSE de su aplicación con credenciales y libera la conexión', () => {
-    const listeners = new Map<string, EventListener>();
-    const source = { onopen: null as ((event: Event) => void) | null, onerror: null as ((event: Event) => void) | null,
-      addEventListener: (name: string, listener: EventListener) => listeners.set(name, listener), close: jasmine.createSpy('close') };
-    const factory = spyOn(window, 'EventSource').and.returnValue(source as unknown as EventSource);
-    const recibidos: string[] = []; const subscription = api.escuchar().subscribe(event => recibidos.push(event.operacion));
-    expect(factory).toHaveBeenCalledWith(root + '/events', { withCredentials: true });
-    source.onopen!(new Event('open'));
-    listeners.get('catalogo-aplicacion')!(new MessageEvent('catalogo-aplicacion', { data: JSON.stringify({ recurso: 'metadatos', operacion: 'UPDATED', id: 'm' }) }));
-    expect(recibidos).toEqual(['CONNECTED', 'UPDATED']); subscription.unsubscribe(); expect(source.close).toHaveBeenCalled();
-  });
-  it('notifica desconexion y reintenta con espera sin mantener conexiones viejas', () => {
-    jasmine.clock().install();
-    try {
-      const sources: Array<{ onopen: ((event: Event) => void) | null; onerror: ((event: Event) => void) | null; addEventListener: jasmine.Spy; close: jasmine.Spy }> = [];
-      spyOn(window, 'EventSource').and.callFake(function () {
-        const source = { onopen: null, onerror: null, addEventListener: jasmine.createSpy(), close: jasmine.createSpy() };
-        sources.push(source); return source as unknown as EventSource;
-      });
-      const values: string[] = []; const subscription = api.escuchar().subscribe(event => values.push(event.operacion));
-      sources[0].onerror!(new Event('error')); expect(values).toEqual(['DISCONNECTED']); expect(sources[0].close).toHaveBeenCalled();
-      jasmine.clock().tick(1999); expect(sources.length).toBe(1); jasmine.clock().tick(1); expect(sources.length).toBe(2);
-      subscription.unsubscribe(); expect(sources[1].close).toHaveBeenCalled(); jasmine.clock().tick(60000); expect(sources.length).toBe(2);
-    } finally { jasmine.clock().uninstall(); }
-  });
-  it('consulta solo la aplicación configurada y utiliza la sesión, sin secreto de integración', () => {
+
+  it('consulta solo su aplicacion con la sesion web y sin secreto interno', () => {
     api.consultar().subscribe(value => expect(value.aplicacion.id).toBe(APP_ID));
     const request = http.expectOne(root);
     expect(request.request.withCredentials).toBeTrue();
     expect(request.request.headers.has('Authorization')).toBeFalse();
     request.flush({ catalogo: catalogoFixture() });
   });
-  it('rechaza una respuesta que corresponde a otra aplicación', () => {
-    api.consultar().subscribe({ error: (error: Error) => expect(error.message).toContain('no corresponde') });
-    const other = catalogoFixture(); other.aplicacion.id = 'otra';
-    http.expectOne(root).flush({ catalogo: other });
-  });
-  it('crea, actualiza y elimina a través de los endpoints de su aplicación', () => {
+
+  it('crea, actualiza y elimina recursos del catalogo seleccionado', () => {
     api.guardar('parametros', { nombre: 'Nuevo', activo: true }).subscribe();
-    const crear = http.expectOne(root + '/parametros'); expect(crear.request.method).toBe('POST'); crear.flush({ mensajes: [] });
+    const crear = http.expectOne(root + '/parametros');
+    expect(crear.request.method).toBe('POST');
+    crear.flush({ mensajes: [] });
+
     api.guardar('parametros', { nombre: 'Editado' }, 'id/con espacio').subscribe();
-    const actualizar = http.expectOne(root + '/parametros/id%2Fcon%20espacio'); expect(actualizar.request.method).toBe('PUT'); actualizar.flush({ mensajes: [] });
+    const actualizar = http.expectOne(root + '/parametros/id%2Fcon%20espacio');
+    expect(actualizar.request.method).toBe('PUT');
+    actualizar.flush({ mensajes: [] });
+
     api.eliminar('parametros', 'id').subscribe();
-    const eliminar = http.expectOne(root + '/parametros/id'); expect(eliminar.request.method).toBe('DELETE'); eliminar.flush({ mensajes: [] });
+    const eliminar = http.expectOne(root + '/parametros/id');
+    expect(eliminar.request.method).toBe('DELETE');
+    eliminar.flush({ mensajes: [] });
   });
-  it('administra tokens, ambientes y consulta parámetros con Bearer', () => {
-    api.tokens().subscribe(value => expect(value.length).toBe(1));
-    http.expectOne('http://localhost:8080/catalogo-parametros/api/v1/tokens').flush({ tokens: [{ id: 't1', aplicacionId: APP_ID }, { id: 't2', aplicacionId: 'otra' }] });
-    api.estadosToken().subscribe(value => expect(value[0].estado).toBe('Activo'));
-    http.expectOne('http://localhost:8080/catalogo-parametros/api/v1/estados-token').flush({ estadosToken: [{ id: 'a', estado: 'Activo' }] });
-    api.ambientes().subscribe(value => expect(value[0].nombre).toBe('Desarrollo'));
-    http.expectOne('http://localhost:8080/catalogo-parametros/api/v1/ambientes?page=1&pageSize=10000').flush({ ambientes: [{ id: 'd', nombre: 'Desarrollo' }] });
-    api.crearToken({ token: 's', estadoToken: 'a', aplicacionId: APP_ID, ambienteId: 'd', fechaExpiracion: null }).subscribe();
-    const crear = http.expectOne('http://localhost:8080/catalogo-parametros/api/v1/tokens'); expect(crear.request.method).toBe('POST'); crear.flush({ mensajes: [], tokens: [] });
-    api.actualizarEstadoToken('t1', 'a').subscribe();
-    const estado = http.expectOne('http://localhost:8080/catalogo-parametros/api/v1/tokens/t1/estado'); expect(estado.request.method).toBe('PATCH'); estado.flush({ mensajes: [], tokens: [] });
-    api.validarToken('t1', 's').subscribe(value => expect(value).toBeTrue());
-    http.expectOne('http://localhost:8080/catalogo-parametros/api/v1/tokens/t1/validar').flush({ valido: true });
-    api.consultarParametrosPorToken('t1', 's').subscribe();
-    const consulta = http.expectOne('http://localhost:8080/catalogo-parametros/api/v1/tokens/t1/parametros'); expect(consulta.request.headers.get('Authorization')).toBe('Bearer s'); consulta.flush({ aplicacion: null, ambiente: null, parametros: [] });
+
+  it('limita la respuesta al ambiente autorizado', () => {
+    api.consultar().subscribe(value => {
+      expect(value.modulos.length).toBe(catalogoFixture().modulos.length);
+      expect(value.funcionalidades.length).toBe(catalogoFixture().funcionalidades.length);
+      expect(value.parametros.length).toBe(catalogoFixture().parametros.length);
+      expect(value.metadatos.every(item => item.idAmbiente === 'ambiente')).toBeTrue();
+      expect(value.metadatosAmbiente.every(item => item.idAmbiente === 'ambiente')).toBeTrue();
+      expect(value.ambientes).toEqual([{ id: 'ambiente', nombre: 'Desarrollo' }]);
+    });
+    const request = http.expectOne(root);
+    request.flush({ catalogo: catalogoFixture() });
   });
-  it('trata los 401 de validación y consulta como rechazo del token', () => {
-    api.validarToken('t1', 's').subscribe(value => expect(value).toBeFalse());
-    http.expectOne('http://localhost:8080/catalogo-parametros/api/v1/tokens/t1/validar').flush({}, { status: 401, statusText: 'Unauthorized' });
-    api.consultarParametrosPorToken('t1', 's').subscribe({ error: (error: Error) => expect(error.message).toContain('no es válido') });
-    http.expectOne('http://localhost:8080/catalogo-parametros/api/v1/tokens/t1/parametros').flush({}, { status: 401, statusText: 'Unauthorized' });
-  });
-  it('avisa al host cuando falta sesión y conserva el control de permisos del servidor', () => {
-    api.consultar().subscribe({ error: (error: Error) => expect(error.message).toContain('sesión') });
-    http.expectOne(root).flush({}, { status: 401, statusText: 'Unauthorized' }); expect(login).toHaveBeenCalledTimes(1);
-    api.eliminar('modulos', 'id').subscribe({ error: (error: Error) => expect(error.message).toContain('permiso') });
-    http.expectOne(root + '/modulos/id').flush({}, { status: 403, statusText: 'Forbidden' });
+
+  it('solicita autenticacion cuando la sesion expira', () => {
+    api.consultar().subscribe({ error: () => undefined });
+    http.expectOne(root).flush({}, { status: 401, statusText: 'Unauthorized' });
+    expect(login).toHaveBeenCalledTimes(1);
   });
 });

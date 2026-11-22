@@ -3,8 +3,6 @@ export const appRoutes: Routes = [
   { path: 'mensajes', loadComponent: () => import('./features/mensajes/messageucolab-admin.component').then(m => m.MessageUcoLabAdminComponent) },
   { path: 'aplicaciones/:id/administracion', loadComponent: () => import('./features/catalogo-embebido/presentation/catalogo-embebido-host.component').then(m => m.CatalogoEmbebidoHostComponent) },
   { path: 'seguridad', loadComponent: () => import('./features/seguridad/security-administration.component').then(m => m.SecurityAdministrationComponent) },
-  { path: 'consulta-parametros', loadChildren: () => import('./features/tokens/tokens.routes').then(m => m.CONSULTA_PARAMETROS_ROUTES) },
-  { path: 'tokens', loadChildren: () => import('./features/tokens/tokens.routes').then(m => m.TOKENS_ROUTES) },
   { path: 'metadatos-ambiente', loadChildren: () => import('./features/metadatos-ambiente/metadatos-ambiente.routes').then(m => m.METADATOS_AMBIENTE_ROUTES) },
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
   { path: 'dashboard', loadComponent: () => import('./layout/components/dashboard/dashboard.component').then(m => m.DashboardComponent) },

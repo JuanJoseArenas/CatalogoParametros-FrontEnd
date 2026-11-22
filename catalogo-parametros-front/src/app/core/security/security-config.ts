@@ -24,7 +24,7 @@ export function trustedPdpUrl(config: SecurityConfig): string {
   return trusted;
 }
 
-export async function loadSecurityConfig(): Promise<SecurityConfig> {
+export async function loadSecurityConfig(pageProtocol = location.protocol): Promise<SecurityConfig> {
   const response = await fetch(new URL('assets/security-config.json', document.baseURI), { cache: 'no-store' });
   if (!response.ok) throw new Error('No fue posible cargar la configuración de seguridad.');
   const config = await response.json() as SecurityConfig;
@@ -34,7 +34,7 @@ export async function loadSecurityConfig(): Promise<SecurityConfig> {
   for (const value of [config.pdpUrl, config.securityUiUrl]) {
     const url = new URL(value, document.baseURI);
     if (!['http:', 'https:'].includes(url.protocol)) throw new Error('URL de seguridad inválida.');
-    if (location.protocol === 'https:' && url.protocol !== 'https:') {
+    if (pageProtocol === 'https:' && url.protocol !== 'https:') {
       throw new Error('Las URLs de seguridad deben usar HTTPS.');
     }
   }

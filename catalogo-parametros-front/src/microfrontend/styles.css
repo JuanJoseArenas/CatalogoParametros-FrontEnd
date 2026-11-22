@@ -109,19 +109,11 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .embedded-panel-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
 .embedded-panel-heading h3, .embedded-panel-heading h4 { margin: 4px 0; color: #024426; }
 .embedded-panel-heading p { color: #587269; }
-.credential-box { border-left: 4px solid #ffca00; }
-.credential-box label, .token-detail label { display: block; margin: 12px 0 5px; color: #024426; font-size: 13px; font-weight: 700; }
-.credential-box textarea { display: block; width: 100%; margin: 5px 0 8px; font-family: ui-monospace, monospace; }
-.query-card { display: grid; grid-template-columns: 1fr 1fr auto; align-items: end; gap: 14px; margin-bottom: 22px; padding: 18px; background: #f5faf7; border: 1px solid #d8e8df; border-radius: 8px; }
-.query-card label { display: flex; flex-direction: column; gap: 6px; color: #024426; font-size: 13px; font-weight: 700; }
 .query-card .actions { justify-content: flex-end; }
 .result-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 18px 0; }
 .result-summary div { padding: 14px; background: #f5faf7; border-left: 3px solid #008b50; border-radius: 6px; }
 .result-summary span { display: block; color: #587269; font-size: 12px; }
 .result-summary strong { display: block; margin-top: 4px; color: #024426; }
-.token-summary { display: grid; grid-template-columns: 150px 1fr; gap: 8px 14px; margin: 16px 0; }
-.token-summary dt { color: #587269; font-weight: 700; }
-.token-summary dd { margin: 0; overflow-wrap: anywhere; }
 .parameter-detail { margin-top: 12px; padding: 0 14px; border: 1px solid #d8e8df; border-radius: 7px; }
 .parameter-detail summary { padding: 12px 0; color: #024426; cursor: pointer; font-weight: 700; }
 .parameter-detail dl { display: grid; grid-template-columns: 160px 1fr; gap: 8px 14px; padding: 0 0 12px; }
@@ -175,8 +167,8 @@ footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; 
   .brand-logo { width: 180px; height: 42px; }
   .fields { grid-template-columns: 1fr; }
   .workspace-tabs { flex-direction: column; }
-  .query-card, .result-summary { grid-template-columns: 1fr; }
-  .token-summary, .parameter-detail dl { grid-template-columns: 1fr; }
+  .result-summary { grid-template-columns: 1fr; }
+  .parameter-detail dl { grid-template-columns: 1fr; }
   .catalogo-footer { flex-direction: column; gap: 4px; }
   .editor-backdrop { padding: 8px; }
   input[type=search] { width: 100%; }

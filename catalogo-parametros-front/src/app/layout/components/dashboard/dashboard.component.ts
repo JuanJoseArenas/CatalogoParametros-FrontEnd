@@ -12,13 +12,10 @@ import { RouterLink } from '@angular/router';
         <p>Administra la información que articula las aplicaciones, funcionalidades y ambientes de la Universidad.</p>
         <div class="hero-actions">
           <a routerLink="/parametros" class="btn btn-warning">Gestionar parámetros</a>
-          <a routerLink="/consulta-parametros" class="btn btn-secondary">Consultar configuración</a>
         </div>
       </section>
 
       <div class="stats-grid">
-        <div class="stat-card"><span class="stat-kicker">01 · CONSULTA</span><div class="stat-icon">Q</div><div class="stat-info"><h3>Consulta de parámetros</h3><p>Consulta parámetros de una aplicación y ambiente mediante un token.</p></div><a routerLink="/consulta-parametros" class="btn btn-primary">Consultar</a></div>
-        <div class="stat-card"><span class="stat-kicker">02 · ACCESO</span><div class="stat-icon">T</div><div class="stat-info"><h3>Tokens</h3><p>Crea y administra las credenciales de acceso a parámetros.</p></div><a routerLink="/tokens" class="btn btn-primary">Administrar</a></div>
         <div class="stat-card"><span class="stat-kicker">03 · ESTRUCTURA</span><div class="stat-icon">O</div><div class="stat-info"><h3>Organizaciones</h3><p>Gestiona las organizaciones que hacen parte del catálogo.</p></div><a routerLink="/organizaciones" class="btn btn-primary">Ver organizaciones</a></div>
         <div class="stat-card"><span class="stat-kicker">04 · ESTRUCTURA</span><div class="stat-icon">A</div><div class="stat-info"><h3>Aplicaciones</h3><p>Administra las aplicaciones consumidoras de la plataforma.</p></div><a routerLink="/aplicaciones" class="btn btn-primary">Ver aplicaciones</a></div>
         <div class="stat-card"><span class="stat-kicker">05 · ESTRUCTURA</span><div class="stat-icon">M</div><div class="stat-info"><h3>Módulos</h3><p>Organiza los módulos funcionales de cada aplicación.</p></div><a routerLink="/modulos" class="btn btn-primary">Ver módulos</a></div>

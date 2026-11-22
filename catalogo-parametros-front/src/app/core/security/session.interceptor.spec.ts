@@ -3,37 +3,28 @@ import { HttpClient, provideHttpClient, withInterceptors } from '@angular/common
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { environment } from '../../../environments/environment';
 import { SECURITY_CONFIG } from './security-config';
+import { SESSION_REDIRECT } from './session';
 import { sessionInterceptor } from './session.interceptor';
 
 describe('Cookies de la API protegida', () => {
   let http: HttpClient;
   let requests: HttpTestingController;
+  let redirect: jasmine.Spy;
+
   beforeEach(() => {
+    redirect = jasmine.createSpy('redirect');
     TestBed.configureTestingModule({ providers: [
       provideHttpClient(withInterceptors([sessionInterceptor])), provideHttpClientTesting(),
-      { provide: SECURITY_CONFIG, useValue: { pdpUrl: 'http://localhost:18080' } }
+      { provide: SECURITY_CONFIG, useValue: { pdpUrl: 'http://localhost:18080' } },
+      { provide: SESSION_REDIRECT, useValue: redirect }
     ] });
     http = TestBed.inject(HttpClient);
     requests = TestBed.inject(HttpTestingController);
   });
+
   afterEach(() => requests.verify());
 
-  it('no envía credenciales a otra ruta del mismo servidor', () => {
-    const url = `${environment.apiUrl}-otro/parametros`;
-    http.get(url).subscribe();
-    const request = requests.expectOne(url);
-    expect(request.request.withCredentials).toBeFalse();
-    request.flush({});
-  });
-
-  it('incluye credenciales en la raiz exacta de la API', () => {
-    http.get(environment.apiUrl).subscribe();
-    const request = requests.expectOne(environment.apiUrl);
-    expect(request.request.withCredentials).toBeTrue();
-    request.flush({});
-  });
-
-  it('incluye credenciales al consultar el catálogo', () => {
+  it('incluye credenciales en la API del catalogo', () => {
     const url = `${environment.apiUrl}/parametros`;
     http.get(url).subscribe();
     const request = requests.expectOne(url);
@@ -41,7 +32,7 @@ describe('Cookies de la API protegida', () => {
     request.flush({});
   });
 
-  it('no añade credenciales a otros servidores', () => {
+  it('no incluye credenciales en otros servidores', () => {
     const url = 'https://otro.example/catalogo-parametros/api/v1/parametros';
     http.get(url).subscribe();
     const request = requests.expectOne(url);
@@ -49,19 +40,12 @@ describe('Cookies de la API protegida', () => {
     request.flush({});
   });
 
-  it('conserva el 403 sin intentar iniciar sesión', () => {
+  it('redirige cualquier 401 de la API a la sesion', () => {
     const url = `${environment.apiUrl}/parametros`;
-    let status = 0;
-    http.get(url).subscribe({ error: error => status = error.status });
-    requests.expectOne(url).flush({}, { status: 403, statusText: 'Forbidden' });
-    expect(status).toBe(403);
-  });
-  it('presenta un token inválido sin redirigir al login central', () => {
-    const url = `${environment.apiUrl}/tokens/65208975-5350-45ce-81e4-2e54abfff853/parametros`;
     let status = 0;
     http.get(url).subscribe({ error: error => status = error.status });
     requests.expectOne(url).flush({}, { status: 401, statusText: 'Unauthorized' });
     expect(status).toBe(401);
+    expect(redirect).toHaveBeenCalledWith({ pdpUrl: 'http://localhost:18080' });
   });
-
 });

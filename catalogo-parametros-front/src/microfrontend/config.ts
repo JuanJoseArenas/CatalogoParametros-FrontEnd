@@ -7,6 +7,10 @@ export function normalizarOpciones(options: ParametrosUiOptions): ParametrosUiOp
   if (!options || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(options.applicationId)) {
     throw new TypeError('applicationId debe ser el UUID de una aplicación del catálogo.');
   }
+  if (options.environmentId !== undefined &&
+      !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(options.environmentId)) {
+    throw new TypeError('environmentId debe ser el UUID de un ambiente del catálogo.');
+  }
   if ('secret' in options || 'secreto' in options || 'applicationCredential' in options) {
     throw new TypeError('El secreto de integración pertenece al backend consumidor, no al microfrontend.');
   }
@@ -27,7 +31,8 @@ export function normalizarOpciones(options: ParametrosUiOptions): ParametrosUiOp
     if (callback !== undefined && typeof callback !== 'function') throw new TypeError('Callback de integración inválido.');
   }
   return {
-    applicationId: options.applicationId.toLowerCase(), apiBaseUrl: url.href.replace(/\/+$/, ''), refreshIntervalMs: interval,
+    applicationId: options.applicationId.toLowerCase(), environmentId: options.environmentId?.toLowerCase(),
+    apiBaseUrl: url.href.replace(/\/+$/, ''), refreshIntervalMs: interval,
     theme: { ...options.theme }, onAuthenticationRequired: options.onAuthenticationRequired, onChange: options.onChange
   };
 }

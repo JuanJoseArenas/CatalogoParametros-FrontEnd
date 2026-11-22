@@ -17,7 +17,7 @@ import { TipoMetadato } from '../../domain/metadato';
         <div class="form-group"><label class="form-label">Tipo de metadato</label><select class="form-control" formControlName="idTipoMetadato" (change)="typeChange.emit()"><option value="">Seleccione un tipo</option>@for (item of tipos(); track item.id) { <option [value]="item.id">{{ item.tipo }}{{ item.detalle ? ' - ' + item.detalle : '' }}</option> }</select></div>
         <div class="form-group"><label class="form-label">Alcance del ambiente</label><select class="form-control" formControlName="alcanceAmbiente" (change)="scopeChange.emit()"><option value="uno">Un ambiente</option><option value="todos" [disabled]="editing()">Todos los ambientes</option></select></div>
         @if (form().get('alcanceAmbiente')?.value === 'uno') {
-          <div class="form-group"><label class="form-label">Ambiente</label><select class="form-control" formControlName="idAmbiente" required><option value="">Seleccione un ambiente</option>@for (item of ambientes(); track item.id) { <option [value]="item.id">{{ item.nombre }}</option> }</select><small>Este valor solo se entrega a los tokens del ambiente seleccionado.</small></div>
+          <div class="form-group"><label class="form-label">Ambiente</label><select class="form-control" formControlName="idAmbiente" required><option value="">Seleccione un ambiente</option>@for (item of ambientes(); track item.id) { <option [value]="item.id">{{ item.nombre }}</option> }</select><small>Este valor queda disponible para el ambiente seleccionado.</small></div>
         } @else {
           <p class="field-help">El mismo valor se creará o actualizará en Producción, Desarrollo y Pruebas.</p>
         }

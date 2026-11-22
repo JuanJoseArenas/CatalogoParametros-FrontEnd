@@ -1,5 +1,16 @@
 import { loginUrl, requireSession } from './session';
 
+describe('Sesion no autenticada', () => {
+  it('usa el callback de redireccion sin recargar la pagina', async () => {
+    const config = { pdpUrl: 'http://localhost:18080', securityUiUrl: 'http://localhost:5175/security-administration.js', applicationName: 'Catalogo' };
+    const redirect = jasmine.createSpy('redirect');
+    spyOn(window, 'fetch').and.resolveTo(new Response('', { status: 401 }));
+
+    expect(await requireSession(config, redirect)).toBeFalse();
+    expect(redirect).toHaveBeenCalledOnceWith(config);
+  });
+});
+
 const config = { pdpUrl: 'http://localhost:18080', securityUiUrl: 'http://localhost:5175/security-administration.js', applicationName: 'Catalogo' };
 
 describe('Sesión central', () => {
